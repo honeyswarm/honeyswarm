@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="row mt-5">
+      <div class="col-6 mt-5">
+
+          <h4>Create an Account</h4>
+          <form  method="POST" action="/register">
+              <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" class="form-control" id="email" name="email" aria-describedby="emailHelp">
+                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+              </div>
+              <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password">
+              </div>
+
+              <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+
+      </div>
+      <div class="col-6 mt-5">
+          <p>Once you create an account an administrator must approve it. </p>
+
+
+          {% with messages = get_flashed_messages() %}
+          {% if messages %}
+
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>Sorry!</strong> {{ messages[0] }}. Go to <a href="{{ url_for('auth.login') }}">login page</a>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+          {% endif %}
+          {% endwith %}
+      </div>
+  </div>
+</div>
+{% endblock %}

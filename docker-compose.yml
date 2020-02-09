@@ -1,0 +1,49 @@
+version: '3.7'
+services:
+  honeyswarm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - honeyswarm_dev.env
+    ports:
+      - "80:80"
+      - "8181:8181"
+    networks:
+      honeynet:
+        ipv4_address: 10.1.0.101
+    depends_on: 
+      - mongoserver
+      - saltmaster
+  mongoserver:
+    image: mongo:latest
+    env_file:
+      - honeyswarm_dev.env
+    ports:
+      - '27017:27017'
+    networks:
+      honeynet:
+        ipv4_address: 10.1.0.102
+    volumes:
+      - "./dev/mongo:/data/db"
+  saltmaster:
+    image: "saltstack/salt:latest"
+    env_file:
+      - honeyswarm_dev.env
+    ports:
+      - "8000:8000"
+      - "4505:4505"
+      - "4506:4506"
+    networks:
+      honeynet:
+        ipv4_address: 10.1.0.103
+    volumes:
+      - "./dev/salt:/etc/salt/pki"
+      - "./honeystates:/srv"
+networks:
+  honeynet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.1.0.0/24

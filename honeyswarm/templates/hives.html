@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!--  This is a list of all the hives that have or tried to register with salt. -->
+
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col-8">
+      <div class="row">
+        <div class="col">
+          <h4>Registered Hives</h4>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Registered</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Created</th>
+                <th scope="col">Last Seen</th>
+                <th scope="col">Honeypot Count</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hive in hive_list %}
+              {% if hive['registered'] %}
+              <tr>
+                <th scope="row">{{hive['id']}}</th>
+                <td>{{hive['registered']}}</td>
+                <td>{{hive['ip_address']}}</td>
+                <td>{{hive['created_at'] | dateformat}}</td>
+                <td>{{hive['last_seen'] | dateformat}}</td>
+                <td>{{hive['honeypots'] | length}}</td>
+                <td>
+                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="poll">Poll</option>
+                    <option value="edit">Edit</option>
+                    <option value="restart">Restart</option>
+                    <option value="delete">Delete</option>
+                    <option value="swarm">Swarm Test Remove</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h4>Unregisterd Hives</h4>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Registered</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Created</th>
+                <th scope="col">Last Seen</th>
+                <th scope="col">Honeypot Count</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hive in hive_list %}
+              {% if not hive['registered'] %}
+              <tr>
+                <th scope="row">{{hive['id']}}</th>
+                <td>{{hive['registered']}}</td>
+                <td>{{hive['ip_address']}}</td>
+                <td>{{hive['created_at'] | dateformat}}</td>
+                <td>{{hive['last_seen'] | dateformat}}</td>
+                <td>{{hive['honeypots'] | length}}</td>
+                <td>
+                  <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="swarm">Add to Swarm</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    <div class="col-4">
+      <div class="card p-2">
+        <h4>What is a Hive?</h4>
+        <p>A Hive is a host device that is capable of running one or more honeypots. A hive can be a virtual machine a physical macine or an Amazon instance.</p>
+        <h4>hive requirements</h4>
+        <ul >
+          <li>Can connect to the internet</li>
+          <li>Can connect to HoneySwarm</li>
+          <li>Able to run docker images</li>
+        </ul>
+        <h4>Configure a hive</h4>
+        <p>First Register the hive by running this command on the target host</p>
+        <p><code>curl -H "Authorization: {{apitoken}}" {{ url_for('hives.hives_register', _external=True) }}</code></p>
+  
+        <p>This should install the base and register the hive with HoneySwarm. The next step is to approve the registration</p>
+
+        <h4>Add hive to swarm</h4>
+        <p>For any unregistered hives you will need to add them to the hive before they can be used to run a honeypot</p>
+        <p>Just select the 'Add to swarm' action from the dropdown</p>
+  
+        <h4>Install a honeypot</h4>
+        <p>Once the hive has been approved in to the swarm it is now ready to get its first honeypot go to the honeypot page</p>
+  
+      </div>
+    </div>
+  </div>
+
+<script>
+
+$( ".hive_action" ).change(function() {
+  let hive_id = this.getAttribute("data-hiveId");
+  let hive_action = this.value;
+
+  console.log("Running action "+ hive_action + " for Hive " + hive_id);
+
+  $.post( "/hives/actions", { action: hive_action, hive_id: hive_id })
+  .done(function( data ) {
+    console.log( "Data Loaded: " + data );
+  })
+  .fail(function() {
+    console.log( "error" );
+  });
+
+
+
+
+
+
+  });
+
+</script>
+
+
+</div>
+
+{% endblock %}

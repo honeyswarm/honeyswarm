@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+
+#HoneySwarm things to ignore
+
+dev/
+honeyswarm_dev.env
