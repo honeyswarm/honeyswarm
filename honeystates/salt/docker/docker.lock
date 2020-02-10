@@ -1,0 +1,2 @@
+# This file just prevents the salt state re-adding 
+# I will find a better way for now this should work!
