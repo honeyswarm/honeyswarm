@@ -22,3 +22,12 @@ class Hive(Document):
     honeypots = ListField(ReferenceField(Honeypot), default=[])
 
 
+class PepperJobs(Document):
+    job_id = StringField()
+    job_short = StringField()
+    job_description = StringField()
+    created_at = DateTimeField(default=datetime.utcnow)
+    complete = BooleanField(default=False)
+    completed_at = StringField()
+    job_response = DictField()
+    
