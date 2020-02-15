@@ -13,7 +13,7 @@
             <thead>
               <tr>
                 <th scope="col">Hive ID</th>
-                <th scope="col">Registered</th>
+                <th scope="col">OS</th>
                 <th scope="col">IP Address</th>
                 <th scope="col">Created</th>
                 <th scope="col">Last Seen</th>
@@ -23,11 +23,11 @@
             </thead>
             <tbody>
               {% for hive in hive_list %}
-              {% if hive['registered'] %}
+              {% if hive['salt_alive']  %}
               <tr>
                 <th scope="row">{{hive['id']}}</th>
-                <td>{{hive['registered']}}</td>
-                <td>{{hive['ip_address']}}</td>
+                <td>{{hive['grains']['osfullname']}}</td>
+                <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
                 <td>{{hive['honeypots'] | length}}</td>
@@ -51,16 +51,11 @@
 
       <div class="row">
         <div class="col">
-          <h4>Unregisterd Hives</h4>
+          <h4>Unregsistered Hives</h4>
           <table class="table table-bordered">
             <thead>
               <tr>
                 <th scope="col">Hive ID</th>
-                <th scope="col">Registered</th>
-                <th scope="col">IP Address</th>
-                <th scope="col">Created</th>
-                <th scope="col">Last Seen</th>
-                <th scope="col">Honeypot Count</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -69,15 +64,12 @@
               {% if not hive['registered'] %}
               <tr>
                 <th scope="row">{{hive['id']}}</th>
-                <td>{{hive['registered']}}</td>
-                <td>{{hive['ip_address']}}</td>
-                <td>{{hive['created_at'] | dateformat}}</td>
-                <td>{{hive['last_seen'] | dateformat}}</td>
-                <td>{{hive['honeypots'] | length}}</td>
                 <td>
                   <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
                     <option value="select">Select</option>
+                    {% if hive['id'] in key_list %}
                     <option value="swarm">Add to Swarm</option>
+                    {% endif %}
                     <option value="delete">Delete</option>
                   </select>
                 </td>
@@ -88,6 +80,36 @@
           </table>
         </div>
       </div>
+
+      <div class="row">
+        <div class="col">
+          <h4>Unresponsive Hives</h4>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hive in hive_list %}
+              {% if not hive['salt_alive'] %}
+              <tr>
+                <th scope="row">{{hive['id']}}</th>
+                <td>
+                  <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
     </div>
     <div class="col-4">
@@ -101,16 +123,26 @@
           <li>Able to run docker images</li>
           <li>Supports Python >=3</li>
         </ul>
-        <h4>Configure a hive</h4>
-        <p>First Register the hive by running this command on the target host</p>
-        <p><code>curl -H "Authorization: {{apitoken}}" {{ url_for('hives.hives_register', _external=True) }}</code></p>
+        <h4>Initialise a hive</h4>
+        <p>The first step is to initialise the Hive Host. We do this by installing a Salt Minion with some custom parameters. You can use the follwing examples to init a Linux or Windows Host</p>
+        <p><code>curl -H "Authorization: {{apitoken}}" {{ url_for('hives.hives_register', operating_system="linux", _external=True) }} | sudo sh</code></p>
   
+        <p><code>
+          powershell -nop -c "Invoke-Expression -Command (Invoke-WebRequest -Headers @{'Authorization'='{{apitoken}}'} -Uri '{{ url_for('hives.hives_register', operating_system="windows", _external=True) }}' -UseBasicParsing).Content"
+        </code></p>
+
+
         <p>This should install the base and register the hive with HoneySwarm. The next step is to approve the registration</p>
 
         <h4>Add hive to swarm</h4>
-        <p>For any unregistered hives you will need to add them to the hive before they can be used to run a honeypot</p>
-        <p>Just select the 'Add to swarm' action from the dropdown</p>
+        <p>Once a Hive has been initialised we need to approve it in to the swarm. This prevents rogue hosts from connecting to us. You will only see the dropdown action once the Minion has started and sent its key to the master.</p>
+        <p>Once availiable Just select the 'Add to swarm' action from the dropdown</p>
   
+        <h4>Next steps</h4>
+        <p>Now you have a few options</p>
+        <ul>
+          <li>Configure the Hive to run multiple honeypots - Set </li>
+        </ul>
         <h4>Install a honeypot</h4>
         <p>Once the hive has been approved in to the swarm it is now ready to get its first honeypot go to the honeypot page</p>
   
