@@ -36,6 +36,133 @@ def hives_list():
         key_list=key_list['minions_pre']
         )
 
+
+##
+# Hive Actions
+##
+@hives.route('/hives/actions/delete', methods=["POST"])
+@login_required
+def hive_delete():
+    """Delete hiveid from Mongo and salt master"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+
+    if not hive_id:
+        json_response['message'] = "Missing Hive ID"
+    else:
+        try:
+            pepper_api.delete_key(hive_id)
+            Hive.objects(id=hive_id).delete()
+            json_response['success'] = True
+            json_response['message'] = "Hive Deleted"
+        except Exception as err:
+            json_response['message'] = "Error Deleting Hive: {0}".format(err)
+
+    return jsonify(json_response)
+
+
+@hives.route('/hives/actions/poll', methods=["POST"])
+@login_required
+def hive_poll():
+    """Poll a hive and get its grains"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+
+    if not hive_id:
+        json_response['message'] = "Missing Hive ID"
+    else:
+        try:
+            hive = Hive.objects(id=hive_id).first()
+            grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+            hive_grains = grains_request[hive_id]
+            if hive_grains:
+                hive.grains = hive_grains
+                hive.last_seen = datetime.utcnow
+                hive.salt_alive = True
+            else:
+                hive.salt_alive = False
+            hive.save()
+            json_response = {"success": True}
+            json_response['message'] = "Poll Complete"
+        except Exception as err:
+            json_response['message'] = "Error Polling Hive: {0}".format(err)
+
+    return jsonify(json_response)
+
+@hives.route('/hives/actions/swarm', methods=["POST"])
+@login_required
+def hive_swarm():
+    """Add a hive to the swarm"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+
+    if not hive_id:
+        json_response['message'] = "Missing Hive ID"
+    else:
+        try:
+            hive = Hive.objects(id=hive_id).first()
+            # Accept the key
+            print("adding Key")
+            add_key = pepper_api.accept_key(hive_id)
+            print("Getting Grains")
+
+            grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+            hive_grains = grains_request[hive_id]
+            if hive_grains:
+                hive.grains = hive_grains
+                hive.last_seen = datetime.utcnow
+                hive.salt_alive = True
+            else:
+                hive.salt_alive = False
+            hive.save()
+
+            json_response['success'] = True
+            json_response['message'] = "Added Hive"
+        except Exception as err:
+            json_response['message'] = "Error Adding to swarm: {0}".format(err)
+
+    return jsonify(json_response)
+
+
+@hives.route('/hives/actions/test', methods=["POST"])
+@login_required
+def hive_test():
+    """Add a hive to the swarm"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+
+    if not hive_id:
+        json_response['message'] = "Missing Hive ID"
+    else:
+        try:
+            hive = Hive.objects(id=hive_id).first()
+            # Accept the key
+            print("adding Key")
+            add_key = pepper_api.accept_key(hive_id)
+            print("Getting Grains")
+
+            grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+            hive_grains = grains_request[hive_id]
+            if hive_grains:
+                hive.grains = hive_grains
+                hive.last_seen = datetime.utcnow
+                hive.salt_alive = True
+            else:
+                hive.salt_alive = False
+            hive.save()
+
+            json_response['success'] = True
+            json_response['message'] = "Added Hive"
+        except Exception as err:
+            json_response['message'] = "Error Adding to swarm: {0}".format(err)
+
+    return jsonify(json_response)
+
+
 @hives.route('/hives/actions', methods=["POST", "GET"])
 @login_required
 def hive_actions():
@@ -52,78 +179,26 @@ def hive_actions():
             hive_id = form_vars['hive_id']
 
             ##
-            # Delete the Hive - Doesnt remove key yet
-            ##
-            if hive_action == 'delete':
-                try:
-                    pepper_api.delete_key(hive_id)
-                    Hive.objects(id=hive_id).delete()
-                    json_response['success'] = True
-                    json_response['message'] = "Hive Deleted"
-                except Exception as err:
-                    json_response['message'] = "Error Deleting Hive: {0}".format(err)
-
-
-            ##
             # Add hive to swarm - Approve the key and poll
             ##
-            elif hive_action == 'swarm':
-                try:
-                    hive = Hive.objects(id=hive_id).first()
-
-                    # Accept the key
-                    print("adding Key")
-                    add_key = pepper_api.accept_key(hive_id)
-
-                    print("Getting Grains")
-
-                    grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
-                    hive_grains = grains_request[hive_id]
-                    if hive_grains:
-                        hive.grains = hive_grains
-                        hive.last_seen = datetime.utcnow
-                        hive.salt_alive = True
-                    else:
-                        hive.salt_alive = False
-                    hive.save()
-
-
-                    json_response['success'] = True
-                    json_response['message'] = "Added Hive"
-                except Exception as err:
-                    json_response['message'] = "Error Adding to swarm: {0}".format(err)
+            if hive_action == 'swarm':
+                pass
 
             ##
             # Poll the hive to update its grains
             ##
             elif hive_action == 'poll':
-                try:
-                    hive = Hive.objects(id=hive_id).first()
-                    grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
-                    hive_grains = grains_request[hive_id]
-                    if hive_grains:
-                        hive.grains = hive_grains
-                        hive.last_seen = datetime.utcnow
-                        hive.salt_alive = True
-                    else:
-                        hive.salt_alive = False
-                    hive.save()
-                except Exception as err:
-                    json_response['message'] = "Error Polling Hive: {0}".format(err)
+                pass
 
 
             elif hive_action == 'edit':
-                try:
-                    this = "that"
-                    json_response['success'] = True
-                    json_response['message'] = "Missing Hive ID or Action"
-                except Exception as err:
-                    json_response['message'] = "Missing Hive ID or Action"
+                pass
 
             ##
             # Can we trigger a hive restart
             ##
             elif hive_action == 'restart':
+                # Windows triggers a 5 minute warning for restart
                 try:
                     pepper_api.run_client_function(hive_id, 'system.reboot')
                 except Exception as err:
