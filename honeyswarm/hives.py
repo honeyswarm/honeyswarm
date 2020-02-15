@@ -5,14 +5,14 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Hive
+from honeyswarm.models import Hive, PepperJobs
 
 
 hives = Blueprint('hives', __name__)
 
 APITOKEN = os.environ.get("HIVE_API_TOKEN")
 
-from app import pepper_api
+from saltapi import pepper_api
 
 @hives.route('/hives')
 @login_required
@@ -23,19 +23,17 @@ def hives_list():
     key_list = pepper_api.salt_keys()
 
     for hive in hive_list:
-        print(hive.id)
         if str(hive.id) in key_list['minions']:
             hive.registered = True
         if str(hive.id) in key_list['minions_pre']:
             hive.registered = False
         hive.save()
 
-    print(key_list)
-
     return render_template(
         "hives.html",
         apitoken=APITOKEN,
-        hive_list=hive_list
+        hive_list=hive_list,
+        key_list=key_list['minions_pre']
         )
 
 @hives.route('/hives/actions', methods=["POST", "GET"])
@@ -43,7 +41,6 @@ def hives_list():
 def hive_actions():
     if request.method == "POST":
         form_vars = request.form.to_dict()
-        print(form_vars)
 
         json_response = {"success": False}
 
@@ -53,14 +50,23 @@ def hive_actions():
         else:
             hive_action = form_vars['action']
             hive_id = form_vars['hive_id']
+
+            ##
+            # Delete the Hive - Doesnt remove key yet
+            ##
             if hive_action == 'delete':
                 try:
+                    pepper_api.delete_key(hive_id)
                     Hive.objects(id=hive_id).delete()
                     json_response['success'] = True
                     json_response['message'] = "Hive Deleted"
                 except Exception as err:
                     json_response['message'] = "Error Deleting Hive: {0}".format(err)
 
+
+            ##
+            # Add hive to swarm - Approve the key and poll
+            ##
             elif hive_action == 'swarm':
                 try:
                     hive = Hive.objects(id=hive_id).first()
@@ -68,51 +74,44 @@ def hive_actions():
                     # Accept the key
                     print("adding Key")
                     add_key = pepper_api.accept_key(hive_id)
-                    print(add_key)
 
-                    # Get the ip address
+                    print("Getting Grains")
 
-                    print("Get IP")
-                    ip_add_response = pepper_api.run_client_function(hive_id, "network.ip_addrs")
-                    ip_add_list = ip_add_response[hive_id]
-
-                    # Add the list of IPs or just the first ?
-                    hive.ip_address = ip_add_list[0]
-
-                    # Save the hive
-
-                    print("Save")
-                    hive.registered = True
-                    hive.last_seen = datetime.utcnow
+                    grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+                    hive_grains = grains_request[hive_id]
+                    if hive_grains:
+                        hive.grains = hive_grains
+                        hive.last_seen = datetime.utcnow
+                        hive.salt_alive = True
+                    else:
+                        hive.salt_alive = False
                     hive.save()
 
-                    # Trigger the base stats sls
 
                     json_response['success'] = True
-                    json_response['message'] = "Missing Hive ID or Action"
+                    json_response['message'] = "Added Hive"
                 except Exception as err:
                     json_response['message'] = "Error Adding to swarm: {0}".format(err)
+
+            ##
+            # Poll the hive to update its grains
+            ##
             elif hive_action == 'poll':
                 try:
                     hive = Hive.objects(id=hive_id).first()
-
-                    # Get the ip address
-
-                    print("Get IP")
-                    ip_add_response = pepper_api.run_client_function(hive_id, "network.ip_addrs")
-                    ip_add_list = ip_add_response[hive_id]
-
-                    # Add the list of IPs or just the first ?
-                    hive.ip_address = ip_add_list[0]
-
-                    # Save the hive
-
-                    print("Save")
-                    hive.registered = True
-                    hive.last_seen = datetime.utcnow
+                    grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+                    hive_grains = grains_request[hive_id]
+                    if hive_grains:
+                        hive.grains = hive_grains
+                        hive.last_seen = datetime.utcnow
+                        hive.salt_alive = True
+                    else:
+                        hive.salt_alive = False
                     hive.save()
                 except Exception as err:
                     json_response['message'] = "Error Polling Hive: {0}".format(err)
+
+
             elif hive_action == 'edit':
                 try:
                     this = "that"
@@ -120,21 +119,47 @@ def hive_actions():
                     json_response['message'] = "Missing Hive ID or Action"
                 except Exception as err:
                     json_response['message'] = "Missing Hive ID or Action"
+
+            ##
+            # Can we trigger a hive restart
+            ##
             elif hive_action == 'restart':
                 try:
-                    this = "that"
-                    json_response['success'] = True
-                    json_response['message'] = "Missing Hive ID or Action"
+                    pepper_api.run_client_function(hive_id, 'system.reboot')
                 except Exception as err:
                     json_response['message'] = "Missing Hive ID or Action"
+
+
+
+            ##
+            # Frames
+            ##
+            elif hive_action == 'frame':
+                # Update the hive now
+
+
+                # Trigger the base stats sls
+                print("adding job")
+                new_job = PepperJobs(
+                    job_short="Install Base State",
+                    job_description="salt '' state.apply docker/docker_linux",
+                    hive=hive
+                )
+
+                job_id = pepper_api.apply_state(hive_id, 'docker/docker_linux')
+
+                new_job.job_id = job_id
+                new_job.save()
+
+                print(job_id)
 
         return jsonify(json_response)
 
 
 
 # This is an API call to return the salt installer
-@hives.route('/api/hive/register')
-def hives_register():
+@hives.route('/api/hive/register/<operating_system>')
+def hives_register(operating_system):
     authenticated = False
     # Check for the deployment token
     if 'Authorization' in request.headers:
@@ -157,10 +182,17 @@ def hives_register():
     new_hive.save()
     salt_id = new_hive.id
 
+    if operating_system == "windows":
+        registration_template = "hive_registration.ps1"
+    elif operating_system == "linux":
+        registration_template = "hive_registration.sh"
+    else:
+        abort(404)
+
+
     # Return the Installation Script
     return render_template(
-        "hive_registration.sh",
+        registration_template,
         honeyswarm_host="192.168.1.184",
         salt_minion_id=salt_id
-
     )
