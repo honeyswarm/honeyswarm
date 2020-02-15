@@ -40,7 +40,7 @@ class PepperApi():
         if api_reponse['return'][0]['data']['success']:
             return api_reponse['return'][0]['data']['return']
 
-    def run_client_function_sync(self, target, function):
+    def run_client_function_async(self, target, function):
         """
         Basic Function Runner; for things like test.ping it is up to the receiving function to parse the data it needs. 
         Makes Async Call returns Job ID

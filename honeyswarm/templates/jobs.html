@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% set active_page = "jobs" %}
+{% block content %}
+<!--  This is a list of all the hives that have or tried to register with salt. -->
+
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col-8">
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">Pending Jobs</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Job Short</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in job_list %}
+              {% if not job['complete']  %}
+              <tr id="row-{{job['hive']['id']}}">
+                <th scope="row">{{job['hive']['id']}}</th>
+                <td>{{job['job_short']}}</td>
+                <td>{{job['created_at'] | dateformat}}</td>
+                <td>
+                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="poll">Poll</option>
+                    <option value="restart">Restart</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="col">
+          <h4 class="text-success">Completed Jobs</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Job Short</th>
+                <th scope="col">Created At</th>
+                <th scope="col">Completed At</th>
+                <th scope="col">Response</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in job_list %}
+              {% if job['complete']  %}
+              <tr id="row-{{job['hive']['id']}}">
+                <th scope="row">{{job['hive']['id']}}</th>
+                <td>{{job['job_short']}}</td>
+                <td>{{job['created_at'] | dateformat}}</td>
+                <td>{{job['completed_at'] | dateformat}}</td>
+                <td>{{job['job_response']}}</td>
+                <td>
+                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="poll">Poll</option>
+                    <option value="restart">Restart</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+    <div class="col-4">
+      <div class="card p-2">
+        <h4>What is a Hive?</h4>
+        <p>A Hive is a host device that is capable of running one or more honeypots. A hive can be a virtual machine a physical macine or an Amazon instance.</p>
+        <h4>hive requirements</h4>
+        <ul >
+          <li>Can connect to the internet</li>
+          <li>Can connect to HoneySwarm</li>
+          <li>Able to run docker images</li>
+          <li>Supports Python >=3</li>
+        </ul>
+        <h4>Initialise a hive</h4>
+        <p>The first step is to initialise the Hive Host. We do this by installing a Salt Minion with some custom parameters. You can use the follwing examples to init a Linux or Windows Host</p>
+        <p><code>curl -H "Authorization: {{apitoken}}" {{ url_for('hives.hives_register', operating_system="linux", _external=True) }} | sudo sh</code></p>
+  
+        <p><code>
+          powershell -nop -c "Invoke-Expression -Command (Invoke-WebRequest -Headers @{'Authorization'='{{apitoken}}'} -Uri '{{ url_for('hives.hives_register', operating_system="windows", _external=True) }}' -UseBasicParsing).Content"
+        </code></p>
+
+
+        <p>This should install the base and register the hive with HoneySwarm. The next step is to approve the registration</p>
+
+        <h4>Add hive to swarm</h4>
+        <p>Once a Hive has been initialised we need to approve it in to the swarm. This prevents rogue hosts from connecting to us. You will only see the dropdown action once the Minion has started and sent its key to the master.</p>
+        <p>Once availiable Just select the 'Add to swarm' action from the dropdown</p>
+  
+        <h4>Next steps</h4>
+        <p>Now you have a few options</p>
+        <ul>
+          <li>Configure the Hive to run multiple honeypots - Set </li>
+        </ul>
+        <h4>Install a honeypot</h4>
+        <p>Once the hive has been approved in to the swarm it is now ready to get its first honeypot go to the honeypot page</p>
+  
+      </div>
+    </div>
+  </div>
+
+<script>
+
+let notificationCount = 0;
+
+$( ".hive_action" ).change(function() {
+  let hive_id = this.getAttribute("data-hiveId");
+  let hive_action = this.value;
+  console.log(this)
+
+
+  // Ignore select
+  if (hive_action == "select"){
+    return
+  }
+
+  console.log("Running action "+ hive_action + " for Hive " + hive_id);
+
+  let post_params = { hive_id: hive_id };
+  let post_url = "/hives/actions/"+hive_action;
+
+  $.post( post_url, post_params)
+  .done(function( data ) {
+    console.log( "Data Loaded: " + data );
+    if (data['success']){
+
+      // Add notification
+      add_notification("text-success", data['message'])
+
+      // Handle some other actions
+      if (hive_action == "delete"){
+        // remove the newly deleted row
+        $('#row-'+hive_id).remove()
+        }
+
+
+
+    } else {
+      add_notification("text-danger", data['message'])
+    }
+
+
+
+  })
+  .fail(function() {
+    add_notification("text-danger", "Something went wrong")
+  });
+
+
+  // reset the dropdown
+  $(this).val('select')
+
+  });
+
+
+function add_notification(textClass, text){
+  notificationCount ++;
+  let notification = `<a class="dropdown-item ${textClass}" href="#">${text}</a>`;
+  $('#notification-dropdown').append(notification);
+  $('#notification-count').html(notificationCount);
+}
+
+
+
+</script>
+
+
+</div>
+
+{% endblock %}

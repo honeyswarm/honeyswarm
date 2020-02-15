@@ -17,6 +17,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from honeyswarm.saltapi import pepper_api
 from honeyswarm.auth import auth
 from honeyswarm.hives import hives
+from honeyswarm.jobs import jobs
 
 # Set the Core Application
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -44,6 +45,7 @@ app.config['MONGODB_SETTINGS'] = MONGODB_SETTINGS
 # Register the Blueprints
 app.register_blueprint(auth)
 app.register_blueprint(hives)
+app.register_blueprint(jobs)
 
 # Init the DB and the login managers
 db = MongoEngine(app)
