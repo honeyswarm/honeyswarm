@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% set active_page = "hives" %}
 {% block content %}
 <!--  This is a list of all the hives that have or tried to register with salt. -->
 
@@ -8,9 +8,9 @@
     <div class="col-8">
       <div class="row">
         <div class="col">
-          <h4>Registered Hives</h4>
-          <table class="table table-bordered">
-            <thead>
+          <h4 class="text-success">Registered Hives</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
               <tr>
                 <th scope="col">Hive ID</th>
                 <th scope="col">OS</th>
@@ -24,7 +24,7 @@
             <tbody>
               {% for hive in hive_list %}
               {% if hive['salt_alive']  %}
-              <tr>
+              <tr id="row-{{hive['id']}}">
                 <th scope="row">{{hive['id']}}</th>
                 <td>{{hive['grains']['osfullname']}}</td>
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
@@ -38,7 +38,6 @@
                     <option value="edit">Edit</option>
                     <option value="restart">Restart</option>
                     <option value="delete">Delete</option>
-                    <option value="swarm">Swarm Test Remove</option>
                   </select>
                 </td>
               </tr>
@@ -51,23 +50,23 @@
 
       <div class="row">
         <div class="col">
-          <h4>Unregsistered Hives</h4>
-          <table class="table table-bordered">
-            <thead>
+          <h4 class="text-warning">Unregsistered Hives</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
               <tr>
-                <th scope="col">Hive ID</th>
-                <th scope="col">Actions</th>
+                <th scope="col-6">Hive ID</th>
+                <th scope="col-6">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for hive in hive_list %}
               {% if not hive['registered'] %}
-              <tr>
+              <tr id="row-{{hive['id']}}">
                 <th scope="row">{{hive['id']}}</th>
                 <td>
                   <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
                     <option value="select">Select</option>
-                    {% if hive['id'] in key_list %}
+                    {% if hive['id'] | string in key_list %}
                     <option value="swarm">Add to Swarm</option>
                     {% endif %}
                     <option value="delete">Delete</option>
@@ -83,22 +82,35 @@
 
       <div class="row">
         <div class="col">
-          <h4>Unresponsive Hives</h4>
-          <table class="table table-bordered">
-            <thead>
+          <h4 class="text-danger">Unresponsive Hives</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
               <tr>
                 <th scope="col">Hive ID</th>
+                <th scope="col">OS</th>
+                <th scope="col">IP Address</th>
+                <th scope="col">Created</th>
+                <th scope="col">Last Seen</th>
+                <th scope="col">Honeypot Count</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for hive in hive_list %}
-              {% if not hive['salt_alive'] %}
-              <tr>
+              {% if not hive['salt_alive'] and hive['id'] | string not in key_list %}
+              <tr id="row-{{hive['id']}}">
                 <th scope="row">{{hive['id']}}</th>
+                <td>{{hive['grains']['osfullname']}}</td>
+                <td>{{hive['grains']['ipv4'][-1]}}</td>
+                <td>{{hive['created_at'] | dateformat}}</td>
+                <td>{{hive['last_seen'] | dateformat}}</td>
+                <td>{{hive['honeypots'] | length}}</td>
                 <td>
-                  <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
+                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
                     <option value="select">Select</option>
+                    <option value="poll">Poll</option>
+                    <option value="edit">Edit</option>
+                    <option value="restart">Restart</option>
                     <option value="delete">Delete</option>
                   </select>
                 </td>
@@ -152,26 +164,66 @@
 
 <script>
 
+let notificationCount = 0;
+
 $( ".hive_action" ).change(function() {
   let hive_id = this.getAttribute("data-hiveId");
   let hive_action = this.value;
+  console.log(this)
+
+
+  // Ignore select
+  if (hive_action == "select"){
+    return
+  }
 
   console.log("Running action "+ hive_action + " for Hive " + hive_id);
 
-  $.post( "/hives/actions", { action: hive_action, hive_id: hive_id })
+  let post_params = { hive_id: hive_id };
+  let post_url = "/hives/actions/"+hive_action;
+
+  $.post( post_url, post_params)
   .done(function( data ) {
     console.log( "Data Loaded: " + data );
+    if (data['success']){
+
+      // Add notification
+      add_notification("text-success", data['message'])
+
+      // Handle some other actions
+      if (hive_action == "delete"){
+        // remove the newly deleted row
+        $('#row-'+hive_id).remove()
+        }
+
+
+
+    } else {
+      add_notification("text-danger", data['message'])
+    }
+
+
+
   })
   .fail(function() {
-    console.log( "error" );
+    add_notification("text-danger", "Something went wrong")
   });
 
 
-
-
-
+  // reset the dropdown
+  $(this).val('select')
 
   });
+
+
+function add_notification(textClass, text){
+  notificationCount ++;
+  let notification = `<a class="dropdown-item ${textClass}" href="#">${text}</a>`;
+  $('#notification-dropdown').append(notification);
+  $('#notification-count').html(notificationCount);
+}
+
+
 
 </script>
 
