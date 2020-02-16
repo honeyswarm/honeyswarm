@@ -67,7 +67,6 @@ class PepperApi():
 
     def lookup_job(self, job_id):
         api_response = self.api.lookup_jid(job_id)
-        print(api_response)
         if len(api_response['return'][0]) == 0:
             return None
         else:

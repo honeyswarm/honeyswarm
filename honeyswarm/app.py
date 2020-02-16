@@ -1,4 +1,5 @@
 import atexit
+import json
 import os
 import pytz
 from datetime import datetime
@@ -68,9 +69,11 @@ def check_jobs():
     open_jobs = PepperJobs.objects(complete=False)
     for job in open_jobs:
         api_check = pepper_api.lookup_job(job.job_id)
+        hive_id = str(job['hive']['id'])
         if api_check:
             job.complete = True
-            job.job_response = api_check
+            job.job_response = json.dumps(api_check['data'][hive_id], sort_keys=True, indent=4)
+            job.completed_at = datetime.utcnow
         job.save()
 
 def poll_hives():

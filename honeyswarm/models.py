@@ -31,7 +31,7 @@ class PepperJobs(Document):
     created_at = DateTimeField(default=datetime.utcnow)
     last_check = DateTimeField()
     complete = BooleanField(default=False)
-    completed_at = StringField()
-    job_response = DictField()
+    completed_at = DateTimeField()
+    job_response = StringField()
     hive = ReferenceField(Hive)
     
