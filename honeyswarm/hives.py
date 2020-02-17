@@ -127,10 +127,10 @@ def hive_swarm():
     return jsonify(json_response)
 
 
-@hives.route('/hives/actions/test', methods=["POST"])
+@hives.route('/hives/actions/frame', methods=["POST"])
 @login_required
 def hive_test():
-    """Add a hive to the swarm"""
+    """Add Docker Frame"""
     form_vars = request.form.to_dict()
     json_response = {"success": False}
     hive_id = request.form.get('hive_id')
@@ -139,21 +139,17 @@ def hive_test():
         json_response['message'] = "Missing Hive ID"
     else:
         try:
-            hive = Hive.objects(id=hive_id).first()
-            # Accept the key
-            print("adding Key")
-            add_key = pepper_api.accept_key(hive_id)
-            print("Getting Grains")
 
-            grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
-            hive_grains = grains_request[hive_id]
-            if hive_grains:
-                hive.grains = hive_grains
-                hive.last_seen = datetime.utcnow
-                hive.salt_alive = True
-            else:
-                hive.salt_alive = False
-            hive.save()
+            job_id = pepper_api.apply_state(hive_id, ['docker/docker_linux'])
+
+            hive = Hive.objects(id=hive_id).first()
+            job = PepperJobs(
+                hive=hive,
+                job_id=job_id,
+                job_short="Apply State",
+                job_description="Apply {0} state to Hive {1}".format('docker/docker_linux', hive_id)
+            )
+            job.save()
 
             json_response['success'] = True
             json_response['message'] = "Added Hive"
@@ -161,6 +157,46 @@ def hive_test():
             json_response['message'] = "Error Adding to swarm: {0}".format(err)
 
     return jsonify(json_response)
+
+
+@hives.route('/hives/actions/cowrie', methods=["POST"])
+@login_required
+def hive_cowrie():
+    """Add Cowrie Honeypot"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+
+    if not hive_id:
+        json_response['message'] = "Missing Hive ID"
+    else:
+        try:
+
+            job_id = pepper_api.apply_state(
+                hive_id, 
+                [
+                    'honeypots/cowrie/cowrie',
+                    "pillar={HPFSERVER: localhost, HPFPORT: 20000, HPFIDENT: cowrie, HPFSECRET: cowrie}"
+                ]
+            )
+
+            hive = Hive.objects(id=hive_id).first()
+            job = PepperJobs(
+                hive=hive,
+                job_id=job_id,
+                job_short="Apply State Cowrie",
+                job_description="Apply honeypot {0} to Hive {1}".format('honeypots/cowrie/cowrie', hive_id)
+            )
+            job.save()
+
+            json_response['success'] = True
+            json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+        except Exception as err:
+            json_response['message'] = "Error creating job: {0}".format(err)
+
+    return jsonify(json_response)
+
+
 
 
 @hives.route('/hives/actions', methods=["POST", "GET"])
