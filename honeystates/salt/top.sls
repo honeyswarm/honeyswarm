@@ -2,4 +2,4 @@
 base:
     'os:Ubuntu':
         - match: grain
-        - docker/docker
+        - docker/docker_linux
