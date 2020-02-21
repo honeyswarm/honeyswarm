@@ -100,8 +100,14 @@
     {% endblock %}
   </div>
 
+
+  <div id="alert-holder" style="position:fixed;top:50px;right:10px;width:400px">
+    <div id="alert-base"></div>
+
+  </div>
+
 </body>
-<script src="{{ url_for('static', filename='functions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/honeyswarm.js') }}"></script>
 {% block page_scripts %}{% endblock %}
 
 </html>
