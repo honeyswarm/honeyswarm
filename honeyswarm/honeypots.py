@@ -42,11 +42,7 @@ def show_honeypot(honeypot_id):
 
     if not honeypot_details:
         abort(404)
-    
     honeypotname = honeypot_details.name
-
-    print(honeypot_details)
-
     # Lets hack in flask code.
     honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', honeypot_id)
     #honey_salt_base =  os.path.join(BASE_PATH, 'honeypots')
@@ -55,7 +51,6 @@ def show_honeypot(honeypot_id):
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
 
     # I want to rebuild the tree slightlt differently. 
-
     new_tree = dict(
         name=os.path.basename(honey_salt_base),
         path_name=dtree['path_name'],
@@ -80,8 +75,45 @@ def show_honeypot(honeypot_id):
         honeypot_id=honeypot_id
         )
 
+@honeypots.route('/honeypots/<honeypot_id>/update/', methods=['POST'])
+@login_required
+def update_honeypot(honeypot_id):
+    honeypot_details = Honeypot.objects(id=honeypot_id).first()
+
+    if not honeypot_details:
+        abort(404)
+
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+
+    honeypot_details.name = request.form.get('honeypot_name')
+    honeypot_details.honeypot_type = request.form.get('honeypot_type')
+    honeypot_details.description = request.form.get('honeypot_description')
+
+    # Now add any Pillar States
+    pillar_states = []
+    for field in form_vars.items():
+        print(field)
+        if field[0].startswith('pillar-key'):
+            key_id = field[0].split('-')[-1]
+            key_name = field[1]
+            key_value = request.form.get("pillar-value-{0}".format(key_id))
+            if key_name == '' or key_value == '':
+                continue
+            pillar_pair = [key_name, key_value]
+            pillar_states.append(pillar_pair)
+
+    
+    honeypot_details.pillar = pillar_states
+
+    honeypot_details.save()
+
+    json_response['success'] = True
+
+    return jsonify(json_response)
 
 @honeypots.route('/honeypots/<honeypot_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
+@login_required
 def resource_data(honeypot_id, file_path):
     print(file_path)
 
@@ -103,6 +135,7 @@ def resource_data(honeypot_id, file_path):
 
 
 @honeypots.route('/honeypots/<honeypot_id>/update-resource-data/<path:file_path>', methods=['POST'])
+@login_required
 def update_resource_data(honeypot_id, file_path):
     print(file_path)
     honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', honeypot_id)
