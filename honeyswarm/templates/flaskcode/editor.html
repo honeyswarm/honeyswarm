@@ -24,7 +24,7 @@
 
                         <div class="card-body">
 
-                            <form>
+                            <form id="honeypot_details">
                                 <div class="form-group">
                                   <label for="honeypot_name">Name</label>
                                   <input type="text" class="form-control" id="honeypot_name" name="honeypot_name" value="{{honeypot_details.name}}">
@@ -39,23 +39,19 @@
                                 </div>
 
                                 <div id="pillar-states" class="form-group">
-                                    <p>Pillar States can be used to customise certain aspects of your honeypot when used with salt states. several default pillars are already exposed by default. You can read more in the docs. (When I write them)</p>
-                                    <div class="form-row">
+                                    <label for="pillar-states">Pillar Values</label>
+                                    <p>Pillar values can be used to customise certain aspects of your honeypot when used with salt states. several default pillars are already exposed by default. You can read more in the docs. (When I write them)</p>
+
+                                    {% for pillar in honeypot_details.pillar %}
+                                    <div class="form-row mb-2">
                                         <div class="col">
-                                          <input type="text" class="form-control" placeholder="Key">
+                                          <input type="text" class="form-control" name="pillar-key-{{loop.index}}" value="{{pillar[0]}}">
                                         </div>
                                         <div class="col">
-                                          <input type="text" class="form-control" placeholder="Default Value">
-                                        </div>
-                                      </div>
-                                      <div class="form-row mt-2">
-                                        <div class="col">
-                                          <input type="text" class="form-control" placeholder="Key">
-                                        </div>
-                                        <div class="col">
-                                          <input type="text" class="form-control" placeholder="Default Value">
+                                          <input type="text" class="form-control" name="pillar-value-{{loop.index}}" value="{{pillar[1]}}">
                                         </div>
                                       </div>
+                                      {% endfor %}
                                 </div>
 
 
@@ -63,10 +59,10 @@
 
                               <hr>
 
-                              <button class="btn btn-success btn-block">Update</button>
+                              <button id="update-btn" class="btn btn-success btn-block">Update</button>
                               <button class="btn btn-danger btn-block">Delete</button>
 
-                              <p>Put in a onlick handler for each of the buttons. To ajax form serialze and update existing. </p>
+                              <p>Button to add or delete pillar pairs</p>
 
             
         
@@ -257,6 +253,20 @@ flaskcode.config.set('editorTheme', "{{ editor_theme }}");
     }
     }, 100);
 
+
+
+    $( "#update-btn" ).click(function() {
+        $.post( window.location+"/update/", $( "#honeypot_details" ).serialize() )
+            .done(function( data ) {
+            console.log(data);
+            if(data['success']){
+                alert_notify('alert-success', 'Success!', 'All fields updated' )
+            } else {
+                alert_notify('alert-danger', 'Opps!', 'Something went wrong!' )
+            }
+        });
+
+    });
 
 </script>
 
