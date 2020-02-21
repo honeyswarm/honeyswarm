@@ -1,7 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import User
+from honeyswarm.models import User, Role
+
+from flask_security import login_required
+from flask_security.utils import login_user, verify_and_update_password, encrypt_password, logout_user 
+
+from honeyswarm import user_datastore
+
 
 auth = Blueprint('auth', __name__)
 

@@ -10,7 +10,7 @@ from honeyswarm.models import Hive, PepperJobs
 
 jobs = Blueprint('jobs', __name__)
 
-from saltapi import pepper_api
+from honeyswarm.saltapi import pepper_api
 
 @jobs.route('/jobs')
 @login_required

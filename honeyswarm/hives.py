@@ -3,8 +3,9 @@ from uuid import uuid4
 from datetime import datetime
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
-from flask_login import login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_security import login_required
+from flask_security.core import current_user
+from flask_security.decorators import roles_accepted
 from honeyswarm.models import Hive, PepperJobs
 
 
@@ -12,7 +13,7 @@ hives = Blueprint('hives', __name__)
 
 APITOKEN = os.environ.get("HIVE_API_TOKEN")
 
-from saltapi import pepper_api
+from honeyswarm.saltapi import pepper_api
 
 @hives.route('/hives')
 @login_required

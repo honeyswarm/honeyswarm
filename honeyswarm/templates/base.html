@@ -39,6 +39,9 @@
         <li class="nav-item {% if active_page  == 'hives' %}active{% endif%}">
           <a class="nav-link" href="{{ url_for('hives.hives_list') }}">Hives</a>
         </li>
+        <li class="nav-item {% if active_page  == 'frames' %}active{% endif%}">
+          <a class="nav-link" href="{{ url_for('hives.hives_list') }}">Frames</a>
+        </li>
         <li class="nav-item {% if active_page  == 'honeypots' %}active{% endif%}">
           <a class="nav-link" href="{{ url_for('honeypots.honeypot_list') }}">Honeypots</a>
         </li>
@@ -101,5 +104,4 @@
 <script src="{{ url_for('static', filename='functions.js') }}"></script>
 {% block page_scripts %}{% endblock %}
 
-<div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 </html>

@@ -2,6 +2,7 @@ flask
 flask-login
 mongoengine
 flask-mongoengine
+flask-security-too
 distro
 flask
 pytz

@@ -14,7 +14,7 @@ from flaskcode.utils import write_file, dir_tree, get_file_extension
 
 honeypots = Blueprint('honeypots', __name__)
 
-from saltapi import pepper_api
+from honeyswarm.saltapi import pepper_api
 
 BASE_PATH = '/home/thehermit/github/honeyswarm/honeystates/salt/'
 

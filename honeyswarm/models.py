@@ -1,12 +1,12 @@
 from mongoengine import Document, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
 from datetime import datetime
-from flask_login import UserMixin
+from flask_security import UserMixin, RoleMixin
 
 
 class Frame(Document):
     name = StringField()
     description = StringField()
-
+    supported_os = ListField()
 
 class Honeypot(Document):
     name = StringField()
@@ -35,8 +35,16 @@ class PepperJobs(Document):
     job_response = StringField()
     hive = ReferenceField(Hive)
 
+class Role(Document, RoleMixin):
+    name = StringField(max_length=80, unique=True)
+    description = StringField(max_length=255)
 
-class User(UserMixin, Document):
+class User(Document,UserMixin):
     email = StringField(unique=True)
     password = StringField()
     name = StringField()
+    active = BooleanField(default=True)
+    fs_uniquifier = StringField(max_length=255)
+    confirmed_at = DateTimeField()
+    roles = ListField(ReferenceField(Role), default=[])
+
