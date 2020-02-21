@@ -67,12 +67,14 @@ def show_honeypot(honeypot_id):
     #    print(k,v)
 
     return render_template(
-        'flaskcode/editor.html',
+        'flaskcode/honeypot_editor.html',
         honeypot_details=honeypot_details,
         dirname=dirname,
         dtree=new_tree,
         editor_theme="vs-dark",
-        honeypot_id=honeypot_id
+        honeypot_id=honeypot_id,
+        object_id=honeypot_id,
+        data_url="honeypots"
         )
 
 @honeypots.route('/honeypots/<honeypot_id>/update/', methods=['POST'])
@@ -112,12 +114,12 @@ def update_honeypot(honeypot_id):
 
     return jsonify(json_response)
 
-@honeypots.route('/honeypots/<honeypot_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
+@honeypots.route('/honeypots/<object_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
 @login_required
-def resource_data(honeypot_id, file_path):
+def resource_data(object_id, file_path):
     print(file_path)
 
-    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', honeypot_id)
+    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -134,11 +136,11 @@ def resource_data(honeypot_id, file_path):
     return response
 
 
-@honeypots.route('/honeypots/<honeypot_id>/update-resource-data/<path:file_path>', methods=['POST'])
+@honeypots.route('/honeypots/<object_id>/update-resource-data/<path:file_path>', methods=['POST'])
 @login_required
-def update_resource_data(honeypot_id, file_path):
+def update_resource_data(object_id, file_path):
     print(file_path)
-    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', honeypot_id)
+    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
     if not is_new_resource and not (os.path.exists(file_path) and os.path.isfile(file_path)):

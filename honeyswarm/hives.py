@@ -161,7 +161,7 @@ def hive_test():
             job.save()
 
             json_response['success'] = True
-            json_response['message'] = "Added Hive"
+            json_response['message'] = "Add Frame submitted with JID: {0}".format(job.id)
         except Exception as err:
             json_response['message'] = "Error Adding to swarm: {0}".format(err)
 

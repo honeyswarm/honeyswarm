@@ -4,12 +4,14 @@ from flask_security import UserMixin, RoleMixin
 
 
 class Frame(Document):
-    name = StringField()
+    name = StringField(unique=True)
     description = StringField()
     supported_os = ListField()
+    frame_state_path = StringField()
+    pillar = ListField()
 
 class Honeypot(Document):
-    name = StringField()
+    name = StringField(unique=True)
     honey_type = StringField()
     description = StringField()
     pillar = ListField()
