@@ -25,7 +25,7 @@ def login_post():
 
     # check if user actually exists
     # take the user supplied password, hash it, and compare it to the hashed password in database
-    if not user or not check_password_hash(user.password, password):
+    if not user or not verify_and_update_password(password, user):
         flash('Please check your login details and try again.')
         return redirect(url_for('auth.login')) # if user doesn't exist or password is wrong, reload the page
 
@@ -53,15 +53,16 @@ def register_post():
         flash('Email address already exists')
         return redirect(url_for('auth.register'))
 
-    # create new user with the form data. Hash the password so plaintext version isn't saved.
+    # create new user hash the password with bcrypt and add them to users group by default. 
 
-    new_user = User(
+    new_user = user_datastore.create_user(
         email=email,
-        name=name,
-        password=generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
-    )
+        password=encrypt_password(password),
+        name=name
+        )
 
-    new_user.save()
+    userrole = user_datastore.find_role('user')
+    user_datastore.add_role_to_user(new_user, userrole)
 
     return redirect(url_for('auth.login'))
 
