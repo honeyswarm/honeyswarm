@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% from 'flaskcode/_macros.html' import render_dir_tree %}
+
+{% block page_title %}{{ app_title }} - {{ dirname }}{% endblock %}
+
+
+
+
+
+{% block content %}
+
+<div class="row min-vh-100">
+    <div class="col">
+        <div class="d-flex flex-column h-100">
+            <div class="row">
+                <div class="col mt-2">
+                    <h3>Editing {{honeypot_details.name}}</h3>
+                </div>
+            </div>
+            <div class="row bg-blue flex-grow-1">
+                <!-- Start Left Column -->
+                <div class="col-4 card">
+
+                    <div class="card-body">
+
+                        <form id="update_details">
+                            <div class="form-group">
+                                <label for="honeypot_name">Name</label>
+                                <input type="text" class="form-control" id="honeypot_name" name="honeypot_name"
+                                    value="{{honeypot_details.name}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="honeypot_type">Type</label>
+                                <input type="text" class="form-control" id="honeypot_type" name="honeypot_type"
+                                    value="{{honeypot_details.honey_type}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="honeypot_description">Description</label>
+                                <textarea class="form-control" id="honeypot_description" name="honeypot_description"
+                                    rows="5">{{honeypot_details.description}}</textarea>
+                            </div>
+
+                            <div id="pillar-states" class="form-group">
+                                <label for="pillar-states">Pillar Values</label>
+                                <p>Pillar values can be used to customise certain aspects of your honeypot when used
+                                    with salt states. several default pillars are already exposed by default. You can
+                                    read more in the docs. (When I write them)</p>
+
+                                {% for pillar in honeypot_details.pillar %}
+                                <div class="form-row mb-2">
+                                    <div class="col">
+                                        <input type="text" class="form-control" name="pillar-key-{{loop.index}}"
+                                            value="{{pillar[0]}}">
+                                    </div>
+                                    <div class="col">
+                                        <input type="text" class="form-control" name="pillar-value-{{loop.index}}"
+                                            value="{{pillar[1]}}">
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </form>
+                        <hr>
+                        <button id="update-btn" class="btn btn-success btn-block">Update</button>
+                        <button class="btn btn-danger btn-block">Delete</button>
+                        <p>Button to add or delete pillar pairs</p>
+
+                    </div>
+
+                </div>
+                <!-- End Left Column -->
+
+                <!-- Start Editor Column -->
+                <div class="col-8 card">
+                    {% include 'flaskcode/editor_base.html' %}
+
+                </div>
+                <!-- End Editor Column -->
+            </div>
+
+
+        </div>
+
+
+    </div>
+</div>
+
+
+
+{% endblock %}

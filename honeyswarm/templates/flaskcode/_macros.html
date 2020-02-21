@@ -1,12 +1,12 @@
 <!-- Override the default _macros.html with our custome one. -->
 {# render dir tree in recursive list #}
-{% macro render_dir_tree(dir_tree, tree_id) %}
+{% macro render_dir_tree(dir_tree, tree_id, data_url) %}
     <ul id="{{ tree_id }}">
         {%- for item in dir_tree.children recursive %}
         <li class="resource-items{% if item.is_file %} file-item{% elif not item.children %} disabled{% else %} dir-item{% endif %}"
             title="{{ item.name }}"
             data-path-name="{{ item.path_name }}"
-            data-url="{{ url_for('honeypots.resource_data', honeypot_id=dir_tree.name, file_path=item.path_name) }}" test>
+            data-url="{{ url_for(data_url+'.resource_data', object_id=dir_tree.name, file_path=item.path_name) }}" test>
             {{ item.name }}
             {%- if item.children -%}
             <ul>{{ loop(item.children) }}</ul>
