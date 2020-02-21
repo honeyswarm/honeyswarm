@@ -17,6 +17,7 @@
                 <th scope="col">IP Address</th>
                 <th scope="col">Created</th>
                 <th scope="col">Last Seen</th>
+                <th scope="col">Frame</th>
                 <th scope="col">Honeypot Count</th>
                 <th scope="col">Actions</th>
               </tr>
@@ -30,6 +31,7 @@
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
+                <td>{{hive['frame']['name'] or 'No Frame'}}</td>
                 <td>{{hive['honeypots'] | length}}</td>
                 <td>
                   <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
@@ -93,6 +95,7 @@
                 <th scope="col">IP Address</th>
                 <th scope="col">Created</th>
                 <th scope="col">Last Seen</th>
+                <th scope="col">Frame</th>
                 <th scope="col">Honeypot Count</th>
                 <th scope="col">Actions</th>
               </tr>
@@ -106,6 +109,7 @@
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
+                <td>{{hive['frame']['name'] or 'No frame'}}</td>
                 <td>{{hive['honeypots'] | length}}</td>
                 <td>
                   <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
@@ -171,15 +175,21 @@ let notificationCount = 0;
 $( ".hive_action" ).change(function() {
   let hive_id = this.getAttribute("data-hiveId");
   let hive_action = this.value;
-  console.log(this)
-
 
   // Ignore select
   if (hive_action == "select"){
     return
   }
 
-  console.log("Running action "+ hive_action + " for Hive " + hive_id);
+  alert_notify('alert-success', 'Running', hive_action + " for Hive " + hive_id )
+
+  // Install a frame we want to pop the modal before sending the request
+
+  if (hive_action == "frame"){
+
+  }
+
+  
 
   let post_params = { hive_id: hive_id };
   let post_url = "/hives/actions/"+hive_action;
@@ -190,7 +200,7 @@ $( ".hive_action" ).change(function() {
     if (data['success']){
 
       // Add notification
-      add_notification("text-success", data['message'])
+      alert_notify('alert-success', 'Success!', data['message'] )
 
       // Handle some other actions
       if (hive_action == "delete"){
@@ -201,14 +211,14 @@ $( ".hive_action" ).change(function() {
 
 
     } else {
-      add_notification("text-danger", data['message'])
+      alert_notify('alert-danger', 'Opps!', data['message'] )
     }
 
 
 
   })
   .fail(function() {
-    add_notification("text-danger", "Something went wrong")
+    alert_notify('alert-danger', 'Opps!', "Something went wrong please check the logs" )
   });
 
 
@@ -228,6 +238,28 @@ function add_notification(textClass, text){
 
 
 </script>
+
+<!-- Add Frame Modal -->
+<div class="modal fade" id="frameModal" tabindex="-1" role="dialog" aria-labelledby="frameModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="frameModalLabel">Install a Frame</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        ...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 </div>

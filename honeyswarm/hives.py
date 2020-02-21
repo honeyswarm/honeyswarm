@@ -77,6 +77,7 @@ def hive_poll():
         try:
             hive = Hive.objects(id=hive_id).first()
             grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+
             hive_grains = grains_request[hive_id]
             if hive_grains:
                 hive.grains = hive_grains
@@ -106,19 +107,26 @@ def hive_swarm():
         try:
             hive = Hive.objects(id=hive_id).first()
             # Accept the key
-            print("adding Key")
             add_key = pepper_api.accept_key(hive_id)
-            print("Getting Grains")
-
             grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
             hive_grains = grains_request[hive_id]
+
+            # If we run too quickly grains may not be ready.
+            # Try one more time. 
+            if not hive_grains:
+                print("Grains round 2")
+                grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
+                hive_grains = grains_request[hive_id]
+
             if hive_grains:
                 hive.grains = hive_grains
                 hive.last_seen = datetime.utcnow
                 hive.salt_alive = True
             else:
                 hive.salt_alive = False
+
             hive.save()
+            json_response = {"success": True}
 
             json_response['success'] = True
             json_response['message'] = "Added Hive"
