@@ -113,12 +113,14 @@ from honeyswarm.auth import auth
 from honeyswarm.hives import hives
 from honeyswarm.jobs import jobs
 from honeyswarm.honeypots import honeypots
+from honeyswarm.frames import frames
 
 # Register the Blueprints
 app.register_blueprint(auth)
 app.register_blueprint(hives)
 app.register_blueprint(jobs)
 app.register_blueprint(honeypots)
+app.register_blueprint(frames)
 
 
 

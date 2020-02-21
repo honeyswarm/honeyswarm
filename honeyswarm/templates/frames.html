@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = "frames" %}
+{% block content %}
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col mt-2">
+            <h3>Frames</h3>
+        </div>
+    </div>
+    
+    {% for frame in frame_list %}
+    <div class="row">
+        <div class="col mt-3">
+            <div class="card">
+                <div class="card-body">
+    
+                    <div class="row">
+                        <div class="col-8">
+                            <h5 class="card-title">{{frame.name}}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Supported OS: {% for os in frame.supported_os %}{{os}} {% endfor %}</h6>
+                            <p class="card-text">{{frame.description}}</p>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="card-title">Actions</h5>
+                            <a href="{{ url_for('frames.show_frame', frame_id=frame.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a>
+                            <a href="{{ url_for('frames.show_frame', frame_id=frame.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
+                            <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
+                        </div>
+                    </div>
+
+                </div>
+              </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+
+
+
+
+{% endblock %}
