@@ -63,7 +63,7 @@
                 <td>{{job['job_short']}}</td>
                 <td>{{job['created_at'] | dateformat}}</td>
                 <td>{{job['completed_at'] | dateformat}}</td>
-                <td>{{job['job_response'][:20]}}</td>
+                <td>{{job['job_response'][:200]}}</td>
                 <td>
                   <select class="form-control job_action" id="regActions" data-jobId="{{job['id']}}">
                     <option value="select">Select</option>
@@ -91,6 +91,11 @@
   </div>
 
 <script>
+
+setTimeout(function() {
+  location.reload();
+}, 60000);
+
 
 let notificationCount = 0;
 

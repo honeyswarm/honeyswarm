@@ -4,6 +4,7 @@ import os
 import pytz
 from datetime import datetime
 
+import flaskcode
 from flask import Flask, Blueprint, render_template, abort, request, g, jsonify, send_file, session, url_for, flash
 from flask_mongoengine import MongoEngine
 from flask_login import LoginManager
@@ -14,11 +15,13 @@ from honeyswarm.saltapi import PepperApi
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
+
 # Import the Blueprints
 from honeyswarm.saltapi import pepper_api
 from honeyswarm.auth import auth
 from honeyswarm.hives import hives
 from honeyswarm.jobs import jobs
+from honeyswarm.honeypots import honeypots
 
 # Set the Core Application
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -47,6 +50,7 @@ app.config['MONGODB_SETTINGS'] = MONGODB_SETTINGS
 app.register_blueprint(auth)
 app.register_blueprint(hives)
 app.register_blueprint(jobs)
+app.register_blueprint(honeypots)
 
 # Init the DB and the login managers
 db = MongoEngine(app)
@@ -98,6 +102,14 @@ app.scheduler.add_job(poll_hives,'interval', minutes=10,args=[])
 
 
 
+##
+# FLask Code
+##
+
+app.config.from_object(flaskcode.default_config)
+app.config['FLASKCODE_RESOURCE_BASEPATH'] = '/home/thehermit/github/honeyswarm/honeystates/salt/'
+app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.objects(id=user_id).first()
@@ -108,6 +120,7 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/dashboard')
 @login_required

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_page = "honeypots" %}
+{% block content %}
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col mt-2">
+            <h3>Honeypots</h3>
+        </div>
+    </div>
+    
+    {% for honeypot in honey_list %}
+    <div class="row">
+        <div class="col mt-3">
+            <div class="card">
+                <div class="card-body">
+    
+                    <div class="row">
+                        <div class="col-8">
+                            <h5 class="card-title">{{honeypot.name}}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{honeypot.honey_type}}</h6>
+                            <p class="card-text">{{honeypot.description}}</p>
+                        </div>
+                        <div class="col-4">
+                            <h5 class="card-title">Actions</h5>
+                            <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a>
+                            <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
+                            <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
+                        </div>
+                    </div>
+
+                </div>
+              </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+
+
+
+
+{% endblock %}

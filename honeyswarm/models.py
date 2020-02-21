@@ -10,8 +10,10 @@ class User(UserMixin, Document):
 
 
 class Honeypot(Document):
+    name = StringField()
     honey_type = StringField()
     description = StringField()
+    pillar = ListField()
 
 
 class Hive(Document):
