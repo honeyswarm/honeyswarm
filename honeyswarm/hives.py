@@ -48,13 +48,21 @@ def hive_delete():
     form_vars = request.form.to_dict()
     json_response = {"success": False}
     hive_id = request.form.get('hive_id')
-
     if not hive_id:
         json_response['message'] = "Missing Hive ID"
     else:
         try:
-            pepper_api.delete_key(hive_id)
+            hive = Hive.objects(id=hive_id).first()
+
+            # Delete Jobs
+            PepperJobs.objects(hive).delete()
+
+            # Delete Hive
             Hive.objects(id=hive_id).delete()
+
+
+            # Remove Key
+            pepper_api.delete_key(hive_id)
             json_response['success'] = True
             json_response['message'] = "Hive Deleted"
         except Exception as err:
