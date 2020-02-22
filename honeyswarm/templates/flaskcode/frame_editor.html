@@ -30,9 +30,14 @@
                                     value="{{frame_details.name}}">
                             </div>
                             <div class="form-group">
-                                <label for="frame_type">Type</label>
-                                <input type="text" class="form-control" id="frame_type" name="frame_type"
-                                    value="{{frame_details.honey_type}}">
+                                <label for="frame_state_path">State File</label>
+                                <input type="text" class="form-control" id="frame_state_path" name="frame_state_path"
+                                    value="{{frame_details.frame_state_path}}">
+                            </div>
+                            <div class="form-group">
+                                <label for="supported_os">Supported OS <small> (Comma Seperated)</small> </label>
+                                <input type="text" class="form-control" id="supported_os" name="supported_os"
+                                    value="{{ frame_details.supported_os|join(', ') }}">
                             </div>
                             <div class="form-group">
                                 <label for="frame_description">Description</label>

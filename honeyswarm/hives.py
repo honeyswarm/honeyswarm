@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_security import login_required
 from flask_security.core import current_user
 from flask_security.decorators import roles_accepted
-from honeyswarm.models import Hive, PepperJobs
+from honeyswarm.models import Hive, PepperJobs, Frame
 
 
 hives = Blueprint('hives', __name__)
@@ -20,6 +20,7 @@ from honeyswarm.saltapi import pepper_api
 def hives_list():
 
     hive_list = Hive.objects
+    frame_list = Frame.objects
 
     key_list = pepper_api.salt_keys()
 
@@ -34,7 +35,8 @@ def hives_list():
         "hives.html",
         apitoken=APITOKEN,
         hive_list=hive_list,
-        key_list=key_list['minions_pre']
+        key_list=key_list['minions_pre'],
+        frame_list=frame_list
         )
 
 
@@ -151,22 +153,30 @@ def hive_test():
     form_vars = request.form.to_dict()
     json_response = {"success": False}
     hive_id = request.form.get('hive_id')
+    frame_state_file = request.form.get('frame_state_file')
+    frame_id = request.form.get('frame_id')
 
     if not hive_id:
         json_response['message'] = "Missing Hive ID"
     else:
         try:
 
-            job_id = pepper_api.apply_state(hive_id, ['docker/docker_linux'])
-
+            frame = Frame.objects(id=frame_id).first()
             hive = Hive.objects(id=hive_id).first()
-            job = PepperJobs(
-                hive=hive,
-                job_id=job_id,
-                job_short="Apply State",
-                job_description="Apply {0} state to Hive {1}".format('docker/docker_linux', hive_id)
-            )
-            job.save()
+
+            if hive and frame:
+                job_id = pepper_api.apply_state(hive_id, [frame_state_file])
+
+                job = PepperJobs(
+                    hive=hive,
+                    job_id=job_id,
+                    job_short="Apply State",
+                    job_description="Apply {0} state to Hive {1}".format('docker/docker_linux', hive_id)
+                )
+                job.save()
+
+                hive.frame = frame
+                hive.save()
 
             json_response['success'] = True
             json_response['message'] = "Add Frame submitted with JID: {0}".format(job.id)

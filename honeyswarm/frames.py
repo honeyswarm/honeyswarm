@@ -85,8 +85,10 @@ def update_frame(frame_id):
     json_response = {"success": False}
 
     frame_details.name = request.form.get('frame_name')
-    frame_details.frame_type = request.form.get('frame_type')
+    frame_details.frame_state_path = request.form.get('frame_state_path')
     frame_details.description = request.form.get('frame_description')
+    os_list = request.form.get('supported_os')
+    frame_details.supported_os = [x for x in os_list.split(',')]
 
     # Now add any Pillar States
     pillar_states = []
