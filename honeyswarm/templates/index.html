@@ -2,14 +2,64 @@
 {% set active_page = "index" %}
 {% block content %}
 
-<div class="mx-auto my-auto">
-  <h1 class="title">
-    Welcome To HoneySwarm
-  </h1>
-  <h2 class="subtitle">
-    The simple Honepot Orchestration and Monitoring solution
-  </h2>
+
+<div class="row vh-100">
+  <div class="col-6 h-75 mx-auto my-auto text-center">
+      <h1 class="title">
+        Welcome To HoneySwarm
+      </h1>
+      <h4 class="subtitle">
+        The simple Honepot Orchestration and Monitoring solution
+      </h4>
+  </div>
+  <div class="col-6 d-flex justify-content-center">
+    {% if not current_user.is_authenticated %}
+
+    <div class="card col-6 h-50 mt-5 text-center">
+      <article class="card-body">
+        <h4 class="card-title text-center mb-4 mt-1">Sign in</h4>
+        <hr>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Sorry!</strong> {{ messages[0] }}. Go to <a href="{{ url_for('auth.login') }}">login page</a>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="/auth/login">
+        <div class="form-group">
+        <div class="input-group">
+          <div class="input-group-prepend">
+              <span class="input-group-text"> <i class="fa fa-user"></i> </span>
+           </div>
+          <input name="email" class="form-control" placeholder="Email or login" type="email">
+        </div> <!-- input-group.// -->
+        </div> <!-- form-group// -->
+        <div class="form-group">
+        <div class="input-group">
+          <div class="input-group-prepend">
+              <span class="input-group-text"> <i class="fa fa-lock"></i> </span>
+           </div>
+            <input name="password" class="form-control" placeholder="******" type="password">
+        </div> <!-- input-group.// -->
+        </div> <!-- form-group// -->
+        <div class="form-group">
+        <button type="submit" class="btn btn-primary btn-block"> Login  </button>
+        </div> <!-- form-group// -->
+        <p class="text-center"><a href="#" class="btn">Forgot password?</a></p>
+        </form>
+      </article>
+      </div> <!-- card.// -->
+
+    {% endif %}
+  </div>
 </div>
+
 
 
 

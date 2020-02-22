@@ -10,15 +10,18 @@ from honeyswarm import user_datastore
 
 auth = Blueprint('auth', __name__)
 
-@auth.route('/login')
+@auth.route('/auth/login')
 def login():
+    
     return render_template("login.html")
 
 
-@auth.route('/login', methods=['POST'])
+@auth.route('/auth/login', methods=['POST'])
+#@csrf_exempt
 def login_post():
     email = request.form.get('email')
     password = request.form.get('password')
+
     remember = True if request.form.get('remember') else False
 
     user = User.objects(email=email).first()

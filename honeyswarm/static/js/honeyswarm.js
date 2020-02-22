@@ -10,3 +10,4 @@ function alert_notify(class_type, msgHeader, msgValue ){
     });
 
 }
+

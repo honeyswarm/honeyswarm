@@ -40,43 +40,54 @@
         </div>
       </div>
 
-
       <div class="row">
         <div class="col">
           <h4 class="text-success">Completed Jobs</h4>
-          <table class="table table-bordered table-sm table-hover">
-            <thead class="thead-light">
-              <tr>
-                <th scope="col">Hive ID</th>
-                <th scope="col">Job Short</th>
-                <th scope="col">Created At</th>
-                <th scope="col">Completed At</th>
-                <th scope="col">Response</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+              <thead class="thead-dark">
+                  <tr>
+                    <th scope="col">Hive ID</th>
+                    <th scope="col">Job Short</th>
+                    <th scope="col">Created At</th>
+                    <th scope="col">Completed At</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+              </thead>
               {% for job in job_list %}
               {% if job['complete']  %}
-              <tr id="row-{{job['hive']['id']}}">
-                <th scope="row">{{job['hive']['id']}}</th>
-                <td>{{job['job_short']}}</td>
-                <td>{{job['created_at'] | dateformat}}</td>
-                <td>{{job['completed_at'] | dateformat}}</td>
-                <td>{{job['job_response'][:200]}}</td>
-                <td>
-                  <select class="form-control job_action" id="regActions" data-jobId="{{job['id']}}">
-                    <option value="select">Select</option>
-                    <option value="delete">Delete</option>
-                  </select>
-                </td>
-              </tr>
+              <tbody>
+                  <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{loop.index}}" aria-expanded="false" aria-controls="group-of-rows-{{loop.index}}">
+                    <th scope="row">{{job['hive']['id']}} <i class="fas fa-chevron-down"></i></th>
+                    <td>{{job['job_short']}}</td>
+                    <td>{{job['created_at'] | dateformat}}</td>
+                    <td>{{job['completed_at'] | dateformat}}</td>
+                    <td>
+                      <select class="form-control job_action" id="regActions" data-jobId="{{job['id']}}">
+                        <option value="select">Select</option>
+                        <option value="delete">Delete</option>
+                      </select>
+                    </td>
+                  </tr>
+              </tbody>
+              <tbody id="group-of-rows-{{loop.index}}" class="collapse">
+                  <tr class="table-warning">
+                      <td colspan=5><pre>{{job['job_response'] | prettyjson}}</pre></td>
+                  </tr>
+              </tbody>
               {% endif %}
               {% endfor %}
-            </tbody>
           </table>
+          </div>
+
+
+
+
         </div>
       </div>
+
+
+
 
 
     </div>

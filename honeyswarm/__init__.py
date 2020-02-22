@@ -17,6 +17,7 @@ from flask_security import Security, MongoEngineUserDatastore, auth_required, ha
 from flask_security import login_required
 from flask_security.core import current_user
 from flask_security.decorators import roles_accepted
+from flask_wtf.csrf import CSRFProtect
 
 
 
@@ -53,7 +54,11 @@ db = MongoEngine(app)
 
 # Setup Flask-Security
 user_datastore = MongoEngineUserDatastore(db, User, Role)
+app.config['SECURITY_LOGIN_URL'] = '/nowhere'
+app.config['SECURITY_LOGIN_USER_TEMPLATE'] = "login.html"
 security = Security(app, user_datastore)
+
+#CSRFProtect(app)
 
 # Global App Scheduler
 executors = dict(default=ThreadPoolExecutor())
@@ -133,6 +138,14 @@ def format_datetime(datetime_object):
     else:
         return str()
 
+
+@app.template_filter('prettyjson')
+def format_prettyjson(json_string):
+
+    pretty_json = json.dumps(json.loads(json_string), sort_keys=True,
+                        indent=4, separators=(',', ': '))
+
+    return pretty_json
 
 @app.route('/')
 def index():
