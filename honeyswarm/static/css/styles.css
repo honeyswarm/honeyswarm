@@ -6,6 +6,11 @@ body {
     height: 100vh;
 }
 
+
+th,td {
+    background-color: #FFF;
+}
+
 /* page preloader start */
 #page-preloader {
     background-color: rgba(30, 30, 35, 1);
