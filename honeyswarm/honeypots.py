@@ -54,7 +54,7 @@ def create_honeypot():
         if not os.path.exists(state_path):
             os.mkdir(state_path)
             os.mknod(state_file_path)
-            os.chmod(state_file_path, stat.S_IRWXO)
+            os.chmod(state_file_path, 0o777)
 
         json_response['success'] = True
         json_response['message'] = "Honypot Created"
@@ -285,8 +285,8 @@ def honeypot_deploy(honeypot_id):
         job = PepperJobs(
             hive=hive,
             job_id=job_id,
-            job_short="Apply State Cowrie",
-            job_description="Apply honeypot {0} to Hive {1}".format('honeypots/cowrie/cowrie', hive_id)
+            job_short="Apply State {0}".format(honeypot_details.name),
+            job_description="Apply honeypot {0} to Hive {1}".format(honeypot_state_file, hive_id)
         )
         job.save()
 
