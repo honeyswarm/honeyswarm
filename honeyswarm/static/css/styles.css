@@ -1,3 +1,7 @@
+html {
+    font-family: 'Roboto', !important;
+}
+
 /** flaskcode styles **/
 body {
     margin: 0;
@@ -69,6 +73,8 @@ th,td {
     line-height: 25px;
     background-color: #1F578E;
     color: #FFF;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
 }
 
 #page-container {
@@ -93,7 +99,7 @@ th,td {
     border: none;
     background-color: transparent;
     white-space: nowrap;
-    height: 38px;
+    height: 40px;
     font-size: 18px;
     font-weight: bold;
     padding-left: 0;
@@ -109,14 +115,17 @@ th,td {
 }
 
 #editor-header {
-    height: 38px;
+    height: 40px;
     background-color: #dddddd;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
 }
 
 #editor-container {
     position: relative;
-    height: calc(100% - 38px);
+    height: calc(100% - 40px);
     overflow: hidden;
+
 }
 
 /* editor widget styles start */
@@ -213,12 +222,4 @@ div.editor-container.light-theme .editor-preloader .loading-center-absolute {
 }
 .badge-danger {
     background-color:#d9534f;
-}
-
-/* custom alerts */
-.alert {
-    border-width: 0;
-    border-radius: 0;
-    padding-top: 8px;
-    padding-bottom: 8px;
 }

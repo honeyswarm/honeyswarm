@@ -5,8 +5,15 @@
         {%- for item in dir_tree.children recursive %}
         <li class="resource-items{% if item.is_file %} file-item{% elif not item.children %} disabled{% else %} dir-item{% endif %}"
             title="{{ item.name }}"
+
+            {% if item.is_file %}
             data-path-name="{{ item.path_name }}"
             data-url="{{ url_for(data_url+'.resource_data', object_id=dir_tree.name, file_path=item.path_name) }}" test>
+            {% else %}
+            data-path-name="{{ item.path_name }}"
+            data-url="{{ url_for(data_url+'.resource_data', object_id=dir_tree.name, file_path='') }}">
+            {% endif %}
+
             {{ item.name }}
             {%- if item.children -%}
             <ul>{{ loop(item.children) }}</ul>

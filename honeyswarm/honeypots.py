@@ -53,10 +53,10 @@ def show_honeypot(honeypot_id):
     # I want to rebuild the tree slightlt differently. 
     new_tree = dict(
         name=os.path.basename(honey_salt_base),
-        path_name=dtree['path_name'],
+        path_name='',
         children=[{
-            'name': honeypotname,
-            'path_name': honeypotname,
+            'name': honeypot_id,
+            'path_name': honeypot_id,
             'children': dtree['children']
         }]
     )
@@ -118,7 +118,7 @@ def update_honeypot(honeypot_id):
 @honeypots.route('/honeypots/<object_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
 @login_required
 def resource_data(object_id, file_path):
-    print(file_path)
+    print("Read Resource", file_path)
 
     honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
 
@@ -140,10 +140,14 @@ def resource_data(object_id, file_path):
 @honeypots.route('/honeypots/<object_id>/update-resource-data/<path:file_path>', methods=['POST'])
 @login_required
 def update_resource_data(object_id, file_path):
-    print(file_path)
+
+
+    print("Update REsource", file_path)
     honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
+
+
     if not is_new_resource and not (os.path.exists(file_path) and os.path.isfile(file_path)):
         abort(404)
     success = True

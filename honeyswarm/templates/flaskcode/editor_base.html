@@ -5,13 +5,13 @@
     <div id="page-row" class="row mt-4">
         <div id="flaskcode-list" class="col-md-2 col-sm-3 col-xs-3">
             <!-- <h4 style="white-space:nowrap;"><i class="fa fa-folder" aria-hidden="true"></i> {{ dirname|truncate(20) }}</h4> -->
-            <div class="list-header well well-sm mb-0"><i class="fa fa-folder" aria-hidden="true"></i> {{ dirname|truncate(20) }}</div>
+            <div class="list-header p-2"><i class="fa fa-folder" aria-hidden="true"></i> File Tree</div>
             <div class="list-container">
                 {{ render_dir_tree(dtree, 'dir-tree', data_url) }}
             </div>
         </div>
         <div id="flaskcode-content " class="col-md-10 col-sm-9 col-xs-9 h-75">
-            <div id="editor-header" class="editor-header well well-sm mb-0">
+            <div id="editor-header" class="p-2">
                 <strong><i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}</strong>
                 &nbsp;
                 <span id="resource-info">
@@ -43,15 +43,16 @@
                     </div>
                 </div>
             </div>
+            <footer id="page-footer">
+                <strong><i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}</strong>
+                <span class="hidden-xs">[ <i class="fa fa-folder" aria-hidden="true"></i> {{ dirname }} ]</span>
+                <span class="pull-right">
+                    <span id="editor_lang" title="Detected Language"></span>&nbsp;&nbsp;&nbsp;Ln&nbsp;<span id="line_num"></span>,&nbsp;Col&nbsp;<span id="column_num"></span>
+                </span>
+            </footer>
             <!-- /Editor Widget -->
         </div>
-        <footer id="page-footer">
-            <strong><i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}</strong>
-            <span class="hidden-xs">[ <i class="fa fa-folder" aria-hidden="true"></i> {{ dirname }} ]</span>
-            <span class="pull-right">
-                <span id="editor_lang" title="Detected Language"></span>&nbsp;&nbsp;&nbsp;Ln&nbsp;<span id="line_num"></span>,&nbsp;Col&nbsp;<span id="column_num"></span>
-            </span>
-        </footer>
+
     </div>
 
 
@@ -73,38 +74,31 @@
 </div>
 
 <!--Modals-->
-<div id="fileNameModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="fileNameModalLabel">
-    <div class="modal-dialog modal-md" role="document">
-        <div class="modal-content">
-            <form id="fileNameForm" method="post">
-                <input type="hidden" id="base_url" name="base_url" value="" />
-                <input type="hidden" id="base_path_name" name="base_path_name" value="" />
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="fileNameModalLabel">Create New File</h4>
+<div id="fileNameModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+    <form id="fileNameForm" method="post">
+      <div class="modal-content">
+        <div class="modal-body">
+            <input type="hidden" id="base_url" name="base_url" value="" />
+            <input type="hidden" id="base_path_name" name="base_path_name" value="" />
+            <label for="new_filename">New File:</label>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                <span class="input-group-text base-path-name" id="basic-addon3">/</span>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="new_filename" class="control-label">New File:</label>
-                                <div class="input-group">
-                                    <div class="input-group-addon"><span class="base-path-name"></span>/</div>
-                                    <input type="text" class="form-control" id="new_filename" name="new_filename" placeholder="New File Name" required />
-                                </div>
-                                <span class="form-msg" class="help-block"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" data-loading-text="Loading...">Create</button>
-                </div>
-            </form>
+                <input type="text" class="form-control" id="new_filename" name="new_filename" placeholder="New File Name" required />
+            </div>
         </div>
+        <div class="modal-footer p-0">
+            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-sm btn-success" data-loading-text="Loading...">Create</button>
+        </div>
+      </div>
+    </form>
     </div>
-</div>
+  </div>
+
+
 <!--/Modals-->
 
 
@@ -114,10 +108,6 @@
 <link rel="stylesheet" type="text/css" href="{{ url_for('flaskcode.static', filename='vendor/treed/treed.css') }}" />
 
 
-<!-- 
-<link rel="stylesheet" type="text/css" href="{{ url_for('flaskcode.static', filename='css/styles.css') }}" />
-
--->
 {% endblock %}
 
 {% block page_scripts %}
@@ -134,8 +124,7 @@ flaskcode.config.set('resourceUrlTemplate', "{{ url_for(data_url+'.resource_data
 flaskcode.config.set('editorTheme', "{{ editor_theme }}");
 
 </script>
-<script type="text/javascript" src="{{ url_for('flaskcode.static', filename='js/flaskcode.js') }}"></script>
-
+<script type="text/javascript" src="{{ url_for('static', filename='js/flaskcode.js') }}"></script>
 <script>
     // We need to add some custom extensions. Once the languages have loaded push our supported in
     var addExtensions = setInterval(function() {
@@ -145,7 +134,6 @@ flaskcode.config.set('editorTheme', "{{ editor_theme }}");
        clearInterval(addExtensions);
     }
     }, 100);
-
 
 
     $( "#update-btn" ).click(function() {
