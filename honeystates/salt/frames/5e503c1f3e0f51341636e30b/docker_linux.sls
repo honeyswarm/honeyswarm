@@ -1,3 +1,4 @@
+# This sets up a docker frame on a supported OS
 python38:
   pkg.installed:
     - pkgs:
