@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV BASE_APPS="python3.8 python3-pip"
+ENV BASE_APPS="python3.8 python3-pip git supervisor"
 
 RUN apt-get update && apt-get install --reinstall -yqq \
       $BASE_APPS \
@@ -19,6 +19,8 @@ RUN ln -s /usr/bin/python3.8 /usr/bin/python
 ADD docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 RUN ln -s /usr/local/bin/docker-entrypoint.sh /
+
+# HPFeeds
 
 # Add Honeyswarm
 ADD honeyswarm /opt/honeyswarm

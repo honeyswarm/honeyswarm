@@ -1,0 +1,3 @@
+# Just till the upstream gets fixed
+FROM hpfeeds/hpfeeds-broker
+RUN /app/bin/pip install motor
