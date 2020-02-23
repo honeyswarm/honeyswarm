@@ -9,7 +9,7 @@
         <div class="col">
           <h4 class="text-warning">Pending Jobs</h4>
           <table class="table table-bordered table-sm table-hover table-striped">
-            <thead class="thead-light">
+            <thead class="thead-dark">
               <tr>
                 <th scope="col">Hive ID</th>
                 <th scope="col">Job Short</th>
@@ -110,8 +110,8 @@ setTimeout(function() {
 
 let notificationCount = 0;
 
-$( ".hive_action" ).change(function() {
-  let hive_id = this.getAttribute("data-hiveId");
+$( ".job_action" ).change(function() {
+  let hive_id = this.getAttribute("data-jobId");
   let hive_action = this.value;
   console.log(this)
 
@@ -123,6 +123,7 @@ $( ".hive_action" ).change(function() {
 
   console.log("Running action "+ hive_action + " for Hive " + hive_id);
 
+
   let post_params = { hive_id: hive_id };
   let post_url = "/hives/actions/"+hive_action;
 
@@ -132,25 +133,20 @@ $( ".hive_action" ).change(function() {
     if (data['success']){
 
       // Add notification
-      add_notification("text-success", data['message'])
-
-      // Handle some other actions
-      if (hive_action == "delete"){
-        // remove the newly deleted row
-        $('#row-'+hive_id).remove()
-        }
-
-
+      alert_notify('alert-success', 'Job Updated', 'Job ID: '+data['message'] )
+      if (data['job_complete']){
+        location.reload();
+      }
 
     } else {
-      add_notification("text-danger", data['message'])
+      alert_notify('alert-danger', 'Error', data['message'] )
     }
 
 
 
   })
   .fail(function() {
-    add_notification("text-danger", "Something went wrong")
+    alert_notify('alert-danger', 'Error', 'Something went wrong' )
   });
 
 
