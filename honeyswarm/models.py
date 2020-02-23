@@ -12,6 +12,7 @@ class Frame(Document):
 
 class Honeypot(Document):
     name = StringField(unique=True)
+    honeypot_state_file = StringField()
     honey_type = StringField()
     description = StringField()
     pillar = ListField()

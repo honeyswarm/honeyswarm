@@ -217,7 +217,7 @@ def hive_cowrie():
             job.save()
 
             json_response['success'] = True
-            json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+            json_response['message'] = str(job.id)
         except Exception as err:
             json_response['message'] = "Error creating job: {0}".format(err)
 

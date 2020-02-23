@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% set active_page = "honeypots" %}
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col-6">
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">Existing {{honeypot_details.name}} Honeypots</h4>
+          <table class="table table-bordered table-sm table-hover">
+            <thead class="thead-light">
+              <tr>
+                <th scope="col">Hive ID</th>
+                <th scope="col">Date Installed</th>
+                <th scope="col">Probe count</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for hive in existing_honeypots %}
+              <tr id="row-{{hive['id']}}">
+                <th scope="row">{{hive['id']}}</th>
+                <td></td>
+                <td></td>
+                <td>
+                  <select class="form-control hinve_action" id="regActions" data-hive_id="{{hive['id']}}">
+                    <option value="select">Select</option>
+                    <option value="poll">Poll</option>
+                    <option value="restart">Restart</option>
+                    <option value="delete">Delete</option>
+                  </select>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+    <div class="col-6">
+      <div class="card p-2">
+        <h4>Deploy</h4>
+        <p>Deploy this honeypot to a Hive</p>
+        <p>Select a hive from this list and click deploy</p>
+
+
+        <form id="deployment_details">
+
+          <div class="form-group">
+            <label for="exampleFormControlSelect1">Select Hive</label>
+            <select name="target_hive" class="form-control" id="exampleFormControlSelect1">
+
+              <option value="select">Select...</option>
+              {% for hive in all_hives %}
+              <option value="{{hive['id']}}">{{hive.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+
+          <div id="pillar-states" class="form-group">
+              <label for="pillar-states">Pillar Values</label>
+              <p>Pillar values can be used to customise certain aspects of your honeypot please refer to the Honeypot editor page for details on each of these options</p>
+
+              {% for pillar in honeypot_details.pillar %}
+              <div class="form-row mb-2">
+                  <div class="col">
+                      <input type="text" class="form-control" name="pillar-key-{{loop.index}}"
+                          value="{{pillar[0]}}">
+                  </div>
+                  <div class="col">
+                      <input type="text" class="form-control" name="pillar-value-{{loop.index}}"
+                          value="{{pillar[1]}}">
+                  </div>
+              </div>
+              {% endfor %}
+          </div>
+      </form>
+      <button id="deploy-btn" class="btn btn-success btn-block">Deploy</button>
+
+
+
+
+      </div>
+    </div>
+  </div>
+
+<script>
+
+
+
+$( "#deploy-btn" ).click(function() {
+        alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
+        $.post( window.location + "../deploy/", $( "#deployment_details" ).serialize() )
+            .done(function( data ) {
+            console.log(data);
+            if(data['success']){
+                alert_notify('alert-success', 'Job Running', 'Job ID: '+data['message'] )
+            } else {
+                alert_notify('alert-danger', 'Opps!', data['message'] )
+            }
+        });
+
+    });
+
+
+
+
+</script>
+
+
+</div>
+
+{% endblock %}

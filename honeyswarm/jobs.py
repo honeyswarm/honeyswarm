@@ -19,10 +19,6 @@ def jobs_list():
     # shoudl probably add a filter in here this could get noisy
     job_list = PepperJobs.objects
 
-    for job in job_list:
-        print(job.hive.id)
-
-
     # Probably want a way to update / delete a job
 
     return render_template(

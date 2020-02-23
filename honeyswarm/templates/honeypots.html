@@ -25,7 +25,7 @@
                         </div>
                         <div class="col-4">
                             <h5 class="card-title">Actions</h5>
-                            <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a>
+                            <a href="{{ url_for('honeypots.honeypot_deployments', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deployment</a>
                             <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
                             <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
                         </div>

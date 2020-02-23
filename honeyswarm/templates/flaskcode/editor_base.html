@@ -144,7 +144,7 @@ flaskcode.config.set('editorTheme', "{{ editor_theme }}");
 
 
     $( "#update-btn" ).click(function() {
-        $.post( window.location+"/update/", $( "#update_details" ).serialize() )
+        $.post( window.location+"../update/", $( "#update_details" ).serialize() )
             .done(function( data ) {
             console.log(data);
             if(data['success']){

@@ -34,7 +34,7 @@ def honeypot_list():
         honey_list=honey_list
         )
 
-@honeypots.route('/honeypots/<honeypot_id>')
+@honeypots.route('/honeypots/<honeypot_id>/edit/')
 @login_required
 def show_honeypot(honeypot_id):
     print(honeypot_id)
@@ -91,6 +91,7 @@ def update_honeypot(honeypot_id):
     honeypot_details.name = request.form.get('honeypot_name')
     honeypot_details.honeypot_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
+    honeypot_details.honeypot_state_file = request.form.get('honeypot_state_file')
 
     # Now add any Pillar States
     pillar_states = []
@@ -155,3 +156,111 @@ def update_resource_data(object_id, file_path):
         message = 'File data not uploaded'
     return jsonify({'success': success, 'message': message})
 
+
+@honeypots.route('/honeypots/<honeypot_id>/deployments/', methods=['GET'])
+@login_required
+def honeypot_deployments(honeypot_id):
+    honeypot_details = Honeypot.objects(id=honeypot_id).first()
+
+
+    if not honeypot_details:
+        abort(404)
+
+    # Get a list of all hives that have a frame installed and are responding to polls.
+    #ToDo: Only permit based on frame supported OS?
+    # Do we need to add Frames as a Reference Field to Honeypot?
+
+    all_hives = Hive.objects(frame__exists=True, salt_alive=True)
+
+    # there is no join so we need multiple queries. 
+    # There shouldnt by thousands or rows so we shouldnt need to worry about effeciency. 
+
+    existing_honeypots = []
+
+    for hive in all_hives:
+        for honeypot in hive.honeypots:
+            print(honeypot_id, honeypot.id)
+            print(honeypot.id == honeypot_id)
+            if str(honeypot.id) == honeypot_id:
+                existing_honeypots.append(hive)
+
+
+    # Get all currently installed honypts of this type
+
+    return render_template(
+        "honey_deployments.html",
+        all_hives=all_hives,
+        existing_honeypots=existing_honeypots,
+        honeypot_details=honeypot_details
+        )
+
+@honeypots.route('/honeypots/<honeypot_id>/deploy/', methods=['POST'])
+@login_required
+def honeypot_deploy(honeypot_id):
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+
+    honeypot_details = Honeypot.objects(id=honeypot_id).first()
+
+    if not honeypot_details:
+        json_response['message'] = "Can not find honeypot"
+
+    hive_id = request.form.get('target_hive')
+
+    hive = Hive.objects(id=hive_id).first()
+    if not hive:
+        json_response['message'] = "Can not find Hive"
+
+
+    config_pillar = {}
+
+    # Now add any Pillar States
+    for field in form_vars.items():
+        if field[0].startswith('pillar-key'):
+            key_id = field[0].split('-')[-1]
+            key_name = field[1]
+            key_value = request.form.get("pillar-value-{0}".format(key_id))
+            if key_name == '' or key_value == '':
+                continue
+            config_pillar[key_name] = key_value
+
+    print(config_pillar)
+    print(hive.name)
+    honeypot_state_file = 'honeypots/{0}/{1}'.format(honeypot_details.id, honeypot_details.honeypot_state_file)
+    pillar_string = ", ".join(("{}: {}".format(*i) for i in config_pillar.items()))
+
+
+    print("pillar={{{0}}}".format(pillar_string))
+
+
+    try:
+
+        job_id = pepper_api.apply_state(
+            hive_id, 
+            [
+                honeypot_state_file,
+                "pillar={{{0}}}".format(pillar_string)
+            ]
+        )
+
+        hive = Hive.objects(id=hive_id).first()
+        job = PepperJobs(
+            hive=hive,
+            job_id=job_id,
+            job_short="Apply State Cowrie",
+            job_description="Apply honeypot {0} to Hive {1}".format('honeypots/cowrie/cowrie', hive_id)
+        )
+        job.save()
+
+        if honeypot_details not in hive.honeypots:
+            hive.honeypots.append(honeypot_details)
+
+        hive.save()
+
+        json_response['success'] = True
+        json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+    except Exception as err:
+        json_response['message'] = "Error creating job: {0}".format(err)
+
+
+    return jsonify(json_response)
