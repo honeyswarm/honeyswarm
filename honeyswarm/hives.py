@@ -1,4 +1,5 @@
 import os
+import time
 from uuid import uuid4
 from datetime import datetime
 
@@ -57,7 +58,7 @@ def hive_delete():
             hive = Hive.objects(id=hive_id).first()
 
             # Delete Jobs
-            PepperJobs.objects(hive).delete()
+            PepperJobs.objects(hive=hive_id).delete()
 
             # Delete Hive
             Hive.objects(id=hive_id).delete()
@@ -124,6 +125,7 @@ def hive_swarm():
             # If we run too quickly grains may not be ready.
             # Try one more time. 
             if not hive_grains:
+                time.sleep(2)
                 print("Grains round 2")
                 grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
                 hive_grains = grains_request[hive_id]
@@ -184,46 +186,6 @@ def hive_test():
             json_response['message'] = "Error Adding to swarm: {0}".format(err)
 
     return jsonify(json_response)
-
-
-@hives.route('/hives/actions/cowrie', methods=["POST"])
-@login_required
-def hive_cowrie():
-    """Add Cowrie Honeypot"""
-    form_vars = request.form.to_dict()
-    json_response = {"success": False}
-    hive_id = request.form.get('hive_id')
-
-    if not hive_id:
-        json_response['message'] = "Missing Hive ID"
-    else:
-        try:
-
-            job_id = pepper_api.apply_state(
-                hive_id, 
-                [
-                    'honeypots/cowrie/cowrie',
-                    "pillar={HPFSERVER: localhost, HPFPORT: 20000, HPFIDENT: cowrie, HPFSECRET: cowrie}"
-                ]
-            )
-
-            hive = Hive.objects(id=hive_id).first()
-            job = PepperJobs(
-                hive=hive,
-                job_id=job_id,
-                job_short="Apply State Cowrie",
-                job_description="Apply honeypot {0} to Hive {1}".format('honeypots/cowrie/cowrie', hive_id)
-            )
-            job.save()
-
-            json_response['success'] = True
-            json_response['message'] = str(job.id)
-        except Exception as err:
-            json_response['message'] = "Error creating job: {0}".format(err)
-
-    return jsonify(json_response)
-
-
 
 
 @hives.route('/hives/actions', methods=["POST", "GET"])
