@@ -1,4 +1,5 @@
 import os
+import stat
 from uuid import uuid4
 from datetime import datetime
 
@@ -15,9 +16,7 @@ from flaskcode.utils import write_file, dir_tree, get_file_extension
 honeypots = Blueprint('honeypots', __name__)
 
 from honeyswarm.saltapi import pepper_api
-
-BASE_PATH = '/home/thehermit/github/honeyswarm/honeystates/salt/'
-
+from honeyswarm import SALT_STATE_BASE
 
 
 @honeypots.route('/honeypots')
@@ -34,6 +33,41 @@ def honeypot_list():
         honey_list=honey_list
         )
 
+@honeypots.route('/honeypots/create/', methods=['POST'])
+@login_required
+def create_honeypot():
+
+    json_response = {"success": False}
+
+    try:
+        new_honeypot = Honeypot()
+        new_honeypot.name = request.form.get('honeypot_name')
+        new_honeypot.honey_type = request.form.get('honeypot_type')
+        new_honeypot.description = request.form.get('honeypot_description')
+        new_honeypot.honeypot_state_file = request.form.get('honeypot_state_file')
+        new_honeypot.save()
+
+        honeypot_id = new_honeypot.id
+        state_path = os.path.join(SALT_STATE_BASE, 'honeypots', str(honeypot_id))
+        state_name = "{0}.sls".format(new_honeypot.honeypot_state_file)
+        state_file_path = os.path.join(state_path, state_name)
+        if not os.path.exists(state_path):
+            os.mkdir(state_path)
+            os.mknod(state_file_path)
+            os.chmod(state_file_path, stat.S_IRWXO)
+
+        json_response['success'] = True
+        json_response['message'] = "Honypot Created"
+
+    except Exception as err:
+        json_response['message'] = err
+        print(err)
+
+    return redirect(url_for('honeypots.honeypot_list'))
+
+    return jsonify(json_response)
+
+
 @honeypots.route('/honeypots/<honeypot_id>/edit/')
 @login_required
 def show_honeypot(honeypot_id):
@@ -44,8 +78,8 @@ def show_honeypot(honeypot_id):
         abort(404)
     honeypotname = honeypot_details.name
     # Lets hack in flask code.
-    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', honeypot_id)
-    #honey_salt_base =  os.path.join(BASE_PATH, 'honeypots')
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
+    #honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots')
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
@@ -120,7 +154,7 @@ def update_honeypot(honeypot_id):
 def resource_data(object_id, file_path):
     print("Read Resource", file_path)
 
-    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -143,7 +177,7 @@ def update_resource_data(object_id, file_path):
 
 
     print("Update REsource", file_path)
-    honey_salt_base =  os.path.join(BASE_PATH, 'honeypots', object_id)
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
 

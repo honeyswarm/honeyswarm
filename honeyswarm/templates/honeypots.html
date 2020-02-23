@@ -7,7 +7,8 @@
 <div class="container">
     <div class="row">
         <div class="col mt-2">
-            <h3>Honeypots</h3>
+            <h3>Honeypots</h3> <span><button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#createHoneyModal">New Honeypot</button></span>
+              
         </div>
     </div>
     
@@ -39,7 +40,40 @@
 </div>
 
 
-
+<div id="createHoneyModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+    <form id="fileNameForm" method="post" action="{{ url_for('honeypots.create_honeypot') }}">
+      <div class="modal-content">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="honeypot_name">Name</label>
+                <input type="text" class="form-control" id="honeypot_name" name="honeypot_name"
+                    value="">
+            </div>
+            <div class="form-group">
+                <label for="honeypot_type">Type</label>
+                <input type="text" class="form-control" id="honeypot_type" name="honeypot_type"
+                    value="">
+            </div>
+            <div class="form-group">
+                <label for="honeypot_description">Description</label>
+                <textarea class="form-control" id="honeypot_description" name="honeypot_description"
+                    rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="honeypot_state_file">State File</label>
+                <input type="text" class="form-control" id="honeypot_state_file" name="honeypot_state_file"
+                    value="">
+            </div>
+        </div>
+        <div class="modal-footer p-0">
+            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-sm btn-success" data-loading-text="Loading...">Create</button>
+        </div>
+      </div>
+    </form>
+    </div>
+  </div>
 
 
 {% endblock %}

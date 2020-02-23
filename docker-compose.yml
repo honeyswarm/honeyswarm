@@ -13,7 +13,7 @@ services:
       honeynet:
         ipv4_address: 10.1.0.101
     volumes:
-      - "./honeystates/salt:/opt/honeyswarm/templates/honeystates"
+      - "./honeystates/salt:/opt/honeyswarm/templates/honeystates:rw"
     depends_on: 
       - mongoserver
       - saltmaster
@@ -40,8 +40,27 @@ services:
       honeynet:
         ipv4_address: 10.1.0.103
     volumes:
-      - "./dev/salt:/etc/salt/pki"
-      - "./honeystates:/srv"
+      - "./dev/salt:/etc/salt/pki:rw"
+      - "./honeystates:/srv:rw"
+  hpfeeds-broker:
+    build:
+      context: .
+      dockerfile: Dockerfile-broker
+    container_name: hpfeeds
+    ports:
+     - "0.0.0.0:10000:10000"
+    networks:
+      honeynet:
+        ipv4_address: 10.1.0.104
+    env_file:
+      - honeyswarm_dev.env
+    command:
+     - '/app/bin/hpfeeds-broker'
+     - '--endpoint=tcp:port=10000'
+     - '--exporter=0.0.0.0:9431'
+     - '--auth="mongodb://admin:admin@mongoserver:27017/hpfeeds"'
+    depends_on: 
+      - mongoserver
 networks:
   honeynet:
     driver: bridge

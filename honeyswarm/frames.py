@@ -16,7 +16,8 @@ frames = Blueprint('frames', __name__)
 
 from honeyswarm.saltapi import pepper_api
 
-BASE_PATH = '/home/thehermit/github/honeyswarm/honeystates/salt/'
+from honeyswarm import SALT_STATE_BASE
+
 
 @frames.route('/frames')
 @login_required
@@ -40,8 +41,8 @@ def show_frame(frame_id):
         abort(404)
     framename = frame_details.name
     # Lets hack in flask code.
-    honey_salt_base =  os.path.join(BASE_PATH, 'frames', frame_id)
-    #honey_salt_base =  os.path.join(BASE_PATH, 'frames')
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', frame_id)
+    #honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames')
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
@@ -117,7 +118,7 @@ def update_frame(frame_id):
 def resource_data(object_id, file_path):
     print(file_path)
 
-    honey_salt_base =  os.path.join(BASE_PATH, 'frames', object_id)
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', object_id)
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -138,7 +139,7 @@ def resource_data(object_id, file_path):
 @login_required
 def update_resource_data(object_id, file_path):
     print(file_path)
-    honey_salt_base =  os.path.join(BASE_PATH, 'frames', object_id)
+    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', object_id)
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
     if not is_new_resource and not (os.path.exists(file_path) and os.path.isfile(file_path)):

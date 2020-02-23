@@ -20,15 +20,13 @@ from flask_security.decorators import roles_accepted
 from flask_wtf.csrf import CSRFProtect
 
 
-
-
-
 # Set the Core Application
 app = Flask(__name__, static_folder='static', static_url_path='')
 app.secret_key = 'MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK'
 app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1)
 TZ = pytz.timezone('Europe/London')
+SALT_STATE_BASE = os.path.join(app.root_path, '../', 'honeystates', 'salt')
 
 # Mongo next
 
@@ -108,7 +106,7 @@ app.scheduler.add_job(poll_hives,'interval', minutes=10,args=[])
 ##
 
 app.config.from_object(flaskcode.default_config)
-app.config['FLASKCODE_RESOURCE_BASEPATH'] = '/home/thehermit/github/honeyswarm/honeystates/salt/'
+app.config['FLASKCODE_RESOURCE_BASEPATH'] = SALT_STATE_BASE
 app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
 
 
