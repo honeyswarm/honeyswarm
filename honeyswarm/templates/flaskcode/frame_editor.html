@@ -51,6 +51,8 @@
                                     with salt states. several default pillars are already exposed by default. You can
                                     read more in the docs. (When I write them)</p>
 
+                                <div id="pillar-div">
+
                                 {% for pillar in frame_details.pillar %}
                                 <div class="form-row mb-2">
                                     <div class="col">
@@ -63,6 +65,11 @@
                                     </div>
                                 </div>
                                 {% endfor %}
+                                </div>
+
+
+                                <script>let pillar_count = {{frame_details.pillar | length}}</script>
+                                <button id="addPillar" type="button" class="btn btn-sm btn-primary" >New Pillar</button>
                             </div>
                         </form>
                         <hr>

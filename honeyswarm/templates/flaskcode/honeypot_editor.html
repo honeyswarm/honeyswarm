@@ -50,25 +50,29 @@
                                 <p>Pillar values can be used to customise certain aspects of your honeypot when used
                                     with salt states. several default pillars are already exposed by default. You can
                                     read more in the docs. (When I write them)</p>
-
-                                {% for pillar in honeypot_details.pillar %}
-                                <div class="form-row mb-2">
-                                    <div class="col">
-                                        <input type="text" class="form-control" name="pillar-key-{{loop.index}}"
-                                            value="{{pillar[0]}}">
+                                <div id="pillar-div">
+                                    {% for pillar in honeypot_details.pillar %}
+                                    <div class="form-row mb-2">
+                                        <div class="col">
+                                            <input type="text" class="form-control" name="pillar-key-{{loop.index}}"
+                                                value="{{pillar[0]}}">
+                                        </div>
+                                        <div class="col">
+                                            <input type="text" class="form-control" name="pillar-value-{{loop.index}}"
+                                                value="{{pillar[1]}}">
+                                        </div>
                                     </div>
-                                    <div class="col">
-                                        <input type="text" class="form-control" name="pillar-value-{{loop.index}}"
-                                            value="{{pillar[1]}}">
-                                    </div>
+                                    {% endfor %}
                                 </div>
-                                {% endfor %}
+                                <script>let pillar_count = {{honeypot_details.pillar | length}}</script>
+
+
+                                <button id="addPillar" type="button" class="btn btn-sm btn-primary" >New Pillar</button>
                             </div>
                         </form>
                         <hr>
                         <button id="update-btn" class="btn btn-success btn-block">Update</button>
                         <button class="btn btn-danger btn-block">Delete</button>
-                        <p>Button to add or delete pillar pairs</p>
 
                     </div>
 

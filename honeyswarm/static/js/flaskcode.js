@@ -581,3 +581,16 @@ $(function () {
         flaskcode.$pagePreloader.fadeOut();
     });
 });
+
+
+
+$( "#addPillar" ).click(function() {
+    console.log("adding pillar")
+
+    let new_pillar = '<div class="form-row mb-2"><div class="col"> \
+        <input type="text" class="form-control" name="pillar-key-'+pillar_count+'"value="", placeholder="PILLARNAME"> \
+        </div><div class="col"><input type="text" class="form-control" name="pillar-value-'+pillar_count+'" value="", placeholder="default value"></div></div>';
+    $('#pillar-div').append(new_pillar);
+
+
+  });
