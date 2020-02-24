@@ -591,6 +591,7 @@ $( "#addPillar" ).click(function() {
         <input type="text" class="form-control" name="pillar-key-'+pillar_count+'"value="", placeholder="PILLARNAME"> \
         </div><div class="col"><input type="text" class="form-control" name="pillar-value-'+pillar_count+'" value="", placeholder="default value"></div></div>';
     $('#pillar-div').append(new_pillar);
+    pillar_count ++;
 
 
   });
