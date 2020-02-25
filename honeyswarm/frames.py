@@ -74,6 +74,43 @@ def show_frame(frame_id):
         data_url="frames"
         )
 
+
+@frames.route('/frames/create/', methods=['POST'])
+@login_required
+def create_frame():
+
+    json_response = {"success": False}
+
+    try:
+        new_frame = Frame()
+        new_frame.name = request.form.get('frame_name')
+        os_list = request.form.get('supported_os')
+        new_frame.supported_os = [x for x in os_list.split(',')]
+        new_frame.description = request.form.get('frame_description')
+        new_frame.frame_state_file = request.form.get('frame_state_file')
+        new_frame.save()
+
+        frame_id = new_frame.id
+        state_path = os.path.join(SALT_STATE_BASE, 'frames', str(frame_id))
+        state_name = "{0}.sls".format(new_frame.frame_state_file)
+        state_file_path = os.path.join(state_path, state_name)
+        if not os.path.exists(state_path):
+            os.mkdir(state_path)
+            os.mknod(state_file_path)
+            os.chmod(state_file_path, 0o777)
+
+        json_response['success'] = True
+        json_response['message'] = "Frame Created"
+
+    except Exception as err:
+        json_response['message'] = err
+        print(err)
+
+    return redirect(url_for('frames.frames_list'))
+
+    return jsonify(json_response)
+
+
 @frames.route('/frames/<frame_id>/update/', methods=['POST'])
 @login_required
 def update_frame(frame_id):

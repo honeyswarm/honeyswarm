@@ -7,7 +7,7 @@
 <div class="container">
     <div class="row">
         <div class="col mt-2">
-            <h3>Frames</h3>
+            <h3>Frames <span><button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#createFrameModal">New Frame</button></span></h3>
         </div>
     </div>
     
@@ -39,7 +39,40 @@
 </div>
 
 
-
+<div id="createFrameModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+    <form id="createFrameForm" method="post" action="{{ url_for('frames.create_frame') }}">
+      <div class="modal-content">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="frame_name">Name</label>
+                <input type="text" class="form-control" id="frame_name" name="frame_name"
+                    value="">
+            </div>
+            <div class="form-group">
+                <label for="frame_state_file">State File</label>
+                <input type="text" class="form-control" id="frame_state_file" name="frame_state_file"
+                    value="">
+            </div>
+            <div class="form-group">
+                <label for="frame_description">Description</label>
+                <textarea class="form-control" id="frame_description" name="frame_description"
+                    rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="supported_os">Supported OS</label>
+                <input type="text" class="form-control" id="supported_os" name="supported_os"
+                    value="">
+            </div>
+        </div>
+        <div class="modal-footer p-0">
+            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-sm btn-success" data-loading-text="Loading...">Create</button>
+        </div>
+      </div>
+    </form>
+    </div>
+  </div>
 
 
 {% endblock %}
