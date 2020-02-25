@@ -13,6 +13,7 @@ from honeyswarm.models import Hive, PepperJobs, Frame
 hives = Blueprint('hives', __name__)
 
 APITOKEN = os.environ.get("HIVE_API_TOKEN")
+HONEYSWARM_HOST = os.environ.get("HONEYSWARM_HOST")
 
 from honeyswarm.saltapi import pepper_api
 
@@ -293,6 +294,6 @@ def hives_register(operating_system):
     # Return the Installation Script
     return render_template(
         registration_template,
-        honeyswarm_host="192.168.1.184",
+        honeyswarm_host=HONEYSWARM_HOST,
         salt_minion_id=salt_id
     )
