@@ -24,6 +24,7 @@ RUN ln -s /usr/local/bin/docker-entrypoint.sh /
 
 # Add Honeyswarm
 ADD honeyswarm /opt/honeyswarm
+ADD honeyswarm.py /opt/
 
 WORKDIR /opt/honeyswarm
 RUN python -m pip install -r requirements.txt
@@ -34,4 +35,4 @@ RUN python -m pip install -r requirements-salt.txt
 
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["flask", "run"]
+CMD ["/usr/bin/python", "/opt/honeyswarm.py"]
