@@ -9,6 +9,7 @@ services:
     ports:
       - "80:80"
       - "8181:8181"
+      - "8282:8282"
     networks:
       honeynet:
         ipv4_address: 10.1.0.101
