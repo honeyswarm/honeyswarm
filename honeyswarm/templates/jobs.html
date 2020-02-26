@@ -58,7 +58,7 @@
               {% if job['complete']  %}
               <tbody>
                   <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{loop.index}}" aria-expanded="false" aria-controls="group-of-rows-{{loop.index}}">
-                    <th scope="row">{{job['hive']['id']}} <i class="fas fa-chevron-down"></i></th>
+                    <th scope="row">{{job['hive']['id']}} <i class="fa fa-caret-down"></i></th>
                     <td>{{job['job_short']}}</td>
                     <td>{{job['created_at'] | dateformat}}</td>
                     <td>{{job['completed_at'] | dateformat}}</td>

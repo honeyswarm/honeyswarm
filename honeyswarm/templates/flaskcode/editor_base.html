@@ -12,7 +12,7 @@
         </div>
         <div id="flaskcode-content " class="col-md-10 col-sm-9 col-xs-9 h-75">
             <div id="editor-header" class="p-2">
-                <strong><i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}</strong>
+                <strong>Editing: </strong>
                 &nbsp;
                 <span id="resource-info">
                     <a href="javascript:void(0);" id="resource-close" class="text-danger" title="Close" style="display:none;"><i class="fa fa-window-close" aria-hidden="true"></i></a>
@@ -39,7 +39,7 @@
                 <div class="editor-notification text-center"></div>
                 <div class="editor-body">
                     <div class="editor-body-msg">
-                        <h2 class="text-center text-info"><i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}</h2>
+                        <h2 class="text-center text-info">Select a file to edit.</h2>
                     </div>
                 </div>
             </div>
@@ -67,8 +67,7 @@
         <div class="loading-center-absolute">
             <i class="fa fa-spinner fa-pulse" aria-hidden="true"></i>
             <br />
-            <i class="fa fa-code" aria-hidden="true"></i> {{ app_title }}
-            <small><em>v{{ app_version }}</em></small>
+            <small><em>. . . Loading . . . </em></small>
         </div>
     </div>
 </div>
@@ -103,7 +102,6 @@
 
 
 {% block page_styles %}
-<link rel="stylesheet" type="text/css" href="{{ url_for('flaskcode.static', filename='vendor/font-awesome/css/font-awesome.min.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('flaskcode.static', filename='vendor/jquery-contextMenu/jquery.contextMenu.min.css') }}" />
 <link rel="stylesheet" type="text/css" href="{{ url_for('flaskcode.static', filename='vendor/treed/treed.css') }}" />
 
