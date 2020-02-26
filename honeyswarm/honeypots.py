@@ -249,8 +249,10 @@ def honeypot_deploy(honeypot_id):
     if not hive:
         json_response['message'] = "Can not find Hive"
 
-
-    config_pillar = {}
+    config_pillar = { 
+        "HIVEID": hive_id,
+        "OBJECTID": honeypot_id 
+    }
 
     # Now add any Pillar States
     for field in form_vars.items():
@@ -262,14 +264,8 @@ def honeypot_deploy(honeypot_id):
                 continue
             config_pillar[key_name] = key_value
 
-    print(config_pillar)
-    print(hive.name)
     honeypot_state_file = 'honeypots/{0}/{1}'.format(honeypot_details.id, honeypot_details.honeypot_state_file)
-    pillar_string = ", ".join(("{}: {}".format(*i) for i in config_pillar.items()))
-
-
-    print("pillar={{{0}}}".format(pillar_string))
-
+    pillar_string = ", ".join(('"{}": "{}"'.format(*i) for i in config_pillar.items()))
 
     try:
 
