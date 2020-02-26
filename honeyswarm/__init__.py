@@ -54,6 +54,7 @@ db = MongoEngine(app)
 user_datastore = MongoEngineUserDatastore(db, User, Role)
 app.config['SECURITY_LOGIN_URL'] = '/nowhere'
 app.config['SECURITY_LOGIN_USER_TEMPLATE'] = "login.html"
+app.config['SECURITY_CONFIRMABLE'] = True
 security = Security(app, user_datastore)
 
 #CSRFProtect(app)
