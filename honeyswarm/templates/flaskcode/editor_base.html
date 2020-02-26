@@ -137,6 +137,7 @@ flaskcode.config.set('editorTheme', "{{ editor_theme }}");
 
 
     $( "#update-btn" ).click(function() {
+        flaskcode.saveResourceState();
         $.post( window.location+"../update/", $( "#update_details" ).serialize() )
             .done(function( data ) {
             console.log(data);
@@ -145,6 +146,9 @@ flaskcode.config.set('editorTheme', "{{ editor_theme }}");
             } else {
                 alert_notify('alert-danger', 'Opps!', 'Something went wrong!' )
             }
+        })
+        .fail(function() {
+            alert_notify('alert-danger', 'Opps!', 'Something went wrong!' )
         });
 
     });
