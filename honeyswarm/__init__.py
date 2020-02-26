@@ -31,7 +31,7 @@ SALT_STATE_BASE = os.path.join(app.root_path, '../', 'honeystates', 'salt')
 # Mongo next
 
 # MongoEngine doesnt support AUTH_SOURCE so we manully construct
-MONGODB_SETTINGS = {
+MONGODB_SETTINGS = [{
     "host" : "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
         os.environ.get("MONGODB_USERNAME"),
         os.environ.get("MONGODB_PASSWORD"),
@@ -39,8 +39,20 @@ MONGODB_SETTINGS = {
         os.environ.get("MONGODB_PORT"),
         os.environ.get("MONGODB_DATABASE"),
         os.environ.get("MONGODB_AUTH_SOURCE")
-    )
+    ),
+    "alias": "honeyswarm_db"
+},{
+    "host" : "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
+        os.environ.get("MONGODB_USERNAME"),
+        os.environ.get("MONGODB_PASSWORD"),
+        os.environ.get("MONGODB_HOST"),
+        os.environ.get("MONGODB_PORT"),
+        "hpfeeds",
+        os.environ.get("MONGODB_AUTH_SOURCE")
+    ),
+    "alias": "hpfeeds_db"
 }
+]
 
 
 app.config['MONGODB_SETTINGS'] = MONGODB_SETTINGS

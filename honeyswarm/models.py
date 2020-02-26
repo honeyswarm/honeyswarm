@@ -3,7 +3,19 @@ from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 
 
+class AuthKey(Document):
+    meta = {
+        'db_alias': 'hpfeeds_db'
+    }
+    identifier = StringField()
+    secret = StringField()
+    publish = ListField()
+    subscribe = ListField()
+
 class Frame(Document):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     name = StringField(unique=True)
     description = StringField()
     supported_os = ListField()
@@ -11,13 +23,21 @@ class Frame(Document):
     pillar = ListField()
 
 class Honeypot(Document):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     name = StringField(unique=True)
     honeypot_state_file = StringField()
     honey_type = StringField()
     description = StringField()
     pillar = ListField()
+    channels = ListField()
+    hpfeeds = ReferenceField(AuthKey)
 
 class Hive(Document):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     name = StringField(unique=True)
     registered = BooleanField(default=False)
     salt_alive = BooleanField()
@@ -28,6 +48,9 @@ class Hive(Document):
     frame = ReferenceField(Frame)
 
 class PepperJobs(Document):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     job_id = StringField()
     job_short = StringField()
     job_description = StringField()
@@ -39,10 +62,16 @@ class PepperJobs(Document):
     hive = ReferenceField(Hive)
 
 class Role(Document, RoleMixin):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     name = StringField(max_length=80, unique=True)
     description = StringField(max_length=255)
 
 class User(Document,UserMixin):
+    meta = {
+        'db_alias': 'honeyswarm_db'
+    }
     email = StringField(unique=True)
     password = StringField()
     name = StringField()
