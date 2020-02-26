@@ -14,7 +14,7 @@ services:
       honeynet:
         ipv4_address: 10.1.0.101
     volumes:
-      - "./honeystates/salt:/opt/honeystates:rw"
+      - "./honeystates/salt:/opt/honeystates/salt:rw"
     depends_on: 
       - mongoserver
       - saltmaster
