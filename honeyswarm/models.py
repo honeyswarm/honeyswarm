@@ -9,8 +9,8 @@ class AuthKey(Document):
     }
     identifier = StringField()
     secret = StringField()
-    publish = ListField()
-    subscribe = ListField()
+    publish = ListField(default=[])
+    subscribe = ListField(default=[])
 
 class Frame(Document):
     meta = {
@@ -31,7 +31,6 @@ class Honeypot(Document):
     honey_type = StringField()
     description = StringField()
     pillar = ListField()
-    channels = ListField()
     hpfeeds = ReferenceField(AuthKey)
 
 class Hive(Document):

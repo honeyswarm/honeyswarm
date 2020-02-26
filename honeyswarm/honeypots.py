@@ -8,7 +8,7 @@ from flask import render_template, abort, jsonify, send_file, g, request
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Hive, PepperJobs, Honeypot
+from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey
 
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 
@@ -45,7 +45,7 @@ def create_honeypot():
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
         new_honeypot.honeypot_state_file = request.form.get('honeypot_state_file')
-        new_honeypot.save()
+        
 
         honeypot_id = new_honeypot.id
         state_path = os.path.join(SALT_STATE_BASE, 'honeypots', str(honeypot_id))
@@ -55,6 +55,23 @@ def create_honeypot():
             os.mkdir(state_path)
             os.mknod(state_file_path)
             os.chmod(state_file_path, 0o777)
+
+
+        # Create an HPFeeds Publish only key
+
+        print(request.form.get('honeypot_channels'))
+        channel_list = request.form.get('honeypot_channels').split('/r/n')
+
+        new_key = AuthKey(
+            identifier=honeypot_id,
+            secret=honeypot_id,
+            publish=channel_list
+        )
+        new_key.save()
+
+        new_honeypot.hpfeeds = new_key
+        new_honeypot.save()
+
 
         json_response['success'] = True
         json_response['message'] = "Honypot Created"
@@ -143,7 +160,37 @@ def update_honeypot(honeypot_id):
     
     honeypot_details.pillar = pillar_states
 
+
+    # Update or Create an HPFeeds Key
+
+    print(request.form.get('honeypot_channels'))
+    channel_list = request.form.get('honeypot_channels').split('\r\n')
+
+    if honeypot_details.hpfeeds:
+        honeypot_details.hpfeeds.publish = channel_list
+    else:
+
+        new_key = AuthKey(
+            identifier=honeypot_id,
+            secret=honeypot_id,
+            publish=channel_list
+        )
+        new_key.save()
+        honeypot_details.hpfeeds = new_key
+
     honeypot_details.save()
+    honeypot_details.hpfeeds.save()
+
+    # Update HoneySwarm HP Master Subscriber
+    honeyswarm_subscriber = AuthKey.objects(identifier="honeyswarm").first()
+
+    if honeyswarm_subscriber:
+        for channel in channel_list:
+            if channel not in honeyswarm_subscriber.publish:
+                honeyswarm_subscriber.subscribe.append(channel)
+        honeyswarm_subscriber.save()
+
+
 
     json_response['success'] = True
 
@@ -217,8 +264,6 @@ def honeypot_deployments(honeypot_id):
 
     for hive in all_hives:
         for honeypot in hive.honeypots:
-            print(honeypot_id, honeypot.id)
-            print(honeypot.id == honeypot_id)
             if str(honeypot.id) == honeypot_id:
                 existing_honeypots.append(hive)
 
