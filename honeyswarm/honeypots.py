@@ -186,7 +186,7 @@ def update_honeypot(honeypot_id):
 
     if honeyswarm_subscriber:
         for channel in channel_list:
-            if channel not in honeyswarm_subscriber.publish:
+            if channel not in honeyswarm_subscriber.subscribe:
                 honeyswarm_subscriber.subscribe.append(channel)
         honeyswarm_subscriber.save()
 
