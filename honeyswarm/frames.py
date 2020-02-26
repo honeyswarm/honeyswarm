@@ -31,7 +31,7 @@ def frames_list():
         frame_list=frame_list
         )
 
-@frames.route('/frames/<frame_id>')
+@frames.route('/frames/<frame_id>/edit/')
 @login_required
 def show_frame(frame_id):
     print(frame_id)
@@ -191,3 +191,74 @@ def update_resource_data(object_id, file_path):
         message = 'File data not uploaded'
     return jsonify({'success': success, 'message': message})
 
+
+
+@frames.route('/frames/<frame_id>/deploy/', methods=['POST'])
+@login_required
+def frame_deploy(frame_id):
+    """Add Docker Frame"""
+    form_vars = request.form.to_dict()
+    json_response = {"success": False}
+    hive_id = request.form.get('hive_id')
+    frame_state_file = request.form.get('frame_state_file')
+    frame_id = request.form.get('frame_id')
+
+
+    frame_details = Frame.objects(id=frame_id).first()
+
+    if not frame_details:
+        json_response['message'] = "Can not find honeypot"
+
+    hive_id = request.form.get('target_hive')
+
+    hive = Hive.objects(id=hive_id).first()
+    if not hive:
+        json_response['message'] = "Can not find Hive"
+
+    config_pillar = { 
+        "HIVEID": hive_id,
+        "OBJECTID": frame_id 
+    }
+
+    # Now add any Pillar States
+    for field in form_vars.items():
+        if field[0].startswith('pillar-key'):
+            key_id = field[0].split('-')[-1]
+            key_name = field[1]
+            key_value = request.form.get("pillar-value-{0}".format(key_id))
+            if key_name == '' or key_value == '':
+                continue
+            config_pillar[key_name] = key_value
+
+    frame_state_file = 'frames/{0}/{1}'.format(frame_details.id, frame_details.frame_state_path)
+    pillar_string = ", ".join(('"{}": "{}"'.format(*i) for i in config_pillar.items()))
+
+    try:
+
+        job_id = pepper_api.apply_state(
+            hive_id, 
+            [
+                frame_state_file,
+                "pillar={{{0}}}".format(pillar_string)
+            ]
+        )
+
+        hive = Hive.objects(id=hive_id).first()
+        job = PepperJobs(
+            hive=hive,
+            job_id=job_id,
+            job_short="Apply State {0}".format(frame_details.name),
+            job_description="Apply frame {0} to Hive {1}".format(frame_details, hive_id)
+        )
+        job.save()
+
+        hive.frame = frame_details
+        hive.save()
+
+        json_response['success'] = True
+        json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+    except Exception as err:
+        json_response['message'] = "Error creating job: {0}".format(err)
+
+
+    return jsonify(json_response)
