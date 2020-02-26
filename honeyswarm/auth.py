@@ -25,6 +25,11 @@ def login_post():
     remember = True if request.form.get('remember') else False
 
     user = User.objects(email=email).first()
+    # Check if enabled account
+    if not user.active:
+        flash('This account has been disabled')
+        return redirect(url_for('auth.login')) # if user doesn't exist or password is wrong, reload the page
+
 
     # check if user actually exists
     # take the user supplied password, hash it, and compare it to the hashed password in database
@@ -33,6 +38,7 @@ def login_post():
         return redirect(url_for('auth.login')) # if user doesn't exist or password is wrong, reload the page
 
     # if the above check passes, then we know the user has the right credentials
+
 
     # ToDo: Need to put a real check for remember me in here
     login_user(user, remember=remember)
@@ -51,7 +57,6 @@ def register_post():
 
     user = User.objects(email=email).first()
 
-
     if user: # if a user is found, we want to redirect back to register page so user can try again
         flash('Email address already exists')
         return redirect(url_for('auth.register'))
@@ -61,7 +66,8 @@ def register_post():
     new_user = user_datastore.create_user(
         email=email,
         password=encrypt_password(password),
-        name=name
+        name=name,
+        active=False
         )
 
     userrole = user_datastore.find_role('user')

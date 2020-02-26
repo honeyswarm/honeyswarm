@@ -46,7 +46,7 @@ class User(Document,UserMixin):
     email = StringField(unique=True)
     password = StringField()
     name = StringField()
-    active = BooleanField(default=True)
+    active = BooleanField(default=False)
     fs_uniquifier = StringField(max_length=255)
     confirmed_at = DateTimeField()
     roles = ListField(ReferenceField(Role), default=[])
