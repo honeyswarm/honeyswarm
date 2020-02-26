@@ -173,8 +173,8 @@ def hive_test():
                 job = PepperJobs(
                     hive=hive,
                     job_id=job_id,
-                    job_short="Apply State",
-                    job_description="Apply {0} state to Hive {1}".format('docker/docker_linux', hive_id)
+                    job_short="Apply Frame state",
+                    job_description="Apply {0} frame state to Hive {1}".format(frame.name, hive_id)
                 )
                 job.save()
 
