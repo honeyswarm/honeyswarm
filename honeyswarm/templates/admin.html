@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% set active_page = "admin" %}
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col">
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">User Accounts</h4>
+          <table class="table table-bordered table-sm table-hover table-striped">
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Active</th>
+                <th scope="col">Roles</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr id="row-{{user['id']}}">
+                <th scope="row">{{user['name']}}</th>
+                <td>{{user['email']}}</td>
+                <td>{{user['active']}}</td>
+                <td>
+                    <select multiple class="form-control" id="user_roles">
+                      {% for role in roles %}
+                      <option value="role-{{role['id']}}" {% if role['name'] in user['roles']|userroles %}selected{% endif %}>{{role['name']}}</option>
+                      {% endfor %}
+                    </select>
+                </td>
+                <td>
+                  <select class="form-control job_action" id="regActions" data-jobId="{{user['id']}}">
+                    <option value="select">Select</option>
+                    <option value="poll">Delete</option>
+                    {% if user['active'] %}
+                    <option value="deactivate">Deactivate</option>
+                    {% else %}
+                    <option value="activate">Activate</option>
+                    {% endif %}
+                    <option value="delete">Set Password</option>
+                  </select>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">Roles</h4>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm table-hover table-striped">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Actions</th>
+                  
+                </tr>
+              </thead>
+              <tbody>
+                {% for role in roles %}
+                <tr id="row-{{role['id']}}">
+                  <th scope="row">{{role['name']}}</th>
+                  <td>{{role['description']}}</td>                  <td>
+                    <select class="form-control job_action" id="regActions" data-jobId="{{role['id']}}">
+                      <option value="select">Select</option>
+                      <option value="poll">Delete</option>
+                    </select>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">HPFeeds Auth Keys</h4>
+          <div class="table-responsive">
+            <table class="table table-bordered table-sm table-hover table-striped">
+              <thead class="thead-dark">
+                <tr>
+                  <th scope="col">Identifier</th>
+                  <th scope="col">Secret</th>
+                  <th scope="col">Publish</th>
+                  <th scope="col">Subscribe</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key in auth_keys %}
+                <tr id="row-{{key['id']}}">
+                  <td scope="col">{{key['identifier']}}</td>
+                  <td scope="col">{{key['secret']}}</td>
+                  <td scope="col">{{key['publish']}}</td>
+                  <th scope="col">{{key['subscribe']}}</td>
+                  <td scope="col">
+                    <select class="form-control job_action" id="regActions" data-jobId="{{key['id']}}">
+                      <option value="select">Select</option>
+                      <option value="poll">Delete</option>
+                    </select>
+                  </td>
+
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+<script>
+
+
+let notificationCount = 0;
+
+$( ".job_action" ).change(function() {
+  let hive_id = this.getAttribute("data-jobId");
+  let hive_action = this.value;
+  console.log(this)
+
+
+  // Ignore select
+  if (hive_action == "select"){
+    return
+  }
+
+  console.log("Running action "+ hive_action + " for Hive " + hive_id);
+
+
+  let post_params = { hive_id: hive_id };
+  let post_url = "/hives/actions/"+hive_action;
+
+  $.post( post_url, post_params)
+  .done(function( data ) {
+    console.log( "Data Loaded: " + data );
+    if (data['success']){
+
+      // Add notification
+      alert_notify('alert-success', 'Job Updated', 'Job ID: '+data['message'] )
+      if (data['job_complete']){
+        location.reload();
+      }
+
+    } else {
+      alert_notify('alert-danger', 'Error', data['message'] )
+    }
+
+
+
+  })
+  .fail(function() {
+    alert_notify('alert-danger', 'Error', 'Something went wrong' )
+  });
+
+
+  // reset the dropdown
+  $(this).val('select')
+
+  });
+
+
+function add_notification(textClass, text){
+  notificationCount ++;
+  let notification = `<a class="dropdown-item ${textClass}" href="#">${text}</a>`;
+  $('#notification-dropdown').append(notification);
+  $('#notification-count').html(notificationCount);
+}
+
+
+
+</script>
+
+
+</div>
+
+{% endblock %}

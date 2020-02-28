@@ -109,6 +109,12 @@
         </li>
         {% endif %}
         {% if current_user.is_authenticated %}
+
+        {% if current_user.has_role('admin') %}
+        <li class="nav-item" {% if active_page  == 'admin' %}active{% endif%}>
+          <a class="nav-link" href="{{ url_for('admin.admin_page') }}">Admin</a>
+        </li>
+        {% endif %}
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
         </li>

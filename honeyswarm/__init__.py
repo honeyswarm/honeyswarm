@@ -125,6 +125,7 @@ app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
 
 # Import the Blueprints after the app has loaded else we get import errors. 
 from honeyswarm.saltapi import pepper_api
+from honeyswarm.admin import admin
 from honeyswarm.auth import auth
 from honeyswarm.hives import hives
 from honeyswarm.jobs import jobs
@@ -132,6 +133,7 @@ from honeyswarm.honeypots import honeypots
 from honeyswarm.frames import frames
 
 # Register the Blueprints
+app.register_blueprint(admin)
 app.register_blueprint(auth)
 app.register_blueprint(hives)
 app.register_blueprint(jobs)
@@ -157,6 +159,11 @@ def format_prettyjson(json_string):
                         indent=4, separators=(',', ': '))
 
     return pretty_json
+
+@app.template_filter('userroles')
+def format_prettyjson(userroles):
+
+    return [x.name for x in userroles]
 
 @app.route('/')
 def index():
