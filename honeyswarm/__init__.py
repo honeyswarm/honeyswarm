@@ -39,8 +39,7 @@ MONGODB_SETTINGS = [{
         os.environ.get("MONGODB_PORT"),
         os.environ.get("MONGODB_DATABASE"),
         os.environ.get("MONGODB_AUTH_SOURCE")
-    ),
-    "alias": "honeyswarm_db"
+    )
 },{
     "host" : "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
         os.environ.get("MONGODB_USERNAME"),
