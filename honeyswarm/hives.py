@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_security import login_required
 from flask_security.core import current_user
 from flask_security.decorators import roles_accepted
-from honeyswarm.models import Hive, PepperJobs, Frame
+from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents
 
 
 hives = Blueprint('hives', __name__)
@@ -31,6 +31,9 @@ def hives_list():
             hive.registered = True
         if str(hive.id) in key_list['minions_pre']:
             hive.registered = False
+
+        hive.event_count = HoneypotEvents.objects(payload__sensor=str(hive.id)).count()
+
         hive.save()
 
     return render_template(

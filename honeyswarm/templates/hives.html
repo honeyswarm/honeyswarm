@@ -18,7 +18,7 @@
                 <th scope="col">Created</th>
                 <th scope="col">Last Seen</th>
                 <th scope="col">Frame</th>
-                <th scope="col">Honeypot Count</th>
+                <th scope="col">Honeypot / Event Count</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -32,7 +32,7 @@
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
                 <td>{{hive['frame']['name'] or '<a href="/frames">Show Frames</a>' | safe}}</td>
-                <td>{{hive['honeypots'] | length}}</td>
+                <td>{{hive['honeypots'] | length}} / {{hive.event_count}}</td>
                 <td>
                   <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
                     <option value="select">Select</option>
