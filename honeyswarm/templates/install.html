@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active_page = "index" %}
+{% block content %}
+
+
+<div class="row vh-100">
+  <div class="col-6 h-75 mx-auto my-auto ">
+      <h1 class="title text-center">
+        Welcome To HoneySwarm
+      </h1>
+      <h4 class="subtitle text-center">
+        Lets get a couple of things set up for you. 
+      </h4>
+
+
+      <form class="mt-3" method="POST">
+        <div class="card">
+          <div class="card-body">
+
+
+            <div class="alert alert-warning" role="alert">
+              Currently Docker Compose is the only supported installation method. Please check all the base settings in the honeyswarm.env file before proceding. 
+            </div>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+    
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Sorry!</strong> {{ messages[0] }}.
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+    
+            {% endif %}
+            {% endwith %}
+
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="adminEmail">Admin Email</label>
+                <input type="email" name="adminEmail" class="form-control" id="adminEmail" placeholder="Email">
+              </div>
+              <div class="form-group col-md-6">
+                <label for="adminName">Name</label>
+                <input class="form-control" type="text" name="adminName" placeholder="Name">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="adminPassword1">Password</label>
+                <input type="password" class="form-control" name="adminPassword1" id="adminPassword1" placeholder="Password">
+              </div>
+              <div class="form-group col-md-6">
+                <label for="adminPassword2">Confirm Password</label>
+                <input type="password" class="form-control" name="adminPassword2" id="adminPassword2" placeholder="Confirm Password">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Install</button>
+
+          </div>
+        </div>
+      </form>
+
+
+  </div>
+</div>
+
+
+
+
+
+{% endblock %}

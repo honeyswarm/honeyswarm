@@ -5,10 +5,10 @@ import pytz
 from datetime import datetime
 
 import flaskcode
-from flask import Flask, Blueprint, render_template, abort, request, g, jsonify, send_file, session, url_for, flash
+from flask import Flask, Blueprint, render_template, abort, request, g, jsonify, send_file, session, url_for, flash, redirect
 from flask_mongoengine import MongoEngine
 from werkzeug.middleware.proxy_fix import ProxyFix
-from honeyswarm.models import User, Role, PepperJobs, Hive
+from honeyswarm.models import User, Role, PepperJobs, Hive, Frame, Honeypot
 from honeyswarm.saltapi import PepperApi
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -125,6 +125,7 @@ app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
 # Import the Blueprints after the app has loaded else we get import errors. 
 from honeyswarm.saltapi import pepper_api
 from honeyswarm.admin import admin
+from honeyswarm.installer import installer
 from honeyswarm.auth import auth
 from honeyswarm.hives import hives
 from honeyswarm.jobs import jobs
@@ -139,6 +140,16 @@ app.register_blueprint(jobs)
 app.register_blueprint(honeypots)
 app.register_blueprint(frames)
 
+# Only show installer pages if we have no users
+try:
+    app.config['installed'] = False
+    user_count = User.objects.count()
+    if user_count > 0:
+        app.config['installed'] = True
+    else:
+        app.register_blueprint(installer)
+except:
+    app.config['installed'] = False
 
 
 # Filters
@@ -160,7 +171,7 @@ def format_prettyjson(json_string):
     return pretty_json
 
 @app.template_filter('userroles')
-def format_prettyjson(userroles):
+def format_userroles(userroles):
 
     return [x.name for x in userroles]
 
@@ -172,3 +183,4 @@ def index():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html', name='kev')
+
