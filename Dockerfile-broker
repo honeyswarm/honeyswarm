@@ -1,8 +1,0 @@
-# Just till the upstream gets fixed
-FROM hpfeeds/hpfeeds-broker
-
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
-RUN chmod +x /wait
-RUN /app/bin/pip install motor
-
-CMD /wait && /app/bin/hpfeeds-broker --endpoint=tcp:port=10000 --exporter=0.0.0.0:9431 --auth="mongodb://admin:admin@mongoserver:27017/hpfeeds"
