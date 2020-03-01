@@ -7,9 +7,7 @@ services:
     env_file:
       - honeyswarm_dev.env
     ports:
-      - "80:80"
-      - "8181:8181"
-      - "8282:8282"
+      - "8080:8080"
     networks:
       honeynet:
         ipv4_address: 10.1.0.101
@@ -42,7 +40,7 @@ services:
         ipv4_address: 10.1.0.103
     volumes:
       - "honeyswarmPKI:/etc/salt/pki:rw"
-      - "honeyswarmStates:/srv:rw"
+      - "honeyswarmStates:/srv/salt:rw"
   hpfeeds-broker:
     image: honeyswarm/honeyswarm_broker
     container_name: hpfeeds
