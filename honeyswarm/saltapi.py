@@ -13,22 +13,16 @@ class PepperApi():
 
 
     def api_auth(self):
-        print("Pepper Auth")
-        self.api.login(os.environ.get("SALT_USERNAME"), os.environ.get("SALT_SHARED_SECRET"), 'sharedsecret')
-        self.authenticated = True
-
-
-    def salt_ping(self, targets):
         try:
-            api_response = self.api.low([{'client': 'local', 'tgt': targets, 'fun': 'test.ping'}])
-            responses = api_response['return']
-            return responses
+            print("Pepper Auth")
+            self.api.login(os.environ.get("SALT_USERNAME"), os.environ.get("SALT_SHARED_SECRET"), 'sharedsecret')
+            self.authenticated = True
         except PepperException as p:
-            if p == 'Authentication denied':
-                self.api_auth()
-        except Exception as err:
-            print(err)
-            return []
+            print(p)
+            self.authenticated = False
+        except Exception as e:
+            self.authenticated = False
+
 
     def salt_keys(self):
         """
@@ -109,15 +103,14 @@ class PepperApi():
                 return None
             else:
                 return api_response['return'][0]
+            print("hello")
         except PepperException as p:
+            self.authenticated = False
+            print(p)
             if p == 'Authentication denied':
                 self.api_auth()
         except Exception as err:
             print(err)
         return None
-
-        
-
-        
 
 pepper_api = PepperApi()
