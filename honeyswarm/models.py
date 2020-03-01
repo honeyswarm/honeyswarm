@@ -35,6 +35,7 @@ class Honeypot(Document):
     description = StringField()
     pillar = ListField()
     hpfeeds = ReferenceField(AuthKey)
+    channels = ListField()
 
 class Hive(Document):
     name = StringField(unique=True)
