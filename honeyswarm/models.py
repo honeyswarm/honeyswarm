@@ -1,4 +1,4 @@
-from mongoengine import Document, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
+from mongoengine import Document, DynamicDocument, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 
@@ -11,6 +11,15 @@ class AuthKey(Document):
     secret = StringField()
     publish = ListField(default=[])
     subscribe = ListField(default=[])
+
+class HoneypotEvents(Document):
+
+    meta = {
+        'db_alias': 'hpfeeds_db'
+    }
+    channel = StringField()
+    ident = StringField()
+    payload = DictField()
 
 class Frame(Document):
     name = StringField(unique=True)
@@ -36,6 +45,7 @@ class Hive(Document):
     grains = DictField(default={'osfullname': 'Not Polled', 'ipv4':[]})
     honeypots = ListField(ReferenceField(Honeypot), default=[])
     frame = ReferenceField(Frame)
+    event_count = IntField(default=0)
 
 class PepperJobs(Document):
     job_id = StringField()
