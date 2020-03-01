@@ -24,11 +24,6 @@ def admin_page():
     # Roles
     roles = Role.objects
 
-    for user in users:
-        for role in roles:
-            print(role.id, user.roles)
-            print(role.id in [x.id for x in user.roles])
-
     # AuthKeys
     auth_keys = AuthKey.objects
 
