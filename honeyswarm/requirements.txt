@@ -9,6 +9,4 @@ pytz
 flaskcode
 APScheduler
 bcrypt
-
-# Use my hpfeeds till its is merged upstream
-git+git://github.com/kevthehermit/hpfeeds.git@mongo-auth#egg=hpfeeds
+hpfeeds3
