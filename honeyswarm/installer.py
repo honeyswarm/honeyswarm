@@ -5,7 +5,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from honeyswarm.models import User, Role, Frame, Honeypot
+from honeyswarm.models import User, Role, Frame, Honeypot, AuthKey
 from flask_security.utils import encrypt_password
 
 from honeyswarm import user_datastore
@@ -62,7 +62,7 @@ def base_install():
         user_datastore.create_role(name="deploy", description="Can deploy honeypots and frames")
     except Exception as err:
         flash('Error creating roles: {0}'.format(err))
-        return redirect(url_for('base_install'))
+        return redirect(url_for('installer.base_install'))
 
     # Create admin account from submitted details.
     try:
@@ -78,22 +78,30 @@ def base_install():
                 )
         else:
             flash('No details provided')
-            return redirect(url_for('base_install'))
+            return redirect(url_for('installer.base_install'))
 
         admin_role = user_datastore.find_role('admin')
         user_datastore.add_role_to_user(new_admin, admin_role)
 
     except Exception as err:
         flash('Error creating admin user: {0}'.format(err))
-        return redirect(url_for('base_install'))
+        return redirect(url_for('installer.base_install'))
 
+
+    # Create Master HPFeeds for the broker
+    hpfeeds_subscriber = AuthKey(
+        identifier=os.environ.get('BROKER_IDENT', 'honeyswarm'),
+        secret=os.environ.get('BROKER_SECRET', 'honeyswarm'),
+        publish=[],
+        subscribe=[]
+    )
 
     # Fetch and write all the states to the correct path
     try:
         install_states(SALT_STATE_BASE)
     except Exception as err:
         flash('Error installing base states: {0}'.format(err))
-        return redirect(url_for('base_install'))
+        return redirect(url_for('installer.base_install'))
 
     # Add Frames
     try:
@@ -108,7 +116,7 @@ def base_install():
             os.rename(os.path.join(frame_path, frame), os.path.join(frame_path, frame_id))
     except Exception as err:
         flash('Error creating frames: {0}'.format(err))
-        return redirect(url_for('base_install'))
+        return redirect(url_for('installer.base_install'))
 
 
     # Add honeypots
@@ -121,9 +129,29 @@ def base_install():
                 new_honeypot = Honeypot(**state_config)
                 new_honeypot.save()
                 honeypot_id = str(new_honeypot.id)
+                channels = state_config['channels']
             os.rename(os.path.join(honeypot_path, honeypot), os.path.join(honeypot_path, honeypot_id))
+            for channel in channels:
+                hpfeeds_subscriber.subscribe.append(channel)
+
+            # Authkey for honeypot
+            honey_auth = AuthKey(
+                identifier=honeypot_id,
+                secret=honeypot_id,
+                subscribe=[],
+                publish=channels
+            )
+            honey_auth.save()
+            new_honeypot.hpfeeds = honey_auth
+            # Second save to write the authkey
+            new_honeypot.save()
+
+
     except Exception as err:
         flash('Error creating honeypots: {0}'.format(err))
-        return redirect(url_for('base_install'))
+        return redirect(url_for('installer.base_install'))
+
+    # The master subscriber should now have all our channels so save it
+    hpfeeds_subscriber.save()
 
     return redirect(url_for('index'))
