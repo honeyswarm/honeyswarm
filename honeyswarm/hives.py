@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_security import login_required
 from flask_security.core import current_user
 from flask_security.decorators import roles_accepted
-from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents
+from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents, Config
 
 
 hives = Blueprint('hives', __name__)
@@ -24,6 +24,10 @@ def hives_list():
     hive_list = Hive.objects
     frame_list = Frame.objects
 
+    config = Config.objects.first()
+    honeyswarm_host = config.honeyswarm_host
+    honeyswarm_api = config.honeyswarm_api
+
     key_list = pepper_api.salt_keys()
 
     for hive in hive_list:
@@ -34,11 +38,13 @@ def hives_list():
 
         hive.event_count = HoneypotEvents.objects(payload__sensor=str(hive.id)).count()
 
+
         hive.save()
 
     return render_template(
         "hives.html",
-        apitoken=APITOKEN,
+        honeyswarm_api=honeyswarm_api,
+        honeyswarm_host=honeyswarm_host,
         hive_list=hive_list,
         key_list=key_list['minions_pre'],
         frame_list=frame_list
@@ -265,10 +271,15 @@ def hive_actions():
 @hives.route('/api/hive/register/<operating_system>')
 def hives_register(operating_system):
     authenticated = False
+
+    config = Config.objects.first()
+    honeyswarm_api = config.honeyswarm_api
+    honeyswarm_host = config.honeyswarm_host
+
     # Check for the deployment token
     if 'Authorization' in request.headers:
         auth_token = request.headers['Authorization']
-        if auth_token == APITOKEN:
+        if auth_token == honeyswarm_api:
             authenticated = True
     else:
         abort(403)
@@ -297,6 +308,6 @@ def hives_register(operating_system):
     # Return the Installation Script
     return render_template(
         registration_template,
-        honeyswarm_host=HONEYSWARM_HOST,
+        honeyswarm_host=honeyswarm_host,
         salt_minion_id=salt_id
     )

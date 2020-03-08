@@ -154,10 +154,10 @@
         </ul>
         <h4>Initialise a hive</h4>
         <p>The first step is to initialise the Hive Host. We do this by installing a Salt Minion with some custom parameters. You can use the follwing examples to init a Linux or Windows Host</p>
-        <p><code>curl -H "Authorization: {{apitoken}}" {{ url_for('hives.hives_register', operating_system="linux", _external=True) }} | sudo sh</code></p>
+        <p><code>curl -H "Authorization: {{honeyswarm_api}}" {{ url_for('hives.hives_register', operating_system="linux", _external=True) }} | sudo sh</code></p>
   
         <p><code>
-          powershell -nop -c "Invoke-Expression -Command (Invoke-WebRequest -Headers @{'Authorization'='{{apitoken}}'} -Uri '{{ url_for('hives.hives_register', operating_system="windows", _external=True) }}' -UseBasicParsing).Content"
+          powershell -nop -c "Invoke-Expression -Command (Invoke-WebRequest -Headers @{'Authorization'='{{honeyswarm_api}}'} -Uri '{{ url_for('hives.hives_register', operating_system="windows", _external=True) }}' -UseBasicParsing).Content"
         </code></p>
 
 

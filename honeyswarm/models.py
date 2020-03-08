@@ -14,6 +14,7 @@ class AuthKey(Document):
 
 class Config(Document):
     honeyswarm_host = StringField()
+    honeyswarm_api = StringField()
     broker_host = StringField()
 
 class HoneypotEvents(Document):

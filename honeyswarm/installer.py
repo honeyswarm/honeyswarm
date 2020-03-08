@@ -105,6 +105,7 @@ def base_install():
 
     master_config.honeyswarm_host = request.form.get('honeyHost')
     master_config.broker_host = request.form.get("brokerHost")
+    master_config.honeyswarm_api = request.form.get("honeyAPI")
 
     master_config.save()
 
