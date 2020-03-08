@@ -131,6 +131,7 @@ from honeyswarm.hives import hives
 from honeyswarm.jobs import jobs
 from honeyswarm.honeypots import honeypots
 from honeyswarm.frames import frames
+from honeyswarm.events import events
 
 # Register the Blueprints
 app.register_blueprint(admin)
@@ -139,6 +140,7 @@ app.register_blueprint(hives)
 app.register_blueprint(jobs)
 app.register_blueprint(honeypots)
 app.register_blueprint(frames)
+app.register_blueprint(events)
 
 # Only show installer pages if we have no users
 try:

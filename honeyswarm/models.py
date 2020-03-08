@@ -1,4 +1,6 @@
-from mongoengine import Document, DynamicDocument, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
+
+from flask_mongoengine import Document
+from mongoengine import DynamicDocument, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 

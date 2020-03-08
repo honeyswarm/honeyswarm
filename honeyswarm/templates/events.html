@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% set active_page = "events" %}
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col">
+      <div class="row">
+        <div class="col">
+          <h4 class="text-warning">Events</h4>
+          <table id="eventstream" class="table table-bordered table-sm table-hover table-striped">
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">Channel</th>
+                <th scope="col">Ident</th>
+                <th scope="col">Sensor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th></th>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+
+
+
+
+
+    </div>
+  </div>
+
+<script>
+
+
+let notificationCount = 0;
+
+$(document).ready(function() {
+    $('#eventstream').DataTable( {
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "/events/paginate",
+            "type": "POST"
+        },
+    } );
+} );
+</script>
+
+
+</div>
+
+{% endblock %}
