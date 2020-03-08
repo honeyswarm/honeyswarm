@@ -8,7 +8,7 @@ from flask import render_template, abort, jsonify, send_file, g, request
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey
+from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config
 
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 
@@ -190,8 +190,6 @@ def update_honeypot(honeypot_id):
                 honeyswarm_subscriber.subscribe.append(channel)
         honeyswarm_subscriber.save()
 
-
-
     json_response['success'] = True
 
     return jsonify(json_response)
@@ -294,12 +292,15 @@ def honeypot_deploy(honeypot_id):
     if not hive:
         json_response['message'] = "Can not find Hive"
 
+    base_config = Config.objects.first()
+
     config_pillar = { 
         "HIVEID": hive_id,
         "OBJECTID": honeypot_id,
         "HPFIDENT": hive_id,
         "HPFSECRET": hive_id,
-        "HPFPORT": 10000
+        "HPFPORT": 10000,
+        "HPFSERVER": base_config.broker_host
     }
 
     # Now add any Pillar States
