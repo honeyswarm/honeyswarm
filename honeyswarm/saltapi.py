@@ -17,9 +17,6 @@ class PepperApi():
             print("Pepper Auth")
             self.api.login(os.environ.get("SALT_USERNAME"), os.environ.get("SALT_SHARED_SECRET"), 'sharedsecret')
             self.authenticated = True
-        except PepperException as p:
-            print(p)
-            self.authenticated = False
         except Exception as e:
             self.authenticated = False
 
@@ -83,7 +80,6 @@ class PepperApi():
             str: Salt Job ID 
         """
         api_reponse = self.api.low([{'client': 'local_async', 'tgt': target, 'fun': "state.apply", 'arg': args_list}])
-        print(api_reponse)
         return api_reponse['return'][0]['jid']
 
     def lookup_job(self, job_id):
@@ -97,18 +93,13 @@ class PepperApi():
             dict/None: Return None if job still pending else dictionary of all state modules and their outputs.  
         """
         # This is lazy but as this job runs frequently use it to check auth state
+        self.api_auth()
         try:
             api_response = self.api.lookup_jid(job_id)
             if len(api_response['return'][0]) == 0:
                 return None
             else:
                 return api_response['return'][0]
-            print("hello")
-        except PepperException as p:
-            self.authenticated = False
-            print(p)
-            if p == 'Authentication denied':
-                self.api_auth()
         except Exception as err:
             print(err)
         return None
