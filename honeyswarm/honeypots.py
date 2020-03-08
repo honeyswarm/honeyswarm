@@ -297,8 +297,8 @@ def honeypot_deploy(honeypot_id):
     config_pillar = { 
         "HIVEID": hive_id,
         "OBJECTID": honeypot_id,
-        "HPFIDENT": hive_id,
-        "HPFSECRET": hive_id,
+        "HPFIDENT": honeypot_id,
+        "HPFSECRET": honeypot_id,
         "HPFPORT": 10000,
         "HPFSERVER": base_config.broker_host
     }
