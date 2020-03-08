@@ -12,6 +12,10 @@ class AuthKey(Document):
     publish = ListField(default=[])
     subscribe = ListField(default=[])
 
+class Config(Document):
+    honeyswarm_host = StringField()
+    broker_host = StringField()
+
 class HoneypotEvents(Document):
 
     meta = {

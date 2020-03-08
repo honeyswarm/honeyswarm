@@ -5,7 +5,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from honeyswarm.models import User, Role, Frame, Honeypot, AuthKey
+from honeyswarm.models import User, Role, Frame, Honeypot, AuthKey, Config
 from flask_security.utils import encrypt_password
 
 from honeyswarm import user_datastore
@@ -90,11 +90,23 @@ def base_install():
 
     # Create Master HPFeeds for the broker
     hpfeeds_subscriber = AuthKey(
-        identifier=os.environ.get('BROKER_IDENT', 'honeyswarm'),
-        secret=os.environ.get('BROKER_SECRET', 'honeyswarm'),
+        identifier="honeyswarm",
+        secret=request.form.get('brokerSecret'),
         publish=[],
         subscribe=[]
     )
+
+    # A Small Config
+    configs = Config.objects
+    if len(configs) > 0:
+        master_config = Config.objects.first()
+    else:
+        master_config = Config()
+
+    master_config.honeyswarm_host = request.form.get('honeyHost')
+    master_config.broker_host = request.form.get("brokerHost")
+
+    master_config.save()
 
     # Fetch and write all the states to the correct path
     try:
