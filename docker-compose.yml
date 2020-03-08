@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - honeyswarm_dev.env
+      - honeyswarm.env
     ports:
       - "8080:8080"
     networks:
@@ -19,7 +19,7 @@ services:
   mongoserver:
     image: mongo:latest
     env_file:
-      - honeyswarm_dev.env
+      - honeyswarm.env
     ports:
       - '27017:27017'
     networks:
@@ -30,7 +30,7 @@ services:
   saltmaster:
     image: "saltstack/salt:latest"
     env_file:
-      - honeyswarm_dev.env
+      - honeyswarm.env
     ports:
       - "8000:8000"
       - "4505:4505"
@@ -50,7 +50,7 @@ services:
       honeynet:
         ipv4_address: 10.1.0.104
     env_file:
-      - honeyswarm_dev.env
+      - honeyswarm.env
     depends_on: 
       - mongoserver
 
