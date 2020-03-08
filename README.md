@@ -1,7 +1,9 @@
 # honeyswarm
 HoneyPot Orchestration
 
+# What is it?
 
+![Image description](HoneySwarm.png)
 
 # Install
 
