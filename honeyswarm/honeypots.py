@@ -296,7 +296,10 @@ def honeypot_deploy(honeypot_id):
 
     config_pillar = { 
         "HIVEID": hive_id,
-        "OBJECTID": honeypot_id 
+        "OBJECTID": honeypot_id,
+        "HPFIDENT": hive_id,
+        "HPFSECRET": hive_id,
+        "HPFPORT": 10000
     }
 
     # Now add any Pillar States
