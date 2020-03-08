@@ -76,6 +76,9 @@
         <li class="nav-item {% if active_page  == 'jobs' %}active{% endif%}">
           <a class="nav-link" href="{{ url_for('jobs.jobs_list') }}">Jobs</a>
         </li>
+        <li class="nav-item {% if active_page  == 'events' %}active{% endif%}">
+          <a class="nav-link" href="{{ url_for('events.events_page') }}">Events</a>
+        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
