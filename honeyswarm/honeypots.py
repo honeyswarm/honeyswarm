@@ -45,9 +45,12 @@ def create_honeypot():
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
         new_honeypot.honeypot_state_file = request.form.get('honeypot_state_file')
-        
 
+        # We need to save here to get the ID then carry on updating
+        new_honeypot.save()
         honeypot_id = new_honeypot.id
+
+        # Add a default state file so that we have something to edit. 
         state_path = os.path.join(SALT_STATE_BASE, 'honeypots', str(honeypot_id))
         state_name = "{0}.sls".format(new_honeypot.honeypot_state_file)
         state_file_path = os.path.join(state_path, state_name)
@@ -55,11 +58,9 @@ def create_honeypot():
             os.mkdir(state_path)
             os.mknod(state_file_path)
             os.chmod(state_file_path, 0o777)
-
+            
 
         # Create an HPFeeds Publish only key
-
-        print(request.form.get('honeypot_channels'))
         channel_list = request.form.get('honeypot_channels').split('/r/n')
 
         new_key = AuthKey(
@@ -72,7 +73,15 @@ def create_honeypot():
         new_honeypot.hpfeeds = new_key
         new_honeypot.save()
 
+        #ToDo: Add the key to the approved subscribers
 
+        sub_key = AuthKey.objects(identifier="honeyswarm").first()
+        for channel in channel_list:
+            if channel not in sub_key.subscribe:
+                sub_key.subscribe.append(channel)
+        sub_key.save()
+
+        
         json_response['success'] = True
         json_response['message'] = "Honypot Created"
 
