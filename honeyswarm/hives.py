@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_security import login_required
 from flask_security.core import current_user
 from flask_security.decorators import roles_accepted
-from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents, Config
+from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents, Config, AuthKey
 
 
 hives = Blueprint('hives', __name__)
@@ -201,69 +201,17 @@ def hive_test():
 @hives.route('/hives/actions', methods=["POST", "GET"])
 @login_required
 def hive_actions():
-    if request.method == "POST":
-        form_vars = request.form.to_dict()
-
-        json_response = {"success": False}
-
-        if 'action' not in form_vars and 'hive_id' not in form_vars:
-            json_response['message'] = "Missing Hive ID or Action"
-        
-        else:
-            hive_action = form_vars['action']
-            hive_id = form_vars['hive_id']
-
-            ##
-            # Add hive to swarm - Approve the key and poll
-            ##
-            if hive_action == 'swarm':
-                pass
-
-            ##
-            # Poll the hive to update its grains
-            ##
-            elif hive_action == 'poll':
-                pass
-
-
-            elif hive_action == 'edit':
-                pass
-
-            ##
-            # Can we trigger a hive restart
-            ##
-            elif hive_action == 'restart':
-                # Windows triggers a 5 minute warning for restart
-                try:
-                    pepper_api.run_client_function(hive_id, 'system.reboot')
-                except Exception as err:
-                    json_response['message'] = "Missing Hive ID or Action"
-
-
-
-            ##
-            # Frames
-            ##
-            elif hive_action == 'frame':
-                # Update the hive now
-
-
-                # Trigger the base stats sls
-                print("adding job")
-                new_job = PepperJobs(
-                    job_short="Install Base State",
-                    job_description="salt '' state.apply docker/docker_linux",
-                    hive=hive
-                )
-
-                job_id = pepper_api.apply_state(hive_id, 'docker/docker_linux')
-
-                new_job.job_id = job_id
-                new_job.save()
-
-                print(job_id)
-
-        return jsonify(json_response)
+    print("Deprecated, jsut here till i move it")
+    ##
+    # Can we trigger a hive restart
+    ##
+    hive_action == 'restart':
+    # Windows triggers a 5 minute warning for restart
+    try:
+        pepper_api.run_client_function(hive_id, 'system.reboot')
+    except Exception as err:
+        json_response['message'] = "Missing Hive ID or Action"
+    return jsonify(json_response)
 
 
 
@@ -295,7 +243,19 @@ def hives_register(operating_system):
     )
 
     new_hive.save()
-    salt_id = new_hive.id
+    hive_id = str(new_hive.id)
+
+    # Create an authkey for the broker
+    new_key = AuthKey(
+        identifier=hive_id,
+        secret=hive_id
+    )
+    new_key.save()
+
+    new_hive.hpfeeds = new_key
+    new_hive.save()
+
+    salt_id = hive_id
 
     if operating_system == "windows":
         registration_template = "hive_registration.ps1"
