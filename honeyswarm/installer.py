@@ -147,16 +147,6 @@ def base_install():
             for channel in channels:
                 hpfeeds_subscriber.subscribe.append(channel)
 
-            # Authkey for honeypot
-            honey_auth = AuthKey(
-                identifier=honeypot_id,
-                secret=honeypot_id,
-                subscribe=[],
-                publish=channels
-            )
-            honey_auth.save()
-            new_honeypot.hpfeeds = honey_auth
-            # Second save to write the authkey
             new_honeypot.save()
 
 

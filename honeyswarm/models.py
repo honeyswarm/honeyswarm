@@ -1,6 +1,7 @@
 
 from flask_mongoengine import Document
-from mongoengine import DynamicDocument, ReferenceField, ObjectIdField, BooleanField, StringField, IntField, DictField, DateTimeField, ListField
+from mongoengine import ReferenceField, BooleanField, StringField, IntField, \
+    DictField, DateTimeField, ListField
 from datetime import datetime
 from flask_security import UserMixin, RoleMixin
 
@@ -14,19 +15,25 @@ class AuthKey(Document):
     publish = ListField(default=[])
     subscribe = ListField(default=[])
 
+
 class Config(Document):
     honeyswarm_host = StringField()
     honeyswarm_api = StringField()
     broker_host = StringField()
+
 
 class HoneypotEvents(Document):
 
     meta = {
         'db_alias': 'hpfeeds_db'
     }
+    service = StringField()
+    port = IntField()
+    honeypot_type = StringField()
     channel = StringField()
-    ident = StringField()
     payload = DictField()
+    honeypot_instance_id = StringField()
+
 
 class Frame(Document):
     name = StringField(unique=True)
@@ -35,14 +42,21 @@ class Frame(Document):
     frame_state_path = StringField()
     pillar = ListField()
 
+
 class Honeypot(Document):
     name = StringField(unique=True)
     honeypot_state_file = StringField()
     honey_type = StringField()
     description = StringField()
     pillar = ListField()
-    hpfeeds = ReferenceField(AuthKey)
     channels = ListField()
+
+
+class HoneypotInstance(Document):
+    honeypot = ReferenceField(Honeypot)
+    hpfeeds = ReferenceField(AuthKey)
+    pillar = DictField(default={})
+
 
 class Hive(Document):
     name = StringField(unique=True)
@@ -50,10 +64,11 @@ class Hive(Document):
     salt_alive = BooleanField()
     created_at = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField()
-    grains = DictField(default={'osfullname': 'Not Polled', 'ipv4':[]})
-    honeypots = ListField(ReferenceField(Honeypot), default=[])
+    grains = DictField(default={'osfullname': 'Not Polled', 'ipv4': []})
+    honeypots = ListField(ReferenceField(HoneypotInstance), default=[])
     frame = ReferenceField(Frame)
     event_count = IntField(default=0)
+
 
 class PepperJobs(Document):
     job_id = StringField()
@@ -66,11 +81,13 @@ class PepperJobs(Document):
     job_response = StringField()
     hive = ReferenceField(Hive)
 
+
 class Role(Document, RoleMixin):
     name = StringField(max_length=80, unique=True)
     description = StringField(max_length=255)
 
-class User(Document,UserMixin):
+
+class User(Document, UserMixin):
     email = StringField(unique=True)
     password = StringField()
     name = StringField()

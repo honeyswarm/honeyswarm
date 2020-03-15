@@ -8,7 +8,7 @@ from flask import render_template, abort, jsonify, send_file, g, request
 from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config
+from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config, HoneypotInstance
 
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 
@@ -60,20 +60,8 @@ def create_honeypot():
             os.chmod(state_file_path, 0o777)
             
 
-        # Create an HPFeeds Publish only key
+        # Add all channels to the master subscriber
         channel_list = request.form.get('honeypot_channels').split('/r/n')
-
-        new_key = AuthKey(
-            identifier=honeypot_id,
-            secret=honeypot_id,
-            publish=channel_list
-        )
-        new_key.save()
-
-        new_honeypot.hpfeeds = new_key
-        new_honeypot.save()
-
-        #ToDo: Add the key to the approved subscribers
 
         sub_key = AuthKey.objects(identifier="honeyswarm").first()
         for channel in channel_list:
@@ -81,7 +69,6 @@ def create_honeypot():
                 sub_key.subscribe.append(channel)
         sub_key.save()
 
-        
         json_response['success'] = True
         json_response['message'] = "Honypot Created"
 
@@ -105,7 +92,6 @@ def show_honeypot(honeypot_id):
     honeypotname = honeypot_details.name
     # Lets hack in flask code.
     honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
-    #honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots')
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
@@ -120,11 +106,6 @@ def show_honeypot(honeypot_id):
             'children': dtree['children']
         }]
     )
-
-    #print(new_tree)
-
-    #for k, v in new_tree.items():
-    #    print(k,v)
 
     return render_template(
         'flaskcode/honeypot_editor.html',
@@ -156,7 +137,6 @@ def update_honeypot(honeypot_id):
     # Now add any Pillar States
     pillar_states = []
     for field in form_vars.items():
-        print(field)
         if field[0].startswith('pillar-key'):
             key_id = field[0].split('-')[-1]
             key_name = field[1]
@@ -170,27 +150,9 @@ def update_honeypot(honeypot_id):
     honeypot_details.pillar = pillar_states
 
 
-    # Update or Create an HPFeeds Key
-
-    print(request.form.get('honeypot_channels'))
+    # Update HoneySwarm HP Master Subscriber
     channel_list = request.form.get('honeypot_channels').split('\r\n')
 
-    if honeypot_details.hpfeeds:
-        honeypot_details.hpfeeds.publish = channel_list
-    else:
-
-        new_key = AuthKey(
-            identifier=honeypot_id,
-            secret=honeypot_id,
-            publish=channel_list
-        )
-        new_key.save()
-        honeypot_details.hpfeeds = new_key
-
-    honeypot_details.save()
-    honeypot_details.hpfeeds.save()
-
-    # Update HoneySwarm HP Master Subscriber
     honeyswarm_subscriber = AuthKey.objects(identifier="honeyswarm").first()
 
     if honeyswarm_subscriber:
@@ -294,25 +256,57 @@ def honeypot_deploy(honeypot_id):
 
     if not honeypot_details:
         json_response['message'] = "Can not find honeypot"
+        return jsonify(json_response)
 
     hive_id = request.form.get('target_hive')
 
     hive = Hive.objects(id=hive_id).first()
     if not hive:
         json_response['message'] = "Can not find Hive"
+        return jsonify(json_response)
 
+
+    # Does this hive have the correct frame installed
+    if not hive.frame:
+        json_response['message'] = "Can not find Hive"
+        return jsonify(json_response)
+
+    # Do we already have an instance of this honeypot type
+    honeypot_instance = None
+    for instance in hive.honeypots:
+        if instance.honeypot == honeypot_details:
+            honeypot_instance = instance
+
+    if not honeypot_instance:
+
+        # Create honeypot instance
+        honeypot_instance = HoneypotInstance(
+            honeypot = honeypot_details
+        )
+
+        honeypot_instance.save()
+        instance_id = str(honeypot_instance.id)
+
+        # Create an AuthKey
+        auth_key = AuthKey(
+            identifier=instance_id,
+            secret=instance_id,
+            publish=honeypot_details.channels
+        )
+        auth_key.save()
+
+    # Now add any Pillar States
     base_config = Config.objects.first()
-
     config_pillar = { 
         "HIVEID": hive_id,
-        "OBJECTID": honeypot_id,
-        "HPFIDENT": honeypot_id,
-        "HPFSECRET": honeypot_id,
+        "HONEYPOTID": honeypot_id,
+        "INSTANCEID": instance_id,
+        "HPFIDENT": instance_id,
+        "HPFSECRET": instance_id,
         "HPFPORT": 10000,
         "HPFSERVER": base_config.broker_host
     }
 
-    # Now add any Pillar States
     for field in form_vars.items():
         if field[0].startswith('pillar-key'):
             key_id = field[0].split('-')[-1]
@@ -322,6 +316,12 @@ def honeypot_deploy(honeypot_id):
                 continue
             config_pillar[key_name] = key_value
 
+    # update key / config and save again
+    honeypot_instance.hpfeeds = auth_key
+    honeypot_instance.pillar = config_pillar
+    honeypot_instance.save()
+
+    # Create the job
     honeypot_state_file = 'honeypots/{0}/{1}'.format(honeypot_details.id, honeypot_details.honeypot_state_file)
     pillar_string = ", ".join(('"{}": "{}"'.format(*i) for i in config_pillar.items()))
 
@@ -344,8 +344,8 @@ def honeypot_deploy(honeypot_id):
         )
         job.save()
 
-        if honeypot_details not in hive.honeypots:
-            hive.honeypots.append(honeypot_details)
+        if honeypot_instance not in hive.honeypots:
+            hive.honeypots.append(honeypot_instance)
 
         hive.save()
 

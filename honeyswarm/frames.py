@@ -217,7 +217,7 @@ def frame_deploy(frame_id):
 
     config_pillar = { 
         "HIVEID": hive_id,
-        "OBJECTID": frame_id 
+        "FRAMEID": frame_id 
     }
 
     # Now add any Pillar States
