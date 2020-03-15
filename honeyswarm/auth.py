@@ -25,8 +25,12 @@ def login_post():
     remember = True if request.form.get('remember') else False
 
     user = User.objects(email=email).first()
+
+
+    # ToDo: There is username enumeration here.
+
     # Check if enabled account
-    if not user.active:
+    if not user or not user.active:
         flash('This account has been disabled')
         return redirect(url_for('auth.login')) # if user doesn't exist or password is wrong, reload the page
 
