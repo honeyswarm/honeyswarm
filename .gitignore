@@ -135,3 +135,4 @@ dmypy.json
 dev/
 honeyswarm_dev.env
 honeyswarm.env
+.vscode/
