@@ -1,14 +1,8 @@
-import os
-import time
-from uuid import uuid4
-from datetime import datetime
+from bson import ObjectId
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
+from flask import Blueprint, render_template, request, jsonify
 from flask_security import login_required
-from flask_security.core import current_user
-from flask_security.decorators import roles_accepted
-from honeyswarm.models import Hive, HoneypotEvents, Config
-
+from honeyswarm.models import HoneypotEvents
 
 events = Blueprint('events', __name__)
 
@@ -23,14 +17,9 @@ def events_page():
         )
 
 
-
 @events.route('/events/paginate', methods=["POST"])
 @login_required
 def event_stream():
-
-    #for k, v in request.form.items():
-    #    print(k,v)
-
 
     draw = request.form.get("draw")
     start_offset = int(request.form.get("start"))
@@ -39,37 +28,41 @@ def event_stream():
     # Calculate the correct page number
     start_offset = start_offset + per_page
     start_page = int(start_offset / per_page)
-    
-    #print(start_offset, start_page, per_page)
 
-    events = HoneypotEvents.objects.paginate(page=start_page, per_page=per_page)
+    # print(start_offset, start_page, per_page)
+
+    events = HoneypotEvents.objects.paginate(
+        page=start_page,
+        per_page=per_page
+        )
     event_count = events.total
 
     # This should be how many matched a search. If no search then total rows
     filtered_records = event_count
-
 
     # Collect all the rows together
     data_rows = []
     for event in events.items:
         try:
             single_row = [
-                event["channel"],
-                event["ident"],
-                event["payload"]["sensor"]
+                "dtg",
+                event["service"],
+                event["port"],
+                event["honeypot_type"],
+                event["honeypot_instance_id"]
             ]
 
-            #print(event)
+            # print(event)
             data_rows.append(single_row)
-        except:
+        except Exception as err:
+            print(err)
             continue
-
 
     # Final Json to return
     json_results = {
         "draw": draw,
         "recordsTotal": event_count,
-        "recordsFiltered": event_count,
+        "recordsFiltered": filtered_records,
         "data": data_rows
     }
 
