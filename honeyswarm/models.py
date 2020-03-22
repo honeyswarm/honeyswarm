@@ -27,12 +27,14 @@ class HoneypotEvents(Document):
     meta = {
         'db_alias': 'hpfeeds_db'
     }
+    date = DateTimeField(default=datetime.utcnow)
     service = StringField()
     port = IntField()
     honeypot_type = StringField()
     channel = StringField()
     payload = DictField()
     honeypot_instance_id = StringField()
+    source_ip = StringField()
 
 
 class Frame(Document):

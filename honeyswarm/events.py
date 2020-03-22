@@ -21,6 +21,10 @@ def events_page():
 @login_required
 def event_stream():
 
+    # Used to check for query strings
+    # for k, v in request.form.items():
+    #    print(k, v)
+
     draw = request.form.get("draw")
     start_offset = int(request.form.get("start"))
     per_page = int(request.form.get("length"))
@@ -31,7 +35,27 @@ def event_stream():
 
     # print(start_offset, start_page, per_page)
 
-    events = HoneypotEvents.objects.paginate(
+    # Check for a column sort
+    order_by = request.form.get("order[0][column]")
+    order_direction = request.form.get("order[0][dir]")
+
+    if order_direction == "asc":
+        direction = "+"
+    else:
+        direction = "-"
+
+    column = [
+        "date",
+        "source_ip",
+        "service",
+        "port",
+        "honeypot_type",
+        "honeypot_instance_id"
+        ][int(order_by)]
+
+    order_string = "{0}{1}".format(direction, column)
+
+    events = HoneypotEvents.objects.order_by(order_string).paginate(
         page=start_page,
         per_page=per_page
         )
@@ -45,7 +69,8 @@ def event_stream():
     for event in events.items:
         try:
             single_row = [
-                "dtg",
+                event["date"],
+                event["source_ip"],
                 event["service"],
                 event["port"],
                 event["honeypot_type"],
