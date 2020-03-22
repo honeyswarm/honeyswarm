@@ -11,6 +11,7 @@
           <table id="eventstream" class="table table-bordered table-sm table-hover table-striped">
             <thead class="thead-dark">
               <tr>
+                <th></th>
                 <th scope="col">DTG</th>
                 <th scope="col">Source IP</th>
                 <th scope="col">Service</th>
@@ -39,30 +40,76 @@
     </div>
   </div>
 
-<script>
+  <script>
+    let notificationCount = 0;
 
-
-let notificationCount = 0;
-
-$(document).ready(function() {
-    $('#eventstream').DataTable( {
+    $(document).ready(function () {
+      var table = $('#eventstream').DataTable({
         "processing": true,
         "serverSide": true,
         "ajax": {
-            "url": "/events/paginate",
-            "type": "POST"
+          "url": "/events/paginate",
+          "type": "POST"
         },
         "columns": [
-          {"data": "dtg"},
-          {"data": "source_ip"},
-          {"data": "service"},
-          {"data": "port"},
-          {"data": "honeypot_type"},
-          {"data": "honeypot_instance_id"},
+          {
+            "className": 'details-control',
+            "orderable": false,
+            "data": null,
+            "defaultContent": ''
+          },
+          { "data": "dtg" },
+          { "data": "source_ip" },
+          { "data": "service" },
+          { "data": "port" },
+          { "data": "honeypot_type" },
+          { "data": "honeypot_instance_id" },
         ]
-    } );
-} );
-</script>
+      });
+
+      // Add event listener for opening and closing details
+      $('#eventstream tbody').on('click', 'td.details-control', function () {
+        var tr = $(this).closest('tr');
+        var row = table.row(tr);
+
+        if (row.child.isShown()) {
+          // This row is already open - close it
+          row.child.hide();
+          tr.removeClass('shown');
+        }
+        else {
+          // Open this row
+          row.child(format(tr.attr('id'))).show();
+          tr.addClass('shown');
+        }
+      });
+
+    });
+
+    function format(event_id) {
+      var div = $('<div/>')
+        .addClass('loading')
+        .text('Loading...');
+
+      $.ajax({
+        url: "/events/payload/" + event_id,
+        type: 'POST',
+        data: {
+          event_id: event_id
+        },
+        dataType: 'json',
+        success: function (json) {
+          console.log(json.payload);
+          div
+            .html('<pre>'+JSON.stringify(json.payload, undefined, 4)+'</pre>')
+            .removeClass('loading');
+        }
+      });
+
+      return div;
+    };
+
+  </script>
 
 
 </div>

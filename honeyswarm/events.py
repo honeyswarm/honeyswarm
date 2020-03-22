@@ -90,3 +90,19 @@ def event_stream():
     }
 
     return jsonify(json_results)
+
+
+@events.route('/events/payload/<event_id>', methods=["POST"])
+@login_required
+def event_payload(event_id):
+    single_event = HoneypotEvents.objects(id=event_id).first()
+
+    # Just need to tidy some long cols
+    if "ttylog" in single_event.payload:
+        single_event.payload["ttylog"] = "truncated from this table"
+
+    json_response = {
+        "valid": True,
+        "payload": single_event.payload
+    }
+    return jsonify(json_response)

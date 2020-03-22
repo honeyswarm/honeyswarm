@@ -2,6 +2,16 @@ html {
     font-family: 'Roboto', !important;
 }
 
+td.details-control {
+    background: url('/images/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+tr.shown td.details-control {
+    background: url('/images/details_close.png') no-repeat center center;
+}
+
+
+
 /** flaskcode styles **/
 body {
     margin: 0;
