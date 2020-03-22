@@ -44,9 +44,10 @@
         <div class="col">
           <h4 class="text-success">Completed Jobs</h4>
           <div class="table-responsive">
-            <table class="table table-bordered table-sm table-striped">
+            <table id="jobs_table" class="table table-bordered table-sm table-striped">
               <thead class="thead-dark">
                   <tr>
+                    <th></th>
                     <th scope="col">Hive ID</th>
                     <th scope="col">Job Short</th>
                     <th scope="col">Created At</th>
@@ -54,35 +55,12 @@
                     <th scope="col">Actions</th>
                   </tr>
               </thead>
-              {% for job in job_list %}
-              {% if job['complete']  %}
               <tbody>
-                  <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{loop.index}}" aria-expanded="false" aria-controls="group-of-rows-{{loop.index}}">
-                    <th scope="row">{{job['hive']['id']}} <i class="fa fa-caret-down"></i></th>
-                    <td>{{job['job_short']}}</td>
-                    <td>{{job['created_at'] | dateformat}}</td>
-                    <td>{{job['completed_at'] | dateformat}}</td>
-                    <td>
-                      <select class="form-control job_action" id="regActions" data-jobId="{{job['id']}}">
-                        <option value="select">Select</option>
-                        <option value="delete">Delete</option>
-                      </select>
-                    </td>
-                  </tr>
+                <tr>
+                </tr>
               </tbody>
-              <tbody id="group-of-rows-{{loop.index}}" class="collapse">
-                  <tr class="table-warning">
-                      <td colspan=5><pre>{{job['job_response'] | prettyjson}}</pre></td>
-                  </tr>
-              </tbody>
-              {% endif %}
-              {% endfor %}
           </table>
           </div>
-
-
-
-
         </div>
       </div>
 
@@ -163,9 +141,78 @@ function add_notification(textClass, text){
   $('#notification-count').html(notificationCount);
 }
 
+</script>
 
+
+<script>
+
+  $(document).ready(function () {
+    var table = $('#jobs_table').DataTable({
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        "url": "/jobs/paginate",
+        "type": "POST"
+      },
+      "columns": [
+        {
+          "className": 'details-control',
+          "orderable": false,
+          "data": null,
+          "defaultContent": ''
+        },
+        { "data": "hive_id"},
+        { "data": "job_short" },
+        { "data": "created_at" },
+        { "data": "completed_at" },
+        { "data": "actions", orderable: false , "defaultContent": 'selectdropdown'}
+      ]
+    });
+
+    // Add event listener for opening and closing details
+    $('#jobs_table tbody').on('click', 'td.details-control', function () {
+      var tr = $(this).closest('tr');
+      var row = table.row(tr);
+
+      if (row.child.isShown()) {
+        // This row is already open - close it
+        row.child.hide();
+        tr.removeClass('shown');
+      }
+      else {
+        // Open this row
+        row.child(format(tr.attr('id'))).show();
+        tr.addClass('shown');
+      }
+    });
+
+  });
+
+  function format(event_id) {
+    var div = $('<div/>')
+      .addClass('loading')
+      .text('Loading...');
+
+    $.ajax({
+      url: "/jobs/payload/" + event_id,
+      type: 'POST',
+      data: {
+        event_id: event_id
+      },
+      dataType: 'json',
+      success: function (json) {
+        console.log(json.payload);
+        div
+          .html('<pre>'+json.payload+'</pre>')
+          .removeClass('loading');
+      }
+    });
+
+    return div;
+  };
 
 </script>
+
 
 
 </div>

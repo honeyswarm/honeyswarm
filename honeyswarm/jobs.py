@@ -25,6 +25,92 @@ def jobs_list():
         )
 
 
+@jobs.route('/jobs/paginate', methods=["POST"])
+@login_required
+def jobs_paginate():
+
+    # Used to check for query strings
+    # for k, v in request.form.items():
+    #    print(k, v)
+
+    draw = request.form.get("draw")
+    start_offset = int(request.form.get("start"))
+    per_page = int(request.form.get("length"))
+
+    # Calculate the correct page number
+    start_offset = start_offset + per_page
+    start_page = int(start_offset / per_page)
+
+    # print(start_offset, start_page, per_page)
+
+    # Check for a column sort
+    order_by = request.form.get("order[0][column]")
+    order_direction = request.form.get("order[0][dir]")
+
+    if order_direction == "asc":
+        direction = "+"
+    else:
+        direction = "-"
+
+    column = [
+        "hive_id",
+        "job_short",
+        "created_at",
+        "completed_at"
+        ][int(order_by)]
+
+    order_string = "{0}{1}".format(direction, column)
+
+    job_rows = PepperJobs.objects.order_by(order_string).paginate(
+        page=start_page,
+        per_page=per_page
+        )
+    job_count = job_rows.total
+
+    # This should be how many matched a search. If no search then total rows
+    filtered_records = job_count
+
+    # Collect all the rows together
+    data_rows = []
+    for row in job_rows.items:
+        try:
+            single_row = {
+                "DT_RowId": str(row.id),
+                "hive_id": str(row.hive.id),
+                "job_short": row.job_short,
+                "created_at": row.created_at,
+                "completed_at": row.completed_at
+            }
+
+            data_rows.append(single_row)
+        except Exception as err:
+            print(err)
+            continue
+
+    # Final Json to return
+    json_results = {
+        "draw": draw,
+        "recordsTotal": job_count,
+        "recordsFiltered": filtered_records,
+        "data": data_rows
+    }
+
+    return jsonify(json_results)
+
+
+@jobs.route('/jobs/payload/<job_id>', methods=["POST"])
+@login_required
+def jobs_payload(job_id):
+    single_job = PepperJobs.objects(id=job_id).first()
+
+    json_response = {
+        "valid": True,
+        "payload": single_job.job_response
+    }
+    return jsonify(json_response)
+
+
+
 @jobs.route('/jobs/poll')
 @login_required
 def jobs_poll():
