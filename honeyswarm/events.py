@@ -66,16 +66,16 @@ def event_stream():
     data_rows = []
     for event in events.items:
         try:
-            single_row = [
-                event["date"],
-                event["source_ip"],
-                event["service"],
-                event["port"],
-                event["honeypot_type"],
-                event["honeypot_instance_id"]
-            ]
+            single_row = {
+                "DT_RowId": str(event.id),
+                "dtg": event.date,
+                "source_ip": event.source_ip,
+                "service": event.service,
+                "port": event.port,
+                "honeypot_type": event.honeypot_type,
+                "honeypot_instance_id": event.honeypot_instance_id
+            }
 
-            # print(event)
             data_rows.append(single_row)
         except Exception as err:
             print(err)

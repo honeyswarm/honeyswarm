@@ -52,6 +52,14 @@ $(document).ready(function() {
             "url": "/events/paginate",
             "type": "POST"
         },
+        "columns": [
+          {"data": "dtg"},
+          {"data": "source_ip"},
+          {"data": "service"},
+          {"data": "port"},
+          {"data": "honeypot_type"},
+          {"data": "honeypot_instance_id"},
+        ]
     } );
 } );
 </script>
