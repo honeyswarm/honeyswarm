@@ -13,13 +13,14 @@ class PepperApi():
     def api_auth(self):
         try:
             print("Pepper Auth")
-            self.api.login(
+            auth_test = self.api.login(
                 os.environ.get("SALT_USERNAME"),
                 os.environ.get("SALT_SHARED_SECRET"),
                 'sharedsecret')
             self.authenticated = True
+            print(auth_test)
         except Exception as err:
-            print(err)
+            print("<-------------", err)
             self.authenticated = False
 
     def salt_keys(self):
@@ -30,6 +31,8 @@ class PepperApi():
             dict: A dictionary with 3 lists for minions,
             pre-minions and rejected minions
         """
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{'client': 'wheel', 'fun': 'key.list_all'}]
             )
@@ -47,6 +50,8 @@ class PepperApi():
         Returns:
             dict: A dictionary with the ID for any accepted minions.
         """
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{'client': 'wheel', 'fun': 'key.accept', 'match': minion_id}]
             )
@@ -55,6 +60,8 @@ class PepperApi():
 
     def delete_key(self, minion_id):
         """Given a Minion ID will delete the key from the salt master"""
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{'client': 'wheel', 'fun': 'key.delete', 'match': minion_id}]
             )
@@ -67,6 +74,8 @@ class PepperApi():
         the receiving function to parse the data it needs.
         Makes Async Call returns Job ID
         """
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{'client': 'local_async', 'tgt': target, 'fun': function}]
             )
@@ -78,6 +87,8 @@ class PepperApi():
         is up to the receiving function to parse the data it needs.
         Not async so blocking?
         """
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{'client': 'local', 'tgt': target, 'fun': function}]
             )
@@ -96,6 +107,8 @@ class PepperApi():
         Returns:
             str: Salt Job ID
         """
+        # check auth state
+        self.api_auth()
         api_reponse = self.api.low(
             [{
                 'client':
@@ -118,8 +131,7 @@ class PepperApi():
             dict/None: Return None if job still pending else dictionary of
             all state modules and their outputs.
         """
-        # This is lazy but as this job runs frequently
-        # use it to check auth state
+        # check auth state
         self.api_auth()
         try:
             api_response = self.api.lookup_jid(job_id)
@@ -130,5 +142,6 @@ class PepperApi():
         except Exception as err:
             print(err)
         return None
+
 
 pepper_api = PepperApi()
