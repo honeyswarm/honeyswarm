@@ -1,17 +1,223 @@
 {% extends "base.html" %}
 {% set active_page = "dashboard" %}
 {% block content %}
-<h1 class="title">
-  Welcome, {{ name }}!
-</h1>
+
+<div class="row">
+  <div class="col">
+    <h1 class="title">
+      Dashboard
+    </h1>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-6 offset-3">
+
+    <div class="card-deck">
+      <div class="card border-info">
+        <div class="card-body">
+          <h5 class="card-title text-center"><strong>Hives</strong></h5>
+          <h2 class="text-center text-info"><strong>{{hive_count}}</strong></h2>
+        </div>
+      </div>
+      <div class="card border-info">
+        <div class="card-body">
+          <h5 class="card-title text-center"><strong>Instances</strong></h5>
+          <h2 class="text-center text-info"><strong>{{instance_count}}</strong></h2>
+        </div>
+      </div>
+      <div class="card border-info">
+        <div class="card-body">
+          <h5 class="card-title text-center"><strong>Events</strong></h5>
+          <h2 class="text-center text-info"><strong>{{event_count}}</strong></h2>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 
-<div class="card text-white bg-danger mt-5 container" >
+<div class="row mt-5">
+  <div class="col">
+    <div class="card-deck">
+      <div class="card border-info">
+        <div class="card-body">
+          <canvas id="serviceDay"></canvas>
+        </div>
+      </div>
+      <div class="card border-info">
+        <div class="card-body">
+          <canvas id="serviceWeek"></canvas>
+        </div>
+      </div>
+      <div class="card border-info">
+        <div class="card-body">
+          <canvas id="serviceMonth"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="card text-white bg-danger mt-5 container">
   <div class="card-header">Disclaimer</div>
   <div class="card-body">
     <h5 class="card-title">Full Remote Code Execution to ALL Hives</h5>
-    <p class="card-text">By design this application has full remote code execution via the Minions on every hive. Using the honepot states you can set any configuration, install any software. So please make sure you have properly protected access to this platform.  </p>
-    <p class="card-text">I will at some point, assuming anyone uses this platform,  introduce some better user management / groups / 2fa and other mitigations. </p>
+    <p class="card-text">By design this application has full remote code execution via the Minions on every hive. Using
+      the honepot states you can set any configuration, install any software. So please make sure you have properly
+      protected access to this platform. </p>
+    <p class="card-text">I will at some point, assuming anyone uses this platform, introduce some better user management
+      / groups / 2fa and other mitigations. </p>
   </div>
 </div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.js"
+  integrity="sha256-8zyeSXm+yTvzUN1VgAOinFgaVFEFTyYzWShOy9w7WoQ=" crossorigin="anonymous"></script>
+
+<script>
+  var ctx = document.getElementById('serviceDay').getContext('2d');
+  var myChart = new Chart(ctx, {
+    type: 'horizontalBar',
+    data: {
+      // {{service_graphs['serviceDay'][0] | safe}}
+      labels: {{service_graphs['serviceDay'][0] | safe}},
+      datasets: [{
+        data: {{service_graphs['serviceDay'][1] | safe}},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)'
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      legend: {
+        display: false
+      }, title: {
+        display: true,
+        text: 'Services last 24 Hours'
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+
+
+</script>
+
+<script>
+  var ctx = document.getElementById('serviceWeek').getContext('2d');
+  var myChart = new Chart(ctx, {
+    type: 'horizontalBar',
+    data: {
+      labels: {{service_graphs['serviceWeek'][0] | safe}},
+      datasets: [{
+        data: {{service_graphs['serviceWeek'][1] | safe}},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)'
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      legend: {
+        display: false
+      }, title: {
+        display: true,
+        text: 'Services last 7 days'
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+
+
+</script>
+
+<script>
+  var ctx = document.getElementById('serviceMonth').getContext('2d');
+  var myChart = new Chart(ctx, {
+    type: 'horizontalBar',
+    data: {
+      labels: {{service_graphs['serviceMonth'][0] | safe}},
+      datasets: [{
+        data: {{service_graphs['serviceMonth'][1] | safe}},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)'
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      legend: {
+        display: false
+      }, title: {
+        display: true,
+        text: 'Services last 30 days'
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }]
+      }
+    }
+  });
+
+
+</script>
+
+
 {% endblock %}

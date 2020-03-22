@@ -80,7 +80,6 @@ atexit.register(app.scheduler.shutdown)
 
 def check_jobs():
     # Get all PepperJobs not marked as complete
-    print("checking PepperJobs")
     open_jobs = PepperJobs.objects(complete=False)
     for job in open_jobs:
         api_check = pepper_api.lookup_job(job.job_id)
@@ -132,6 +131,7 @@ from honeyswarm.jobs import jobs
 from honeyswarm.honeypots import honeypots
 from honeyswarm.frames import frames
 from honeyswarm.events import events
+from honeyswarm.dashboard import dashboard
 
 # Register the Blueprints
 app.register_blueprint(admin)
@@ -141,6 +141,7 @@ app.register_blueprint(jobs)
 app.register_blueprint(honeypots)
 app.register_blueprint(frames)
 app.register_blueprint(events)
+app.register_blueprint(dashboard)
 
 # Only show installer pages if we have no users
 try:
@@ -180,9 +181,3 @@ def format_userroles(userroles):
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html', name='kev')
-

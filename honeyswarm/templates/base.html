@@ -62,7 +62,7 @@
       <ul class="navbar-nav mr-auto">
         {% if current_user.is_authenticated %}
         <li class="nav-item {% if active_page  == 'dashboard' %}active{% endif%}">
-          <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard </a>
+          <a class="nav-link" href="{{ url_for('dashboard.main_dashboard') }}">Dashboard </a>
         </li>
         <li class="nav-item {% if active_page  == 'hives' %}active{% endif%}">
           <a class="nav-link" href="{{ url_for('hives.hives_list') }}">Hives</a>
