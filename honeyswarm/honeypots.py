@@ -1,22 +1,15 @@
 import os
-import stat
-from uuid import uuid4
-from datetime import datetime
 
 import mimetypes
-from flask import render_template, abort, jsonify, send_file, g, request
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
-from flask_login import login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Blueprint, redirect, url_for, request, abort
+from flask import render_template, jsonify, send_file
+from flask_login import login_required
 from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config, HoneypotInstance
-
 from flaskcode.utils import write_file, dir_tree, get_file_extension
-
-
-honeypots = Blueprint('honeypots', __name__)
-
 from honeyswarm.saltapi import pepper_api
 from honeyswarm import SALT_STATE_BASE
+
+honeypots = Blueprint('honeypots', __name__)
 
 
 @honeypots.route('/honeypots')
@@ -33,6 +26,7 @@ def honeypot_list():
         honey_list=honey_list
         )
 
+
 @honeypots.route('/honeypots/create/', methods=['POST'])
 @login_required
 def create_honeypot():
@@ -44,21 +38,24 @@ def create_honeypot():
         new_honeypot.name = request.form.get('honeypot_name')
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
-        new_honeypot.honeypot_state_file = request.form.get('honeypot_state_file')
+        new_honeypot.honeypot_state_file = request.form.get(
+            'honeypot_state_file'
+            )
 
         # We need to save here to get the ID then carry on updating
         new_honeypot.save()
         honeypot_id = new_honeypot.id
 
-        # Add a default state file so that we have something to edit. 
-        state_path = os.path.join(SALT_STATE_BASE, 'honeypots', str(honeypot_id))
+        # Add a default state file so that we have something to edit.
+        state_path = os.path.join(
+            SALT_STATE_BASE, 'honeypots', str(honeypot_id)
+            )
         state_name = "{0}.sls".format(new_honeypot.honeypot_state_file)
         state_file_path = os.path.join(state_path, state_name)
         if not os.path.exists(state_path):
             os.mkdir(state_path)
             os.mknod(state_file_path)
             os.chmod(state_file_path, 0o777)
-            
 
         # Add all channels to the master subscriber
         channel_list = request.form.get('honeypot_channels').split('/r/n')
@@ -91,12 +88,12 @@ def show_honeypot(honeypot_id):
         abort(404)
     honeypotname = honeypot_details.name
     # Lets hack in flask code.
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
+    honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
 
-    # I want to rebuild the tree slightlt differently. 
+    # I want to rebuild the tree slightlt differently.
     new_tree = dict(
         name=os.path.basename(honey_salt_base),
         path_name='',
@@ -118,6 +115,7 @@ def show_honeypot(honeypot_id):
         data_url="honeypots"
         )
 
+
 @honeypots.route('/honeypots/<honeypot_id>/update/', methods=['POST'])
 @login_required
 def update_honeypot(honeypot_id):
@@ -132,7 +130,9 @@ def update_honeypot(honeypot_id):
     honeypot_details.name = request.form.get('honeypot_name')
     honeypot_details.honeypot_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
-    honeypot_details.honeypot_state_file = request.form.get('honeypot_state_file')
+    honeypot_details.honeypot_state_file = request.form.get(
+        'honeypot_state_file'
+        )
 
     # Now add any Pillar States
     pillar_states = []
@@ -146,9 +146,7 @@ def update_honeypot(honeypot_id):
             pillar_pair = [key_name, key_value]
             pillar_states.append(pillar_pair)
 
-    
     honeypot_details.pillar = pillar_states
-
 
     # Update HoneySwarm HP Master Subscriber
     channel_list = request.form.get('honeypot_channels').split('\r\n')
@@ -165,12 +163,16 @@ def update_honeypot(honeypot_id):
 
     return jsonify(json_response)
 
-@honeypots.route('/honeypots/<object_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
+
+@honeypots.route(
+    '/honeypots/<object_id>/resource-data/<path:file_path>.txt',
+    methods=['GET', 'HEAD']
+    )
 @login_required
 def resource_data(object_id, file_path):
     print("Read Resource", file_path)
 
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
+    honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -179,26 +181,30 @@ def resource_data(object_id, file_path):
     mimetype, encoding = mimetypes.guess_type(file_path, False)
     if mimetype:
         response.headers.set('X-File-Mimetype', mimetype)
-        extension = mimetypes.guess_extension(mimetype, False) or get_file_extension(file_path)
+        extension = mimetypes.guess_extension(
+            mimetype, False) or get_file_extension(file_path)
         if extension:
-            response.headers.set('X-File-Extension', extension.lower().lstrip('.'))
+            response.headers.set(
+                'X-File-Extension', extension.lower().lstrip('.'))
     if encoding:
         response.headers.set('X-File-Encoding', encoding)
     return response
 
 
-@honeypots.route('/honeypots/<object_id>/update-resource-data/<path:file_path>', methods=['POST'])
+@honeypots.route(
+    '/honeypots/<object_id>/update-resource-data/<path:file_path>',
+    methods=['POST']
+    )
 @login_required
 def update_resource_data(object_id, file_path):
-
-
-    print("Update REsource", file_path)
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
+    honey_salt_base = os.path.join(
+        SALT_STATE_BASE, 'honeypots', object_id
+        )
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
 
-
-    if not is_new_resource and not (os.path.exists(file_path) and os.path.isfile(file_path)):
+    if not is_new_resource and not (
+            os.path.exists(file_path) and os.path.isfile(file_path)):
         abort(404)
     success = True
     message = 'File saved successfully'
@@ -216,35 +222,29 @@ def update_resource_data(object_id, file_path):
 def honeypot_deployments(honeypot_id):
     honeypot_details = Honeypot.objects(id=honeypot_id).first()
 
-
     if not honeypot_details:
         abort(404)
 
-    # Get a list of all hives that have a frame installed and are responding to polls.
-    #ToDo: Only permit based on frame supported OS?
+    # Get a list of all hives that have a frame installed
+    # and are responding to polls.
+    # ToDo: Only permit based on frame supported OS?
     # Do we need to add Frames as a Reference Field to Honeypot?
 
     all_hives = Hive.objects(frame__exists=True, salt_alive=True)
-
-    # there is no join so we need multiple queries. 
-    # There shouldnt by thousands or rows so we shouldnt need to worry about effeciency. 
-
     existing_honeypots = []
-
     for hive in all_hives:
         for honeypot in hive.honeypots:
             if str(honeypot.id) == honeypot_id:
                 existing_honeypots.append(hive)
 
-
     # Get all currently installed honypts of this type
-
     return render_template(
         "honey_deployments.html",
         all_hives=all_hives,
         existing_honeypots=existing_honeypots,
         honeypot_details=honeypot_details
         )
+
 
 @honeypots.route('/honeypots/<honeypot_id>/deploy/', methods=['POST'])
 @login_required
@@ -265,7 +265,6 @@ def honeypot_deploy(honeypot_id):
         json_response['message'] = "Can not find Hive"
         return jsonify(json_response)
 
-
     # Does this hive have the correct frame installed
     if not hive.frame:
         json_response['message'] = "Can not find Hive"
@@ -281,7 +280,7 @@ def honeypot_deploy(honeypot_id):
 
         # Create honeypot instance
         honeypot_instance = HoneypotInstance(
-            honeypot = honeypot_details
+            honeypot=honeypot_details
         )
 
         honeypot_instance.save()
@@ -297,7 +296,7 @@ def honeypot_deploy(honeypot_id):
 
     # Now add any Pillar States
     base_config = Config.objects.first()
-    config_pillar = { 
+    config_pillar = {
         "HIVEID": hive_id,
         "HONEYPOTID": honeypot_id,
         "INSTANCEID": instance_id,
@@ -322,13 +321,18 @@ def honeypot_deploy(honeypot_id):
     honeypot_instance.save()
 
     # Create the job
-    honeypot_state_file = 'honeypots/{0}/{1}'.format(honeypot_details.id, honeypot_details.honeypot_state_file)
-    pillar_string = ", ".join(('"{}": "{}"'.format(*i) for i in config_pillar.items()))
+    honeypot_state_file = 'honeypots/{0}/{1}'.format(
+        honeypot_details.id,
+        honeypot_details.honeypot_state_file
+        )
+
+    pillar_string = ", ".join(
+        ('"{}": "{}"'.format(*i) for i in config_pillar.items())
+        )
 
     try:
-
         job_id = pepper_api.apply_state(
-            hive_id, 
+            hive_id,
             [
                 honeypot_state_file,
                 "pillar={{{0}}}".format(pillar_string)
@@ -340,7 +344,9 @@ def honeypot_deploy(honeypot_id):
             hive=hive,
             job_id=job_id,
             job_short="Apply State {0}".format(honeypot_details.name),
-            job_description="Apply honeypot {0} to Hive {1}".format(honeypot_state_file, hive_id)
+            job_description="Apply honeypot {0} to Hive {1}".format(
+                honeypot_state_file, hive_id
+                )
         )
         job.save()
 
@@ -350,9 +356,10 @@ def honeypot_deploy(honeypot_id):
         hive.save()
 
         json_response['success'] = True
-        json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+        json_response['message'] = "Job Created with Job ID: {0}".format(
+            str(job.id)
+            )
     except Exception as err:
         json_response['message'] = "Error creating job: {0}".format(err)
-
 
     return jsonify(json_response)

@@ -1,17 +1,14 @@
-import os
 import json
-from uuid import uuid4
 from datetime import datetime
+from flask import Blueprint, request
+from flask import jsonify, render_template
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
-from flask_login import login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Hive, PepperJobs
-
+from flask_login import login_required
+from honeyswarm.models import PepperJobs
+from honeyswarm.saltapi import pepper_api
 
 jobs = Blueprint('jobs', __name__)
 
-from honeyswarm.saltapi import pepper_api
 
 @jobs.route('/jobs')
 @login_required
@@ -42,7 +39,9 @@ def jobs_poll():
         hive_id = str(job['hive']['id'])
         if api_check:
             job.complete = True
-            job.job_response = json.dumps(api_check['data'][hive_id], sort_keys=True, indent=4)
+            job.job_response = json.dumps(
+                api_check['data'][hive_id],
+                sort_keys=True, indent=4)
             job.completed_at = datetime.utcnow
         job.save()
         json_response['success'] = True

@@ -1,5 +1,3 @@
-from bson import ObjectId
-
 from flask import Blueprint, render_template, request, jsonify
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents

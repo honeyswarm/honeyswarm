@@ -1,22 +1,15 @@
 import os
-from uuid import uuid4
-from datetime import datetime
-
 import mimetypes
-from flask import render_template, abort, jsonify, send_file, g, request, url_for
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
-from flask_login import login_user, logout_user, login_required
-from werkzeug.security import generate_password_hash, check_password_hash
-from honeyswarm.models import Frame
+from flask import Blueprint, redirect, url_for, request, abort
+from flask import jsonify, render_template, send_file
+from flask_login import login_required
+from honeyswarm.models import Frame, Hive, PepperJobs
 
 from flaskcode.utils import write_file, dir_tree, get_file_extension
-
+from honeyswarm.saltapi import pepper_api
+from honeyswarm import SALT_STATE_BASE
 
 frames = Blueprint('frames', __name__)
-
-from honeyswarm.saltapi import pepper_api
-
-from honeyswarm import SALT_STATE_BASE
 
 
 @frames.route('/frames')
@@ -25,11 +18,11 @@ def frames_list():
 
     # List of Availiable Frames
     frame_list = Frame.objects
-
     return render_template(
         "frames.html",
         frame_list=frame_list
         )
+
 
 @frames.route('/frames/<frame_id>/edit/')
 @login_required
@@ -41,13 +34,12 @@ def show_frame(frame_id):
         abort(404)
     framename = frame_details.name
     # Lets hack in flask code.
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', frame_id)
-    #honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames')
+    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', frame_id)
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
 
-    # I want to rebuild the tree slightlt differently. 
+    # I want to rebuild the tree slightlt differently.
     new_tree = dict(
         name=os.path.basename(honey_salt_base),
         path_name=dtree['path_name'],
@@ -58,9 +50,8 @@ def show_frame(frame_id):
         }]
     )
 
-    #print(new_tree)
-
-    #for k, v in new_tree.items():
+    # print(new_tree)
+    # for k, v in new_tree.items():
     #    print(k,v)
 
     return render_template(
@@ -141,21 +132,22 @@ def update_frame(frame_id):
             pillar_pair = [key_name, key_value]
             pillar_states.append(pillar_pair)
 
-    
     frame_details.pillar = pillar_states
-
     frame_details.save()
-
     json_response['success'] = True
 
     return jsonify(json_response)
 
-@frames.route('/frames/<object_id>/resource-data/<path:file_path>.txt', methods=['GET', 'HEAD'])
+
+@frames.route(
+    '/frames/<object_id>/resource-data/<path:file_path>.txt',
+    methods=['GET', 'HEAD']
+    )
 @login_required
 def resource_data(object_id, file_path):
     print(file_path)
 
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', object_id)
+    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', object_id)
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -164,22 +156,28 @@ def resource_data(object_id, file_path):
     mimetype, encoding = mimetypes.guess_type(file_path, False)
     if mimetype:
         response.headers.set('X-File-Mimetype', mimetype)
-        extension = mimetypes.guess_extension(mimetype, False) or get_file_extension(file_path)
+        extension = mimetypes.guess_extension(
+            mimetype, False) or get_file_extension(file_path)
         if extension:
-            response.headers.set('X-File-Extension', extension.lower().lstrip('.'))
+            response.headers.set(
+                'X-File-Extension', extension.lower().lstrip('.')
+                )
     if encoding:
         response.headers.set('X-File-Encoding', encoding)
     return response
 
 
-@frames.route('/frames/<object_id>/update-resource-data/<path:file_path>', methods=['POST'])
+@frames.route(
+    '/frames/<object_id>/update-resource-data/<path:file_path>',
+    methods=['POST']
+    )
 @login_required
 def update_resource_data(object_id, file_path):
-    print(file_path)
-    honey_salt_base =  os.path.join(SALT_STATE_BASE, 'frames', object_id)
+    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', object_id)
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
-    if not is_new_resource and not (os.path.exists(file_path) and os.path.isfile(file_path)):
+    if not is_new_resource and not (
+            os.path.exists(file_path) and os.path.isfile(file_path)):
         abort(404)
     success = True
     message = 'File saved successfully'
@@ -192,7 +190,6 @@ def update_resource_data(object_id, file_path):
     return jsonify({'success': success, 'message': message})
 
 
-
 @frames.route('/frames/<frame_id>/deploy/', methods=['POST'])
 @login_required
 def frame_deploy(frame_id):
@@ -202,8 +199,6 @@ def frame_deploy(frame_id):
     hive_id = request.form.get('hive_id')
     frame_state_file = request.form.get('frame_state_file')
     frame_id = request.form.get('frame_id')
-
-
     frame_details = Frame.objects(id=frame_id).first()
 
     if not frame_details:
@@ -215,9 +210,9 @@ def frame_deploy(frame_id):
     if not hive:
         json_response['message'] = "Can not find Hive"
 
-    config_pillar = { 
+    config_pillar = {
         "HIVEID": hive_id,
-        "FRAMEID": frame_id 
+        "FRAMEID": frame_id
     }
 
     # Now add any Pillar States
@@ -230,13 +225,16 @@ def frame_deploy(frame_id):
                 continue
             config_pillar[key_name] = key_value
 
-    frame_state_file = 'frames/{0}/{1}'.format(frame_details.id, frame_details.frame_state_path)
-    pillar_string = ", ".join(('"{}": "{}"'.format(*i) for i in config_pillar.items()))
+    frame_state_file = 'frames/{0}/{1}'.format(
+        frame_details.id, frame_details.frame_state_path
+        )
+    pillar_string = ", ".join(
+        ('"{}": "{}"'.format(*i) for i in config_pillar.items())
+        )
 
     try:
-
         job_id = pepper_api.apply_state(
-            hive_id, 
+            hive_id,
             [
                 frame_state_file,
                 "pillar={{{0}}}".format(pillar_string)
@@ -248,7 +246,8 @@ def frame_deploy(frame_id):
             hive=hive,
             job_id=job_id,
             job_short="Apply State {0}".format(frame_details.name),
-            job_description="Apply frame {0} to Hive {1}".format(frame_details, hive_id)
+            job_description="Apply frame {0} to Hive {1}".format(
+                frame_details, hive_id)
         )
         job.save()
 
@@ -256,9 +255,10 @@ def frame_deploy(frame_id):
         hive.save()
 
         json_response['success'] = True
-        json_response['message'] = "Job Created with Job ID: {0}".format(str(job.id))
+        json_response['message'] = "Job Created with Job ID: {0}".format(
+            str(job.id)
+            )
     except Exception as err:
         json_response['message'] = "Error creating job: {0}".format(err)
-
 
     return jsonify(json_response)
