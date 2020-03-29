@@ -36,7 +36,7 @@ def login_post():
 
     # ToDo: Need to put a real check for remember me in here
     login_user(user, remember=remember)
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard.main_dashboard'))
 
 
 @auth.route('/register')
