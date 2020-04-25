@@ -272,12 +272,15 @@ def honeypot_deploy(honeypot_id):
         json_response['message'] = "Can not find Hive"
         return jsonify(json_response)
 
-    # Do we already have an instance of this honeypot type
+    # Do we already have an instance of this honeypot type on this hive?#
+    # Get it and its auth_key
     honeypot_instance = None
     for instance in hive.honeypots:
         if instance.honeypot == honeypot_details:
             honeypot_instance = instance
+            auth_key = AuthKey.objects(identifier=str(honeypot_instance.id))
 
+    # Else we create an instance and a new auth_key
     if not honeypot_instance:
 
         # Create honeypot instance
@@ -295,6 +298,8 @@ def honeypot_deploy(honeypot_id):
             publish=honeypot_details.channels
         )
         auth_key.save()
+
+    instance_id = str(honeypot_instance.id)
 
     # Now add any Pillar States
     base_config = Config.objects.first()
@@ -318,6 +323,9 @@ def honeypot_deploy(honeypot_id):
             config_pillar[key_name] = key_value
 
     # update key / config and save again
+    auth_key.save()
+    print(auth_key.identifier)
+    print("Save")
     honeypot_instance.hpfeeds = auth_key
     honeypot_instance.pillar = config_pillar
     honeypot_instance.save()
