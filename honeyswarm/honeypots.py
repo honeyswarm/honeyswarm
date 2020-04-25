@@ -38,6 +38,7 @@ def create_honeypot():
         new_honeypot.name = request.form.get('honeypot_name')
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
+        new_honeypot.channels = request.form.get('honeypot_channels').split('/r/n')
         new_honeypot.honeypot_state_file = request.form.get(
             'honeypot_state_file'
             )
@@ -75,7 +76,6 @@ def create_honeypot():
 
     return redirect(url_for('honeypots.honeypot_list'))
 
-    return jsonify(json_response)
 
 
 @honeypots.route('/honeypots/<honeypot_id>/edit/')
@@ -130,6 +130,7 @@ def update_honeypot(honeypot_id):
     honeypot_details.name = request.form.get('honeypot_name')
     honeypot_details.honeypot_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
+    honeypot_details.channels = request.form.get('honeypot_channels').split('/r/n')
     honeypot_details.honeypot_state_file = request.form.get(
         'honeypot_state_file'
         )
@@ -159,6 +160,7 @@ def update_honeypot(honeypot_id):
                 honeyswarm_subscriber.subscribe.append(channel)
         honeyswarm_subscriber.save()
 
+    honeypot_details.save()
     json_response['success'] = True
 
     return jsonify(json_response)
