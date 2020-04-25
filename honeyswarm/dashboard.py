@@ -28,12 +28,24 @@ def main_dashboard():
         }}
     ]
 
-    service_graph_day = [x for x in HoneypotEvents.objects().aggregate(
-        *service_pipeline)][0]
-    service_graph_week = [x for x in HoneypotEvents.objects().aggregate(
-        *service_pipeline)][0]
-    service_graph_month = [x for x in HoneypotEvents.objects().aggregate(
-        *service_pipeline)][0]
+    try:
+
+        service_graph_day = [x for x in HoneypotEvents.objects().aggregate(
+            *service_pipeline)][0]
+    except:
+        service_graph_day = {}
+
+    try:
+        service_graph_week = [x for x in HoneypotEvents.objects().aggregate(
+            *service_pipeline)][0]
+    except:
+        service_graph_week = {}
+
+    try:
+        service_graph_month = [x for x in HoneypotEvents.objects().aggregate(
+            *service_pipeline)][0]
+    except:
+        service_graph_month = {}
 
     service_graphs = {
         "serviceDay": [
