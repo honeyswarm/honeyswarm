@@ -278,7 +278,7 @@ def honeypot_deploy(honeypot_id):
     for instance in hive.honeypots:
         if instance.honeypot == honeypot_details:
             honeypot_instance = instance
-            auth_key = AuthKey.objects(identifier=str(honeypot_instance.id))
+            auth_key = AuthKey.objects(identifier=str(honeypot_instance.id)).first()
 
     # Else we create an instance and a new auth_key
     if not honeypot_instance:
@@ -324,8 +324,6 @@ def honeypot_deploy(honeypot_id):
 
     # update key / config and save again
     auth_key.save()
-    print(auth_key.identifier)
-    print("Save")
     honeypot_instance.hpfeeds = auth_key
     honeypot_instance.pillar = config_pillar
     honeypot_instance.save()
