@@ -12,15 +12,13 @@ class PepperApi():
 
     def api_auth(self):
         try:
-            print("Pepper Auth")
             auth_test = self.api.login(
                 os.environ.get("SALT_USERNAME"),
                 os.environ.get("SALT_SHARED_SECRET"),
                 'sharedsecret')
             self.authenticated = True
-            print(auth_test)
         except Exception as err:
-            print("<-------------", err)
+            print(err)
             self.authenticated = False
 
     def salt_keys(self):

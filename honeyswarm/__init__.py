@@ -91,7 +91,6 @@ def check_jobs():
         job.save()
 
 def poll_hives():
-    print("Polling all registered hives")
     for hive in Hive.objects(registered=True):
         hive_id = str(hive.id)
         grains_request = pepper_api.run_client_function(hive_id, 'grains.items')
@@ -167,7 +166,6 @@ def format_datetime(datetime_object):
 
 @app.template_filter('prettyjson')
 def format_prettyjson(json_string):
-
     pretty_json = json.dumps(json.loads(json_string), sort_keys=True,
                         indent=4, separators=(',', ': '))
 
