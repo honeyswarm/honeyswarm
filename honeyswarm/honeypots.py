@@ -276,7 +276,7 @@ def honeypot_deploy(honeypot_id):
     # Get it and its auth_key
     honeypot_instance = None
     for instance in hive.honeypots:
-        if instance.honeypot == honeypot_details:
+        if instance.id == honeypot_details.id:
             honeypot_instance = instance
             auth_key = AuthKey.objects(identifier=str(honeypot_instance.id)).first()
 
