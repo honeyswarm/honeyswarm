@@ -27,7 +27,7 @@ class HoneypotEvents(Document):
     meta = {
         'db_alias': 'hpfeeds_db'
     }
-    date = DateTimeField(default=datetime.utcnow)
+    date = DateTimeField(default=datetime.utcnow())
     service = StringField()
     port = IntField()
     honeypot_type = StringField()
@@ -64,7 +64,7 @@ class Hive(Document):
     name = StringField(unique=True)
     registered = BooleanField(default=False)
     salt_alive = BooleanField()
-    created_at = DateTimeField(default=datetime.utcnow)
+    created_at = DateTimeField(default=datetime.utcnow())
     last_seen = DateTimeField()
     grains = DictField(default={'osfullname': 'Not Polled', 'ipv4': []})
     honeypots = ListField(ReferenceField(HoneypotInstance), default=[])
@@ -76,7 +76,7 @@ class PepperJobs(Document):
     job_id = StringField()
     job_short = StringField()
     job_description = StringField()
-    created_at = DateTimeField(default=datetime.utcnow)
+    created_at = DateTimeField(default=datetime.utcnow())
     last_check = DateTimeField()
     complete = BooleanField(default=False)
     completed_at = DateTimeField()
