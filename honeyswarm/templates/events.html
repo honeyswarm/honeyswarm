@@ -45,6 +45,7 @@
 
     $(document).ready(function () {
       var table = $('#eventstream').DataTable({
+        "pageLength": 25,
         "processing": true,
         "serverSide": true,
         "ajax": {
