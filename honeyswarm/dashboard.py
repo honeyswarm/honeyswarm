@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents, Honeypot, HoneypotInstance, Hive
@@ -6,17 +7,19 @@ from honeyswarm.models import HoneypotEvents, Honeypot, HoneypotInstance, Hive
 dashboard = Blueprint('dashboard', __name__)
 
 
-@dashboard.route('/dashboard')
-@login_required
-def main_dashboard():
-    hive_count = Hive.objects.count()
-    event_count = HoneypotEvents.objects.count()
-    instance_count = HoneypotInstance.objects.count()
+def get_dashboard_data(days):
+    today = datetime.utcnow()
+    start_date = today - timedelta(days)
     service_pipeline = [
+        { "$match": {
+            "date": { "$gte": start_date, "$lte": today }
+        }},
         {"$group": {
             "_id": "$service",
             "count": {"$sum": 1}
         }},
+        {"$sort": {"count": -1}},
+        {"$limit": 10},
         {"$group": {
             "_id": 0,
             "counts": {
@@ -29,23 +32,27 @@ def main_dashboard():
     ]
 
     try:
-
-        service_graph_day = [x for x in HoneypotEvents.objects().aggregate(
+        graph_data = [x for x in HoneypotEvents.objects().aggregate(
             *service_pipeline)][0]
-    except:
-        service_graph_day = {}
 
-    try:
-        service_graph_week = [x for x in HoneypotEvents.objects().aggregate(
-            *service_pipeline)][0]
-    except:
-        service_graph_week = {}
+    except Exception as err:
+        print(err)
+        graph_data = {}
+    return graph_data
 
-    try:
-        service_graph_month = [x for x in HoneypotEvents.objects().aggregate(
-            *service_pipeline)][0]
-    except:
-        service_graph_month = {}
+
+@dashboard.route('/dashboard')
+@login_required
+def main_dashboard():
+
+    hive_count = Hive.objects.count()
+    event_count = HoneypotEvents.objects.count()
+    instance_count = HoneypotInstance.objects.count()
+
+    service_graph_day = get_dashboard_data(1)
+    service_graph_week = get_dashboard_data(7)
+    service_graph_month = get_dashboard_data(30)
+
 
     service_graphs = {
         "serviceDay": [
