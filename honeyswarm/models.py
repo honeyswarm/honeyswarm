@@ -92,7 +92,7 @@ class Role(Document, RoleMixin):
 class User(Document, UserMixin):
     email = StringField(unique=True)
     password = StringField()
-    name = StringField()
+    name = StringField(unique=True)
     active = BooleanField(default=False)
     fs_uniquifier = StringField(max_length=255)
     confirmed_at = DateTimeField()

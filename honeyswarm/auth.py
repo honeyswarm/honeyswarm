@@ -47,7 +47,7 @@ def register():
 @auth.route('/register', methods=['POST'])
 def register_post():
     email = request.form.get('email')
-    name = request.form.get('name')
+    name = request.form.get('username')
     password = request.form.get('password')
 
     user = User.objects(email=email).first()
