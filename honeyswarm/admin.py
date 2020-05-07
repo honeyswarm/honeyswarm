@@ -68,10 +68,15 @@ def updte_users():
 
     action = request.form.get('action')
     user_id = request.form.get('object_id')
+    new_user = request.form.get('newuser')
 
-    user = User.objects(id=user_id).first()
-    
-    if not user:
+    if new_user:
+        user = None
+    else:
+        user = User.objects(id=user_id).first()
+
+
+    if not user and not new_user:
         json_response['message'] = "Not a valid user"
         return jsonify(json_response)
 
@@ -80,21 +85,34 @@ def updte_users():
         json_response['success'] = True
         json_response['message'] = "Deleted User {0}".format(user.name)
 
-    elif action == "update":
-
-        user.name = request.form.get('name')
-        user.email = request.form.get('email')
+    elif action == "update":    
+        user_name = request.form.get('name')
+        user_email = request.form.get('email')
         activate_user = request.form.get('active')
-
         password = request.form.get('password')
         
-        if password:
-            user.password = encrypt_password(password)
-
-        if activate_user == "false":
-            user_datastore.deactivate_user(user)
+        if activate_user == "true":
+            active_user = True
         else:
-            user_datastore.activate_user(user)
+            active_user = False
+
+        if new_user:
+            user = user_datastore.create_user(
+                email=user_email,
+                password=encrypt_password(password),
+                name=user_name,
+                active=active_user
+                )
+        else:
+            user.name = user_name
+            user.email = user_email
+            if password:
+                user.password = encrypt_password(password)
+
+            if active_user:
+                user_datastore.activate_user(user)
+            else:
+                user_datastore.deactivate_user(user)
 
         # Remove all roles
         all_roles = Role.objects()
@@ -111,5 +129,6 @@ def updte_users():
 
         json_response['success'] = True
         json_response['message'] = "Updated details for {0}".format(user.name)
+
 
     return jsonify(json_response)

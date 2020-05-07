@@ -46,22 +46,21 @@
                   </select>
                 </td>
                 <td class="text-right">
-                  <span><button class="btn btn-info"
-                      onclick="update_object('update', '{{user['id']}}', '/admin/users/')">Update</button> <button
-                      class="btn btn-danger ml-2"
-                      onclick="update_object('delete', '{{user['id']}}', '/admin/users/')">Delete</button></span>
+                  <span>
+                    <button class="btn btn-info" onclick="update_object('update', '{{user['id']}}', '/admin/users/')">Update</button> 
+                    <button class="btn btn-danger ml-2" onclick="update_object('delete', '{{user['id']}}', '/admin/users/')">Delete</button></span>
                 </td>
               </tr>
               {% endfor %}
               <tr id="row-newuser">
-                <th scope="row"><input type="text" class="form-control" placeholder="Username"></th>
-                <td><input type="text" class="form-control" value="" placeholder="user@domain.com"></td>
+                <th scope="row"><input name="name" type="text" class="form-control" placeholder="Username"></th>
+                <td><input name="email" type="text" class="form-control" value="" placeholder="user@domain.com"></td>
                 <td><input type="password" class="form-control" placeholder="********"></td>
                 <td>
 
                   <div class="form-check">
                     <div class="custom-control custom-checkbox">
-                      <input type="checkbox" class="custom-control-input text-center mx-auto my-auto" id="customCheck1"
+                      <input name="active" type="checkbox" class="custom-control-input text-center mx-auto my-auto" id="customCheck1"
                         checked>
                       <label class="custom-control-label" for="customCheck1"></label>
                     </div>
@@ -70,13 +69,16 @@
 
                 </td>
                 <td>
-                  <select multiple class="form-control" id="user_roles">
+                  <select name="roles" multiple class="form-control" id="user_roles">
                     {% for role in roles %}
                     <option value="{{role['id']}}">{{role['name']}}</option>
                     {% endfor %}
                   </select>
                 </td>
                 <td class="text-right">
+                  <input type="hidden" name="newuser" value="true">
+                  <button class="btn btn-success" onclick="update_object('update', 'newuser', '/admin/users/')">New User</button> 
+
                 </td>
               </tr>
             </tbody>
