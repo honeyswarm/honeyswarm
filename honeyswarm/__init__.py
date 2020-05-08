@@ -115,7 +115,7 @@ def poll_instances():
 
 app.scheduler.add_job(check_jobs,'interval', minutes=1,args=[])
 
-app.scheduler.add_job(poll_instances,'interval', seconds=30,args=[])
+app.scheduler.add_job(poll_instances,'interval', minutes=5,args=[])
 
 # ToDo: Set sensible intervals
 app.scheduler.add_job(poll_hives,'interval', minutes=10,args=[])
