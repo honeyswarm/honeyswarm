@@ -25,7 +25,13 @@ class Config(Document):
 class HoneypotEvents(Document):
 
     meta = {
-        'db_alias': 'hpfeeds_db'
+        'db_alias': 'hpfeeds_db',
+        'indexes': [
+            {'fields': ['-date']},
+            {'fields': ['-port']},
+            {'fields': ['-honeypot_type']},
+            {'fields': ['-service']}
+        ]
     }
     date = DateTimeField(default=datetime.utcnow())
     service = StringField()
@@ -52,12 +58,14 @@ class Honeypot(Document):
     description = StringField()
     pillar = ListField()
     channels = ListField()
+    container_name = StringField()
 
 
 class HoneypotInstance(Document):
     honeypot = ReferenceField(Honeypot)
     hpfeeds = ReferenceField(AuthKey)
     pillar = DictField(default={})
+    status = StringField(default="stopped")
 
 
 class Hive(Document):
