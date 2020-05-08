@@ -49,7 +49,7 @@ def event_stream():
         "port",
         "honeypot_type",
         "honeypot_instance_id"
-        ][int(order_by)]
+        ][int(order_by)-1]
 
     order_string = "{0}{1}".format(direction, column)
 
