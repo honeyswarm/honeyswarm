@@ -18,12 +18,20 @@ def honeypot_list():
 
     # List of Availiable HoneyPots
     honey_list = Honeypot.objects
+    hives = Hive.objects()
 
+    instances = []
+
+    for hive in hives:
+        for instance in hive.honeypots:
+            instances.append([hive.id, instance])
+            
     # Installed Honeypots
 
     return render_template(
         "honeypots.html",
-        honey_list=honey_list
+        honey_list=honey_list,
+        instances=instances
         )
 
 
@@ -38,6 +46,7 @@ def create_honeypot():
         new_honeypot.name = request.form.get('honeypot_name')
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
+        new_honeypot.container_name = request.form.get('honeypot_container_name')
         new_honeypot.channels = request.form.get('honeypot_channels').split('/r/n')
         new_honeypot.honeypot_state_file = request.form.get(
             'honeypot_state_file'
@@ -130,6 +139,7 @@ def update_honeypot(honeypot_id):
     honeypot_details.name = request.form.get('honeypot_name')
     honeypot_details.honeypot_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
+    honeypot_details.container_name = request.form.get('honeypot_container_name')
     honeypot_details.channels = request.form.get('honeypot_channels').split('/r/n')
     honeypot_details.honeypot_state_file = request.form.get(
         'honeypot_state_file'
@@ -219,7 +229,7 @@ def update_resource_data(object_id, file_path):
     return jsonify({'success': success, 'message': message})
 
 
-@honeypots.route('/honeypots/<honeypot_id>/deployments/', methods=['GET'])
+@honeypots.route('/honeypots/<honeypot_id>/deployments/', methods=['POST'])
 @login_required
 def honeypot_deployments(honeypot_id):
     honeypot_details = Honeypot.objects(id=honeypot_id).first()
@@ -227,25 +237,21 @@ def honeypot_deployments(honeypot_id):
     if not honeypot_details:
         abort(404)
 
-    # Get a list of all hives that have a frame installed
-    # and are responding to polls.
-    # ToDo: Only permit based on frame supported OS?
-    # Do we need to add Frames as a Reference Field to Honeypot?
-
     all_hives = Hive.objects(frame__exists=True, salt_alive=True)
-    existing_honeypots = []
-    for hive in all_hives:
-        for honeypot in hive.honeypots:
-            if str(honeypot.id) == honeypot_id:
-                existing_honeypots.append(hive)
 
-    # Get all currently installed honypts of this type
-    return render_template(
-        "honey_deployments.html",
+    modal_form = render_template(
+        "honeypot_deployment.html",
         all_hives=all_hives,
-        existing_honeypots=existing_honeypots,
         honeypot_details=honeypot_details
-        )
+    )
+
+    json_response = {
+        "modal_form": modal_form,
+        "honeypot_details": honeypot_details
+    }
+
+    return jsonify(json_response)
+
 
 
 @honeypots.route('/honeypots/<honeypot_id>/deploy/', methods=['POST'])
@@ -369,5 +375,60 @@ def honeypot_deploy(honeypot_id):
             )
     except Exception as err:
         json_response['message'] = "Error creating job: {0}".format(err)
+
+    return jsonify(json_response)
+
+
+
+@honeypots.route('/instance/control/', methods=['POST'])
+@login_required
+def instance_control():
+    json_response = {"success": False, "message": "No action taken"}
+
+    instance_action = request.form.get('action')
+    instance_id = request.form.get('instance_id')
+    hive_id = request.form.get('hive_id')
+
+    hive = Hive.objects(id=hive_id).first()
+    instance = HoneypotInstance.objects(id=instance_id).first()
+
+    if not hive or not instance:
+        json_response['message'] = "Unable to find valid hive or instance"
+        return jsonify(json_response)
+
+    if instance_action == "delete":
+        # Trigger the container to close
+        container_name = instance.honeypot.container_name
+        remove_container = pepper_api.docker_remove(hive_id, container_name)
+        if remove_container:
+            hive.honeypots.update(pull__following=instance)
+            instance.delete()
+            json_response["success"] = True
+            json_response['message'] = "Removed instance of {0}".format(container_name)
+
+    
+    elif instance_action == "stop":
+        container_name = instance.honeypot.container_name
+        container_stop = pepper_api.docker_control(
+            hive_id,
+            container_name,
+            "stop"
+        )
+        json_response['success'] = True
+        json_response['message'] = "Honeypot {0} on hive {1} is stopped".format(container_name, hive_id)
+        instance.status = "stopped"
+
+    elif instance_action == "start":
+        container_name = instance.honeypot.container_name
+        container_start = pepper_api.docker_control(
+            hive_id,
+            container_name,
+            "start"
+        )
+        json_response['success'] = True
+        json_response['message'] = "Honeypot {0} on hive {1} is running".format(container_name, hive_id)
+        instance.status = "running"
+
+    instance.save()
 
     return jsonify(json_response)

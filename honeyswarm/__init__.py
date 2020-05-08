@@ -103,8 +103,19 @@ def poll_hives():
             hive.salt_alive = False
         hive.save()
 
+def poll_instances():
+    for hive in Hive.objects():
+        for instance in hive.honeypots:
+            container_name = instance.honeypot.container_name
+            status = pepper_api.docker_state(str(hive.id), container_name)
+            instance.status = status
+            instance.save()
+    pass
+
 
 app.scheduler.add_job(check_jobs,'interval', minutes=1,args=[])
+
+app.scheduler.add_job(poll_instances,'interval', seconds=30,args=[])
 
 # ToDo: Set sensible intervals
 app.scheduler.add_job(poll_hives,'interval', minutes=10,args=[])

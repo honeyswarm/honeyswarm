@@ -61,7 +61,7 @@ def jobs_paginate():
 
     order_string = "{0}{1}".format(direction, column)
 
-    job_rows = PepperJobs.objects.order_by(order_string).paginate(
+    job_rows = PepperJobs.objects(complete=True).order_by(order_string).paginate(
         page=start_page,
         per_page=per_page
         )

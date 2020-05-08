@@ -142,4 +142,84 @@ class PepperApi():
         return None
 
 
+    def docker_state(self, target, container):
+        """
+        Get the status of a docker container. 
+        """
+        # check auth state
+        self.api_auth()
+        api_reponse = self.api.low(
+            [{'client': 'local', 'tgt': target, 'fun': 'docker.state', 'arg': container}]
+            )
+
+        try:        
+            result_object = api_reponse['return'][0]
+            return result_object[target]
+
+        except Exception as err:
+            return "Error Getting status: {0}".format(err)
+
+
+    def docker_control(self, target, container, wanted_state):
+        """
+        Set the status of a container.
+        The container must already exist
+        """
+        # check auth state
+        self.api_auth()
+
+        if wanted_state == "start":
+            function = "docker.start"
+        elif wanted_state == "stop":
+            function = "docker.stop"
+
+        api_reponse = self.api.low(
+            [{'client': 'local', 'tgt': target, 'fun': function, 'arg': container}]
+            )
+
+        try:        
+            result_object = api_reponse['return'][0]
+            return result_object
+
+        except:
+            return "Error Get"
+
+
+    def docker_remove(self, target, container):
+        """
+        Remove a container and destroy its image
+        """
+        # check auth state
+        self.api_auth()
+
+        responses = []
+
+        # Stop the container
+        api_reponse = self.api.low(
+            [{'client': 'local', 'tgt': target, 'fun': 'docker.stop', 'arg': container}]
+            )
+        responses.append(api_reponse)
+
+        # Remove the container
+        api_reponse = self.api.low(
+            [{'client': 'local', 'tgt': target, 'fun': 'docker.rm', 'arg': container}]
+            )
+        responses.append(api_reponse)
+
+        # Check state to confirm
+        api_reponse = self.api.low(
+            [{'client': 'local', 'tgt': target, 'fun': 'docker.state', 'arg': container}]
+            )
+
+        try:        
+            result_object = api_reponse['return'][0]
+            if 'ERROR' in result_object[target]:
+                return True
+            else:
+                return False
+
+        except:
+            return False
+
+
 pepper_api = PepperApi()

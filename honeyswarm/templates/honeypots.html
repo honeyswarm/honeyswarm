@@ -1,84 +1,257 @@
 {% extends "base.html" %}
 {% set active_page = "honeypots" %}
+{% set page_title = " - Honeypots" %}
 {% block content %}
 
 
 
-<div class="container">
+<div class="container-fluid">
     <div class="row">
         <div class="col mt-2">
-            <h3>Honeypots <span><button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#createHoneyModal"><i class="fa fa-plus"></i> New Honeypot</button></span></h3> 
+            <h3>Honeypots </h3> 
               
         </div>
     </div>
     
-    {% for honeypot in honey_list %}
-    <div class="row">
-        <div class="col mt-3">
-            <div class="card">
-                <div class="card-body">
-    
-                    <div class="row">
-                        <div class="col-8">
-                            <h5 class="card-title">{{honeypot.name}}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">{{honeypot.honey_type}}</h6>
-                            <p class="card-text">{{honeypot.description}}</p>
-                        </div>
-                        <div class="col-4">
-                            <h5 class="card-title">Actions</h5>
-                            <a href="{{ url_for('honeypots.honeypot_deployments', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deployment</a>
-                            <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
-                            <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
-                        </div>
-                    </div>
+<div class="row mt-5">
+    <div class="col">
+        <h4 class="text-warning">Existing Honeypots</h4>
+        <table class="table table-bordered table-sm table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Instance ID</th>
+              <th scope="col">Hive ID</th>
+              <th scope="col">Honeypot Type</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for instance in instances %}
+            <tr id="row-{{instance[1].id}}">
+              <th scope="row">{{instance[1].id}}</th>
+              <td>{{instance[0]}}</td>
+              <td>{{instance[1].honeypot.name}}</td>
+              <td>{{instance[1].status}}</td>
+              <td class=text-right>
+                <span>
+                    <button class="btn btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}" disabled>Poll</button> 
+                    <button class="btn btn-success ml-2 instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
+                    <button class="btn btn-warning ml-2 instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
+                    <button class="btn btn-danger ml-2 instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
+                </span>
 
-                </div>
-              </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+</div>
+
+<div class="row mt-5">
+      <div class="col">
+        <h4 class="text-warning mb-4">Available Honeypots <span><button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#createHoneyModal"><i class="fa fa-plus"></i> New Honeypot type</button></span></h4>
+        
+
+        <div class="card-columns">
+            {% for honeypot in honey_list %}
+                <div class="card">
+                    <div class="card-body">
+        
+                        <div class="row">
+                            <div class="col-8">
+                                <h5 class="card-title">{{honeypot.name}}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{honeypot.honey_type}}</h6>
+                                <p class="card-text">{{honeypot.description}}</p>
+                            </div>
+                            <div class="col-4">
+                                <h5 class="card-title">Actions</h5>
+                                <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#deploymentModal" data-honeypotid="{{honeypot.id}}" data-honeypotname="{{honeypot.name}}">
+                                    Deploy
+                                  </button>
+                                <!-- <a href="{{ url_for('honeypots.honeypot_deployments', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a> -->
+                                <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
+                                <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
+                            </div>
+                        </div>
+    
+                    </div>
+                  </div>
+                  {% endfor %}
         </div>
-    </div>
-    {% endfor %}
+        
+
+      </div>
 </div>
 
 
-<div id="createHoneyModal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-    <form id="fileNameForm" method="post" action="{{ url_for('honeypots.create_honeypot') }}">
+
+<div class="modal fade" id="createHoneyModal" tabindex="-1" role="dialog" aria-labelledby="createHoneyModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
       <div class="modal-content">
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="honeypot_name">Name</label>
-                <input type="text" class="form-control" id="honeypot_name" name="honeypot_name"
-                    value="">
-            </div>
-            <div class="form-group">
-                <label for="honeypot_type">Type</label>
-                <input type="text" class="form-control" id="honeypot_type" name="honeypot_type"
-                    value="">
-            </div>
-            <div class="form-group">
-                <label for="honeypot_description">Description</label>
-                <textarea class="form-control" id="honeypot_description" name="honeypot_description"
-                    rows="5"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="honeypot_state_file">State File</label>
-                <input type="text" class="form-control" id="honeypot_state_file" name="honeypot_state_file"
-                    value="">
-            </div>
-            <div class="form-group">
-                <label for="honeypot_channels">HPFeeds Channels</label>
-                <textarea class="form-control" id="honeypot_channels" name="honeypot_channels"
-                    rows="3" placeholder="enter each hpfeeds channels on a new line"></textarea>
-            </div>
+        <div class="modal-header">
+          <h5 class="modal-title" id="createHoneyModalTitle">Create a new Honeypot that can be deployed to hives</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
-        <div class="modal-footer p-0">
+        <div class="modal-body">
+
+
+
+            <form id="fileNameForm" method="post" action="{{ url_for('honeypots.create_honeypot') }}">
+                <div class="modal-content">
+                  <div class="modal-body">
+                      <div class="form-group">
+                          <label for="honeypot_name">Name</label>
+                          <input type="text" class="form-control" id="honeypot_name" name="honeypot_name"
+                              value="" required>
+                      </div>
+                      <div class="form-group">
+                          <label for="honeypot_type">Type</label>
+                          <input type="text" class="form-control" id="honeypot_type" name="honeypot_type"
+                              value="">
+                      </div>
+                      <div class="form-group">
+                          <label for="honeypot_description">Description</label>
+                          <textarea class="form-control" id="honeypot_description" name="honeypot_description"
+                              rows="5"></textarea>
+                      </div>
+                      <div class="form-group">
+                          <label for="honeypot_state_file">State File</label>
+                          <input type="text" class="form-control" id="honeypot_state_file" name="honeypot_state_file"
+                              value="">
+                      </div>
+                      <div class="form-group">
+                          <label for="honeypot_channels">HPFeeds Channels</label>
+                          <textarea class="form-control" id="honeypot_channels" name="honeypot_channels"
+                              rows="3" placeholder="enter each hpfeeds channels on a new line"></textarea>
+                      </div>
+                  </div>
+                  <div class="modal-footer p-0">
+
+                  </div>
+                </div>
+              
+
+
+
+        </div>
+        <div class="modal-footer">
             <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Close</button>
             <button type="submit" class="btn btn-sm btn-success" data-loading-text="Loading...">Create</button>
         </div>
-      </div>
     </form>
+      </div>
     </div>
   </div>
+
+
+
+
+
+
+  <div class="modal fade" id="deploymentModal" tabindex="-1" role="dialog" aria-labelledby="deploymentModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deploymentModalTitle">Deploy this honeypot to an existing hive</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <div id="deployment_form_target">
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<script>
+
+$('#deploymentModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget)
+    var honeypot_id = button.data('honeypotid')
+    var honeypot_name = button.data('honeypotname')
+    var post_url = `/honeypots/${honeypot_id}/deployments/`
+
+    $.post( post_url, $( "#deployment_details" ).serialize() )
+            .done(function( data ) {
+            $('#deployment_form_target').html(data['modal_form'])
+            $('.modal-title').html(`Deploy <strong>${honeypot_name}</strong> to an existing hive`)
+
+        });
+
+
+})
+
+$( ".instance-btn" ).click(function() {
+
+    var button = $(this)
+    var action = button.data('action')
+    var hive_id = button.data('hiveid')
+    var instance_id = button.data('instanceid')
+
+    post_data = {
+        "action": action,
+        "hive_id": hive_id,
+        "instance_id": instance_id
+    }
+
+
+        alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
+        $.post( '/instance/control/', post_data )
+            .done(function( data ) {
+            console.log(data);
+            if(data['success']){
+                alert_notify('alert-success', 'Job Running', 'Job ID: '+data['message'] )
+            } else {
+                alert_notify('alert-danger', 'Opps!', data['message'] )
+            }
+        });
+
+
+    });
+
+
+
+
+function update_object(action, object_id, post_url) {
+
+
+
+
+
+      $.post(post_url, post_data)
+        .done(function (data) {
+          if (data['success']) {
+            // Add notification
+            alert_notify('alert-success', 'Success!', data['message'])
+
+          } else {
+            alert_notify('alert-danger', 'Opps!', data['message'])
+          }
+
+          if (action == "delete") {
+            $('#row-' + object_id).remove();
+          }
+
+        })
+        .fail(function () {
+          alert_notify('alert-danger', 'Opps!', "Something went wrong please check the logs")
+        });
+
+
+    }
+
+
+</script>
+
+
 
 
 {% endblock %}

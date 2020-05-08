@@ -1,6 +1,7 @@
 # This should only run at first time setup
 import os
 import json
+from secrets import token_hex
 from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
@@ -55,7 +56,13 @@ def install_states(state_base):
 def base_install():
 
     if request.method == "GET":
-        return render_template("install.html")
+        token1 = token_hex(16)
+        token2 = token_hex(16)
+        return render_template(
+            "install.html",
+            token1=token1,
+            token2=token2
+            )
 
     # Assuming we are at post now.
 
