@@ -430,5 +430,6 @@ def instance_control():
         instance.status = "running"
 
     instance.save()
+    hive.save()
 
     return jsonify(json_response)
