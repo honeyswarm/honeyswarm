@@ -5,6 +5,7 @@ import pytz
 from datetime import datetime
 
 import flaskcode
+from datetime import timedelta
 from flask import Flask, Blueprint, render_template, abort, request, g, jsonify, send_file, session, url_for, flash, redirect
 from flask_mongoengine import MongoEngine
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -66,6 +67,7 @@ user_datastore = MongoEngineUserDatastore(db, User, Role)
 app.config['SECURITY_LOGIN_URL'] = '/nowhere'
 app.config['SECURITY_LOGIN_USER_TEMPLATE'] = "login.html"
 app.config['SECURITY_CONFIRMABLE'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 security = Security(app, user_datastore)
 
 #CSRFProtect(app)
