@@ -26,12 +26,16 @@ From this pop up box you can configure any customisable options and then select 
 In the background you should see a notification for a scheduled deployment. 
 The Deployment pop up will stay active until you select close to enable multiple deployments. 
 
+.. image:: images/HoneyPot-Deploy.png
+   :alt: Deploy Honeypot
+
 Controlling Honeypots
 ---------------------
 
 You can Start, Stop and Delete individual Honeypots from teh Honeypots page.
 
-.. image: image/Honeypot-Control.png
+.. image:: images/Honeypot-Control.png
+   :width: 400
    :alt: HoneyPot Control
 
 Editing Honeypots
