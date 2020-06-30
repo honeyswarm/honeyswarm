@@ -15,7 +15,7 @@ HoneySwarm
 
 If you want to run the latest stable release go to https://github.com/honeyswarm/honeyswarm/releases and get the latest release
 
-If you prefer a development version to then ``git clone git@github.com:honeyswarm/honeyswarm.git``
+If you prefer a development version then ``git clone git@github.com:honeyswarm/honeyswarm.git``
 
 Configuration
 -------------
@@ -30,7 +30,28 @@ Please leave all the HOST names and ports as they are pre configured.
 
 If you wish to change the external HTTP port from 8080 to something of your choice edit the docker-compose.yml file. 
 
-Once you have made your changes you will need to start the application and complete the first time setup by visiting: http://honeyswarmip/installation
+Once you have made your changes you will need to start the application and complete the first time setup.
+
+
+First Time Setup
+----------------
+
+Once you start your HoneySwarm instance for the first time you will need to run the initial installation. 
+To start the install visit http://HONEYSWARMIP:8080/install
+
+You should be presented with an installation form. 
+
+.. image:: images/HoneySwarm-Install.png
+   :alt: HoneySwarm Installer
+
+Fill all the required fields.
+
+- Honeyswarm Host: This should be set to an IP address that your honeypot hosts (Hives) can access. 
+- Honeyswarm API: This will autofil with a randomly generated API Key, but you can change it. This is the key that will be used to run the initial Hive setup
+- BrokerHost: This is the HPFeeds Broker IP, if your using the default installation this should be set to match the HoneySwarm Host fields
+- Broker Secret: This is the main auth key that will be used to Subscribe to ALL incoming honeypot Events. 
+
+As part of the installation HoneySwarm will download and install all the available frames and honeypots.
 
 
 Starting

@@ -1,9 +1,12 @@
 Frames
 ======
 
-What is a Hive
+What is a Frame
+---------------
+ToDo
+
+Create a Frame
 --------------
+ToDo
 
-
-Create a Hive
--------------
+Now you have a frame install some honeypots :)

@@ -15,6 +15,7 @@ Welcome to HoneySwarm's documentation!
    quickstart
    hives
    frames
+   honeypots
 
 
 Indices and tables
