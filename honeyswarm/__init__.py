@@ -23,7 +23,7 @@ from flask_wtf.csrf import CSRFProtect
 
 # Set the Core Application
 app = Flask(__name__, static_folder='static', static_url_path='')
-app.secret_key = 'MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK'
+app.secret_key = os.environ.get('SESSION_SECRET', 'MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK')
 app.config['SECURITY_PASSWORD_SALT'] = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1)
 TZ = pytz.timezone('Europe/London')
