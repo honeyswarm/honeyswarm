@@ -24,6 +24,8 @@ author = '@kevthehermit'
 # The full version, including alpha/beta/rc tags
 release = '0.1'
 
+# Required for ReadTheDocs
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
