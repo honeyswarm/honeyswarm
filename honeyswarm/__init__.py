@@ -110,7 +110,7 @@ def poll_instances():
         for instance in hive.honeypots:
             container_name = instance.honeypot.container_name
             status = pepper_api.docker_state(str(hive.id), container_name)
-            instance.status = status
+            instance.status = str(status)
             instance.save()
     pass
 

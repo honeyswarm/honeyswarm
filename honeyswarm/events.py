@@ -26,6 +26,7 @@ def event_stream():
     draw = request.form.get("draw")
     start_offset = int(request.form.get("start"))
     per_page = int(request.form.get("length"))
+    search_value = request.form.get("search[value]", False)
 
     # Calculate the correct page number
     start_offset = start_offset + per_page
@@ -53,10 +54,29 @@ def event_stream():
 
     order_string = "{0}{1}".format(direction, column)
 
-    events = HoneypotEvents.objects.order_by(order_string).paginate(
+    all_events = HoneypotEvents.objects
+
+    # If we are searching
+    #
+    filtered = all_events
+
+    if search_value:
+        if search_value.startswith(("ip:", "service:", "port:", "honeypot:")):
+            search_field, search_term = search_value.split(":", 1)
+            if search_field == "ip":
+                filtered = all_events.filter(source_ip=search_term)
+            elif search_field == "service":
+                filtered = all_events.filter(service=search_term)
+            elif search_field == "port":
+                filtered = all_events.filter(port=search_term)
+            elif search_field == "honeypot":
+                filtered = all_events.filter(honeypot_type=search_term)
+
+    events = filtered.order_by(order_string).paginate(
         page=start_page,
         per_page=per_page
         )
+
     event_count = events.total
 
     # This should be how many matched a search. If no search then total rows

@@ -46,6 +46,7 @@
 
     $(document).ready(function () {
       var table = $('#eventstream').DataTable({
+        "searchDelay": 1000,
         "pageLength": 25,
         "processing": true,
         "serverSide": true,
