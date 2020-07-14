@@ -155,8 +155,7 @@ class PepperApi():
         container_status = "Offline"
         try:        
             result_object = api_reponse['return'][0]
-            # We need this to be a string
-            if result_object[target]:
+            if result_object[target] == "running":
                 container_status = "Online"
         
         except Exception as err:

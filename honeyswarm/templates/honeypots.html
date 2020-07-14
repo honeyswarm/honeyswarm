@@ -32,7 +32,7 @@
               <th scope="row">{{instance[1].id}}</th>
               <td>{{instance[0]}}</td>
               <td>{{instance[1].honeypot.name}}</td>
-              <td>{{instance[1].status}}</td>
+              <td class={% if instance[1].status == "Online"%}text-success{% else %}text-danger{% endif %}>{{instance[1].status}}</td>
               <td class=text-right>
                 <span>
                     <button class="btn btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}" disabled>Poll</button> 
