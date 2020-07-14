@@ -28,9 +28,11 @@ def honeypot_list():
             # Clean them here
             try:
                 honeypot = instance.honeypot.name
+                instances.append([hive.id, instance])
             except:
                 hive.update(pull__honeypots=instance)
-            instances.append([hive.id, instance])
+                hive.save()
+            
             
     # Installed Honeypots
 
@@ -288,7 +290,7 @@ def honeypot_deploy(honeypot_id):
     # Get it and its auth_key
     honeypot_instance = None
     for instance in hive.honeypots:
-        if instance.id == honeypot_details.id:
+        if instance.honeypot.id == honeypot_details.id:
             honeypot_instance = instance
             auth_key = AuthKey.objects(identifier=str(honeypot_instance.id)).first()
 
@@ -413,6 +415,7 @@ def instance_control():
             json_response['message'] = "Removed instance of {0}".format(container_name)
             # Delete the instance
             instance.delete()
+            hive.save()
     
     elif instance_action == "stop":
         container_name = instance.honeypot.container_name
