@@ -152,12 +152,17 @@ class PepperApi():
             [{'client': 'local', 'tgt': target, 'fun': 'docker.state', 'arg': container}]
             )
 
+        container_status = "Offline"
         try:        
             result_object = api_reponse['return'][0]
-            return result_object[target]
-
+            # We need this to be a string
+            if result_object[target]:
+                container_status = "Online"
+        
         except Exception as err:
-            return "Error Getting status: {0}".format(err)
+            container_status = "Error Getting status: {0}".format(err)
+
+        return container_status
 
 
     def docker_control(self, target, container, wanted_state):
