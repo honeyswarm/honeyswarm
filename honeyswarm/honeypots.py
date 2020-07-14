@@ -24,6 +24,12 @@ def honeypot_list():
 
     for hive in hives:
         for instance in hive.honeypots:
+            # Sometimes we can end up with a dead instance. 
+            # Clean them here
+            try:
+                honeypot = instance.honeypot.name
+            except:
+                hive.update(pull__honeypots=instance)
             instances.append([hive.id, instance])
             
     # Installed Honeypots
@@ -401,11 +407,12 @@ def instance_control():
         container_name = instance.honeypot.container_name
         remove_container = pepper_api.docker_remove(hive_id, container_name)
         if remove_container:
-            hive.honeypots.update(pull__following=instance)
-            instance.delete()
+            # remove the instance from the hive honeypot list
+            hive.update(pull__honeypots=instance)
             json_response["success"] = True
             json_response['message'] = "Removed instance of {0}".format(container_name)
-
+            # Delete the instance
+            instance.delete()
     
     elif instance_action == "stop":
         container_name = instance.honeypot.container_name
