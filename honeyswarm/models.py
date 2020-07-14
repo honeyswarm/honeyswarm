@@ -30,7 +30,8 @@ class HoneypotEvents(Document):
             {'fields': ['-date']},
             {'fields': ['-port']},
             {'fields': ['-honeypot_type']},
-            {'fields': ['-service']}
+            {'fields': ['-service']},
+            {'fields': ['-source_ip']}
         ]
     }
     date = DateTimeField(default=datetime.utcnow())
@@ -65,7 +66,7 @@ class HoneypotInstance(Document):
     honeypot = ReferenceField(Honeypot)
     hpfeeds = ReferenceField(AuthKey)
     pillar = DictField(default={})
-    status = StringField(default="stopped")
+    status = StringField(default="Pending")
 
 
 class Hive(Document):

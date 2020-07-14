@@ -13,7 +13,7 @@
           <table class="table table-bordered table-sm table-hover">
             <thead class="thead-dark">
               <tr>
-                <th scope="col">Hive ID</th>
+                <th scope="col">Hive Name</th>
                 <th scope="col">OS</th>
                 <th scope="col">IP Address</th>
                 <th scope="col">Created</th>
@@ -27,7 +27,7 @@
               {% for hive in hive_list %}
               {% if hive['salt_alive']  %}
               <tr id="row-{{hive['id']}}">
-                <th scope="row">{{hive['id']}}</th>
+                <th scope="row">{{hive['name']}}</th>
                 <td>{{hive['grains']['osfullname']}}</td>
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>

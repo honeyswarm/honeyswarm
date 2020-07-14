@@ -28,7 +28,7 @@ def honeypot_list():
             # Clean them here
             try:
                 honeypot = instance.honeypot.name
-                instances.append([hive.id, instance])
+                instances.append([hive.id, instance, hive.name])
             except:
                 hive.update(pull__honeypots=instance)
                 hive.save()

@@ -112,7 +112,6 @@ def poll_instances():
             status = pepper_api.docker_state(str(hive.id), container_name)
             instance.status = str(status)
             instance.save()
-    pass
 
 
 app.scheduler.add_job(check_jobs,'interval', minutes=1,args=[])

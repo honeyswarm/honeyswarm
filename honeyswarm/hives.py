@@ -7,7 +7,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, abort, jsonify
 from flask_security import login_required
 from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents, Config
-
+from honeyswarm.namegen import get_random_name
 
 hives = Blueprint('hives', __name__)
 
@@ -224,7 +224,7 @@ def hives_register(operating_system):
 
     # Lets create a new hive
     new_hive = Hive(
-        name=str(uuid4())
+        name=get_random_name()
     )
 
     new_hive.save()

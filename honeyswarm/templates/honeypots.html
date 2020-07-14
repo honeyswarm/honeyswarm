@@ -20,7 +20,7 @@
           <thead class="thead-dark">
             <tr>
               <th scope="col">Instance ID</th>
-              <th scope="col">Hive ID</th>
+              <th scope="col">Hive Name</th>
               <th scope="col">Honeypot Type</th>
               <th scope="col">Status</th>
               <th scope="col" class="text-center">Actions</th>
@@ -30,7 +30,7 @@
             {% for instance in instances %}
             <tr id="row-{{instance[1].id}}">
               <th scope="row">{{instance[1].id}}</th>
-              <td>{{instance[0]}}</td>
+              <td>{{instance[2]}}</td>
               <td>{{instance[1].honeypot.name}}</td>
               <td class={% if instance[1].status == "Online"%}text-success{% else %}text-danger{% endif %}>{{instance[1].status}}</td>
               <td class=text-right>
