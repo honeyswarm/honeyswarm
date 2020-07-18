@@ -13,7 +13,7 @@ from honeyswarm import user_datastore
 from honeyswarm import SALT_STATE_BASE
 
 
-installer = Blueprint('installer', __name__)
+installer = Blueprint('installer', __name__, template_folder="templates")
 
 
 def install_states(state_base):
@@ -52,7 +52,7 @@ def install_states(state_base):
             print(e)
 
 
-@installer.route('/install', methods=["GET", "POST"])
+@installer.route('/', methods=["GET", "POST"])
 def base_install():
 
     if request.method == "GET":

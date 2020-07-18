@@ -10,3 +10,6 @@ flaskcode
 APScheduler
 bcrypt
 hpfeeds3
+salt
+salt-pepper
+gunicorn

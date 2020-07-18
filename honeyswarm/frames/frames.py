@@ -9,10 +9,10 @@ from flaskcode.utils import write_file, dir_tree, get_file_extension
 from honeyswarm.saltapi import pepper_api
 from honeyswarm import SALT_STATE_BASE
 
-frames = Blueprint('frames', __name__)
+frames = Blueprint('frames', __name__, template_folder="templates")
 
 
-@frames.route('/frames')
+@frames.route('/')
 @login_required
 def frames_list():
 
@@ -24,7 +24,7 @@ def frames_list():
         )
 
 
-@frames.route('/frames/<frame_id>/edit/')
+@frames.route('/<frame_id>/edit/')
 @login_required
 def show_frame(frame_id):
     print(frame_id)
@@ -66,7 +66,7 @@ def show_frame(frame_id):
         )
 
 
-@frames.route('/frames/create/', methods=['POST'])
+@frames.route('/create/', methods=['POST'])
 @login_required
 def create_frame():
 
@@ -102,7 +102,7 @@ def create_frame():
     return jsonify(json_response)
 
 
-@frames.route('/frames/<frame_id>/update/', methods=['POST'])
+@frames.route('/<frame_id>/update/', methods=['POST'])
 @login_required
 def update_frame(frame_id):
     frame_details = Frame.objects(id=frame_id).first()
@@ -140,7 +140,7 @@ def update_frame(frame_id):
 
 
 @frames.route(
-    '/frames/<object_id>/resource-data/<path:file_path>.txt',
+    '/<object_id>/resource-data/<path:file_path>.txt',
     methods=['GET', 'HEAD']
     )
 @login_required
@@ -168,7 +168,7 @@ def resource_data(object_id, file_path):
 
 
 @frames.route(
-    '/frames/<object_id>/update-resource-data/<path:file_path>',
+    '/<object_id>/update-resource-data/<path:file_path>',
     methods=['POST']
     )
 @login_required
@@ -190,7 +190,7 @@ def update_resource_data(object_id, file_path):
     return jsonify({'success': success, 'message': message})
 
 
-@frames.route('/frames/<frame_id>/deploy/', methods=['POST'])
+@frames.route('/<frame_id>/deploy/', methods=['POST'])
 @login_required
 def frame_deploy(frame_id):
     """Add Docker Frame"""

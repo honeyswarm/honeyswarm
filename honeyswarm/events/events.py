@@ -2,20 +2,19 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents
 
-events = Blueprint('events', __name__)
+events = Blueprint('events', __name__, template_folder="templates")
 
 
-@events.route('/events')
+@events.route('/')
 @login_required
 def events_page():
 
     return render_template(
         "events.html"
-
         )
 
 
-@events.route('/events/paginate', methods=["POST"])
+@events.route('/paginate', methods=["POST"])
 @login_required
 def event_stream():
 
@@ -112,7 +111,7 @@ def event_stream():
     return jsonify(json_results)
 
 
-@events.route('/events/payload/<event_id>', methods=["POST"])
+@events.route('/payload/<event_id>', methods=["POST"])
 @login_required
 def event_payload(event_id):
     single_event = HoneypotEvents.objects(id=event_id).first()

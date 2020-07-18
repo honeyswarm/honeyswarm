@@ -4,7 +4,7 @@ from flask import Blueprint, render_template
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents, Honeypot, HoneypotInstance, Hive
 
-dashboard = Blueprint('dashboard', __name__)
+dashboard = Blueprint('dashboard', __name__, template_folder="templates")
 
 
 def get_dashboard_data(days):
@@ -41,7 +41,7 @@ def get_dashboard_data(days):
     return graph_data
 
 
-@dashboard.route('/dashboard')
+@dashboard.route('/')
 @login_required
 def main_dashboard():
 

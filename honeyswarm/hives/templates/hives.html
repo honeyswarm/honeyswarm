@@ -35,26 +35,23 @@
                 <td>{{hive['frame']['name'] or '<a href="/frames">Show Frames</a>' | safe}}</td>
                 <td>{{hive['honeypots'] | length}} / {{hive.event_count}}</td>
                 <td>
-                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
-                    <option value="select">Select</option>
-                    <option value="poll">Poll</option>
-                    <option value="edit">Edit</option>
-                    <option value="restart">Restart</option>
-                    <option value="delete">Delete</option>
+                  <span>
+                      <button class="btn btn-sm btn-info hive-btn" data-action="poll" data-hiveid="{{hive['id']}}">Poll</button> 
+                      <button class="btn btn-sm btn-success hive-btn" data-action="edit" data-hiveid="{{hive['id']}}">Edit</button>
+                      <button class="btn btn-sm btn-warning hive-btn" data-action="restart" data-hiveid="{{hive['id']}}">Restart</button> 
+                      <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
 
-                    {% if not hive['frame'] %}
+                      {% if not hive['frame'] %}
 
-                      {% for frame in frame_list %}
-                        {% if hive['grains']['osfullname'] in frame['supported_os'] %}
-                        <option value="frame" data-frame_id="{{frame.id}}" data-frame_state="frames/{{frame.id}}/{{frame.frame_state_path}}">Install {{frame.name}} Frame</option>
-                        {% endif %}
-                      {% endfor %}
+                        {% for frame in frame_list %}
+                          {% if hive['grains']['osfullname'] in frame['supported_os'] %}
+                          <button class="btn btn-sm btn-danger ml-2 hive-btn" data-frame_id="{{frame.id}}" data-frame_state="frames/{{frame.id}}/{{frame.frame_state_path}}" data-action="frame" data-hiveid="{{hive['id']}}">Install {{frame.name}} Frame</button>
+                          {% endif %}
+                        {% endfor %}
 
-                    {% endif %}
+                      {% endif %}
 
-
-
-                  </select>
+                    </span>
                 </td>
               </tr>
               {% endif %}
@@ -80,13 +77,12 @@
               <tr id="row-{{hive['id']}}">
                 <th scope="row">{{hive['id']}}</th>
                 <td>
-                  <select class="form-control hive_action" id="unregActions" data-hiveId="{{hive['id']}}">
-                    <option value="select">Select</option>
+
+                  <span>
                     {% if hive['id'] | string in key_list %}
-                    <option value="swarm">Add to Swarm</option>
-                    {% endif %}
-                    <option value="delete">Delete</option>
-                  </select>
+                    <button class="btn btn-sm btn-sucess hive-btn" data-action="swarm" data-hiveid="{{hive['id']}}">Add to Swarm</button>
+                    {% endif %} 
+                    <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
                 </td>
               </tr>
               {% endif %}
@@ -183,9 +179,11 @@
 
 let notificationCount = 0;
 
-$( ".hive_action" ).change(function() {
-  let hive_id = this.getAttribute("data-hiveId");
-  let hive_action = this.value;
+$( ".hive-btn" ).click(function() {
+
+  var button = $(this)
+  var hive_action = button.data('action')
+  var hive_id = button.data('hiveid')
   let post_params = { hive_id: hive_id };
   let post_url = "/hives/actions/"+hive_action;
 
@@ -199,8 +197,8 @@ $( ".hive_action" ).change(function() {
 
 
   if (hive_action == "frame"){
-    frame_state_path = $(this).find(':selected').data('frame_state');
-    frame_id = $(this).find(':selected').data('frame_id');
+    frame_state_path = button.data('frame_state');
+    frame_id = button.data('frame_id');
     post_params['frame_state_file'] = frame_state_path;
     post_params['frame_id'] = frame_id;
   }

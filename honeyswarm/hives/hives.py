@@ -9,13 +9,13 @@ from flask_security import login_required
 from honeyswarm.models import Hive, PepperJobs, Frame, HoneypotEvents, Config
 from honeyswarm.namegen import get_random_name
 
-hives = Blueprint('hives', __name__)
+hives = Blueprint('hives', __name__, template_folder="templates")
 
 APITOKEN = os.environ.get("HIVE_API_TOKEN")
 HONEYSWARM_HOST = os.environ.get("HONEYSWARM_HOST")
 
 
-@hives.route('/hives')
+@hives.route('/')
 @login_required
 def hives_list():
 
@@ -52,7 +52,7 @@ def hives_list():
 ##
 # Hive Actions
 ##
-@hives.route('/hives/actions/delete', methods=["POST"])
+@hives.route('/actions/delete', methods=["POST"])
 @login_required
 def hive_delete():
     """Delete hiveid from Mongo and salt master"""
@@ -79,7 +79,7 @@ def hive_delete():
     return jsonify(json_response)
 
 
-@hives.route('/hives/actions/poll', methods=["POST"])
+@hives.route('/actions/poll', methods=["POST"])
 @login_required
 def hive_poll():
     """Poll a hive and get its grains"""
@@ -110,7 +110,7 @@ def hive_poll():
     return jsonify(json_response)
 
 
-@hives.route('/hives/actions/swarm', methods=["POST"])
+@hives.route('/actions/swarm', methods=["POST"])
 @login_required
 def hive_swarm():
     """Add a hive to the swarm"""
@@ -160,7 +160,7 @@ def hive_swarm():
     return jsonify(json_response)
 
 
-@hives.route('/hives/actions/frame', methods=["POST"])
+@hives.route('/actions/frame', methods=["POST"])
 @login_required
 def hive_test():
     """Add Docker Frame"""

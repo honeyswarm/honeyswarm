@@ -7,10 +7,10 @@ from flask_login import login_required
 from honeyswarm.models import PepperJobs
 from honeyswarm.saltapi import pepper_api
 
-jobs = Blueprint('jobs', __name__)
+jobs = Blueprint('jobs', __name__, template_folder="templates")
 
 
-@jobs.route('/jobs')
+@jobs.route('/')
 @login_required
 def jobs_list():
 
@@ -25,7 +25,7 @@ def jobs_list():
         )
 
 
-@jobs.route('/jobs/paginate', methods=["POST"])
+@jobs.route('/paginate', methods=["POST"])
 @login_required
 def jobs_paginate():
 
@@ -98,7 +98,7 @@ def jobs_paginate():
     return jsonify(json_results)
 
 
-@jobs.route('/jobs/payload/<job_id>', methods=["POST"])
+@jobs.route('/payload/<job_id>', methods=["POST"])
 @login_required
 def jobs_payload(job_id):
     single_job = PepperJobs.objects(id=job_id).first()
@@ -111,7 +111,7 @@ def jobs_payload(job_id):
 
 
 
-@jobs.route('/jobs/poll')
+@jobs.route('/poll')
 @login_required
 def jobs_poll():
 

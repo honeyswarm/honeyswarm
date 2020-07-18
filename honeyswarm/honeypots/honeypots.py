@@ -9,10 +9,10 @@ from flaskcode.utils import write_file, dir_tree, get_file_extension
 from honeyswarm.saltapi import pepper_api
 from honeyswarm import SALT_STATE_BASE
 
-honeypots = Blueprint('honeypots', __name__)
+honeypots = Blueprint('honeypots', __name__, template_folder="templates")
 
 
-@honeypots.route('/honeypots')
+@honeypots.route('/')
 @login_required
 def honeypot_list():
 
@@ -43,7 +43,7 @@ def honeypot_list():
         )
 
 
-@honeypots.route('/honeypots/create/', methods=['POST'])
+@honeypots.route('/create/', methods=['POST'])
 @login_required
 def create_honeypot():
 
@@ -95,7 +95,7 @@ def create_honeypot():
 
 
 
-@honeypots.route('/honeypots/<honeypot_id>/edit/')
+@honeypots.route('/<honeypot_id>/edit/')
 @login_required
 def show_honeypot(honeypot_id):
     print(honeypot_id)
@@ -133,7 +133,7 @@ def show_honeypot(honeypot_id):
         )
 
 
-@honeypots.route('/honeypots/<honeypot_id>/update/', methods=['POST'])
+@honeypots.route('/<honeypot_id>/update/', methods=['POST'])
 @login_required
 def update_honeypot(honeypot_id):
     honeypot_details = Honeypot.objects(id=honeypot_id).first()
@@ -185,7 +185,7 @@ def update_honeypot(honeypot_id):
 
 
 @honeypots.route(
-    '/honeypots/<object_id>/resource-data/<path:file_path>.txt',
+    '/<object_id>/resource-data/<path:file_path>.txt',
     methods=['GET', 'HEAD']
     )
 @login_required
@@ -212,7 +212,7 @@ def resource_data(object_id, file_path):
 
 
 @honeypots.route(
-    '/honeypots/<object_id>/update-resource-data/<path:file_path>',
+    '/<object_id>/update-resource-data/<path:file_path>',
     methods=['POST']
     )
 @login_required
@@ -237,7 +237,7 @@ def update_resource_data(object_id, file_path):
     return jsonify({'success': success, 'message': message})
 
 
-@honeypots.route('/honeypots/<honeypot_id>/deployments/', methods=['POST'])
+@honeypots.route('/<honeypot_id>/deployments/', methods=['POST'])
 @login_required
 def honeypot_deployments(honeypot_id):
     honeypot_details = Honeypot.objects(id=honeypot_id).first()
@@ -262,7 +262,7 @@ def honeypot_deployments(honeypot_id):
 
 
 
-@honeypots.route('/honeypots/<honeypot_id>/deploy/', methods=['POST'])
+@honeypots.route('/<honeypot_id>/deploy/', methods=['POST'])
 @login_required
 def honeypot_deploy(honeypot_id):
     form_vars = request.form.to_dict()

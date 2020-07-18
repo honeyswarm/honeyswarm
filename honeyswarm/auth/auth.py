@@ -8,12 +8,12 @@ from honeyswarm import user_datastore
 auth = Blueprint('auth', __name__)
 
 
-@auth.route('/auth/login')
+@auth.route('/login')
 def login():
     return render_template("login.html")
 
 
-@auth.route('/auth/login', methods=['POST'])
+@auth.route('/login', methods=['POST'])
 # @csrf_exempt
 def login_post():
     email = request.form.get('email')

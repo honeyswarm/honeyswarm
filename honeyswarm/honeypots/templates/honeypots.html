@@ -209,7 +209,7 @@ $( ".instance-btn" ).click(function() {
 
 
         alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
-        $.post( '/instance/control/', post_data )
+        $.post( '/honeypots/instance/control/', post_data )
             .done(function( data ) {
             console.log(data);
             if(data['success']){

@@ -7,7 +7,7 @@ HoneyPot Orchestration
 
 # What is it?
 
-Docs available - https://honeyswarm.readthedocs.io/en/latest/honeypots.html
+Docs available - https://honeyswarm.readthedocs.io/en/latest/
 
 ![Image description](HoneySwarm.png)
 

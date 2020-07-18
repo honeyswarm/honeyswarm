@@ -4,10 +4,10 @@ from honeyswarm.models import AuthKey, User, Role
 from flask_security.utils import encrypt_password
 from honeyswarm import user_datastore
 
-admin = Blueprint('admin', __name__)
+admin = Blueprint('admin', __name__, template_folder="templates")
 
 
-@admin.route('/admin')
+@admin.route('/')
 @roles_required('admin')
 def admin_page():
 
@@ -28,7 +28,7 @@ def admin_page():
         )
 
 
-@admin.route('/admin/keys/', methods=['POST'])
+@admin.route('/keys/', methods=['POST'])
 @roles_required('admin')
 def update_keys():
 
@@ -60,7 +60,7 @@ def update_keys():
     return jsonify(json_response)
 
 
-@admin.route('/admin/users/', methods=['POST'])
+@admin.route('/users/', methods=['POST'])
 @roles_required('admin')
 def updte_users():
 

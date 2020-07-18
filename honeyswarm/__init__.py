@@ -2,6 +2,7 @@ import atexit
 import json
 import os
 import pytz
+import importlib
 from datetime import datetime
 
 import flaskcode
@@ -10,7 +11,7 @@ from flask import Flask, Blueprint, render_template, abort, request, g, jsonify,
 from flask_mongoengine import MongoEngine
 from werkzeug.middleware.proxy_fix import ProxyFix
 from honeyswarm.models import User, Role, PepperJobs, Hive, Frame, Honeypot
-from honeyswarm.saltapi import PepperApi
+from honeyswarm.saltapi import pepper_api
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -133,26 +134,36 @@ app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
 
 
 # Import the Blueprints after the app has loaded else we get import errors. 
-from honeyswarm.saltapi import pepper_api
-from honeyswarm.admin import admin
-from honeyswarm.installer import installer
-from honeyswarm.auth import auth
-from honeyswarm.hives import hives
-from honeyswarm.jobs import jobs
-from honeyswarm.honeypots import honeypots
-from honeyswarm.frames import frames
-from honeyswarm.events import events
-from honeyswarm.dashboard import dashboard
+
+from honeyswarm.admin.admin import admin
+from honeyswarm.installer.installer import installer
+from honeyswarm.auth.auth import auth
+from honeyswarm.hives.hives import hives
+from honeyswarm.jobs.jobs import jobs
+from honeyswarm.honeypots.honeypots import honeypots
+from honeyswarm.frames.frames import frames
+from honeyswarm.events.events import events
+from honeyswarm.dashboard.dashboard import dashboard
 
 # Register the Blueprints
-app.register_blueprint(admin)
-app.register_blueprint(auth)
-app.register_blueprint(hives)
-app.register_blueprint(jobs)
-app.register_blueprint(honeypots)
-app.register_blueprint(frames)
-app.register_blueprint(events)
-app.register_blueprint(dashboard)
+app.register_blueprint(admin, url_prefix="/admin")
+app.register_blueprint(auth, url_prefix="/auth")
+app.register_blueprint(hives, url_prefix="/hives")
+app.register_blueprint(jobs, url_prefix="/jobs")
+app.register_blueprint(honeypots, url_prefix="/honeypots")
+app.register_blueprint(frames, url_prefix="/frames")
+app.register_blueprint(events, url_prefix="/events")
+app.register_blueprint(dashboard, url_prefix="/dashboard")
+
+
+#REPORTS = [
+#    {'path': '.plugin.views', 'blueprint': 'plugin'}, 
+#    {'path': '.plugin2.views', 'blueprint': 'plugin2'}
+#]
+
+#for report in REPORTS:
+#    module = importlib.import_module(report['path'], package='app')
+#    app.register_blueprint(getattr(module, report['blueprint']))
 
 # Only show installer pages if we have no users
 try:
@@ -161,7 +172,7 @@ try:
     if user_count > 0:
         app.config['installed'] = True
     else:
-        app.register_blueprint(installer)
+        app.register_blueprint(installer, url_prefix="/install")
 except:
     app.config['installed'] = False
 
@@ -190,4 +201,6 @@ def format_userroles(userroles):
 
 @app.route('/')
 def index():
+    if not app.config['installed']:
+        return redirect(url_for(installer))
     return render_template('index.html')
