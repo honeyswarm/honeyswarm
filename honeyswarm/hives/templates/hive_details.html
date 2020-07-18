@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% set active_page = "hives" %}
+{% set page_title = " - Hives" %}
+{% block content %}
+<!--  This is a list of all the hives that have or tried to register with salt. -->
+
+<div class="container-fluid">
+
+  <div class="row mt-5">
+    <div class="col">
+      <h4 class="text-success">Hive Details</h4>
+    </div>
+  </div>
+
+  <div class="row">
+ 
+    <div class="col">
+      
+      <table class="table table-striped">
+        <tbody>
+          <tr>
+            <th scope="row">Hive Name</th>
+            <td>{{hive_details['name']}}</td>
+          </tr>
+          <tr>
+            <th scope="row">OS</th>
+            <td>{{hive_details['grains']['osfullname']}}</td>
+          </tr>
+          <tr>
+            <th scope="row">IP Address</th>
+            <td>{{hive_details['grains']['ipv4'][-1]}}</td>
+          </tr>
+          <tr>
+            <th scope="row">Created</th>
+            <td>{{hive_details['created_at'] | dateformat}}</td>
+          </tr>
+          <tr>
+            <th scope="row">Last Seen</th>
+            <td>{{hive_details['last_seen'] | dateformat}}</td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <table class="table table-striped">
+        <tbody>
+          <tr>
+            <th scope="row">Frame</th>
+            <td>{{hive_details['frame']['name'] or 'No Frame Installed'}}</td>
+          </tr>
+          <tr>
+            <th scope="row">Honeypots</th>
+            <td>
+              {% for honeypot in hive_details.honeypots %}{{honeypot.honeypot.name}},{% endfor %}</td>
+          </tr>
+          <tr>
+            <th scope="row">Grains</th>
+            <td>
+              <button class="btn btn-sm btn-primary" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">Show Grains</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div class="col">
+
+      <div class="collapse" id="collapseExample">
+        <div class="card card-body">
+          <pre>
+{{hive_details.to_json() | prettyjson}}
+          </pre>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+</div>
+
+{% endblock %}

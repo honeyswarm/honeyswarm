@@ -27,7 +27,7 @@
               {% for hive in hive_list %}
               {% if hive['salt_alive']  %}
               <tr id="row-{{hive['id']}}">
-                <th scope="row">{{hive['name']}}</th>
+                <th scope="row"><a href="{{ url_for('hives.hive_details', hive_id=hive['id']) }}">{{hive['name']}}</a></th>
                 <td>{{hive['grains']['osfullname']}}</td>
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>

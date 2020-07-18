@@ -49,6 +49,24 @@ def hives_list():
     )
 
 
+
+@hives.route('/<hive_id>')
+@login_required
+def hive_details(hive_id):
+    try:
+        hive_details = Hive.objects(id=hive_id).first()
+    except:
+        hive_details = None
+        abort(404)
+
+    return render_template(
+        "hive_details.html",
+        hive_details=hive_details
+    )
+
+
+
+
 ##
 # Hive Actions
 ##
