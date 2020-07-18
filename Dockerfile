@@ -1,38 +1,13 @@
-FROM ubuntu:20.04
+FROM alpine:latest
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV BASE_APPS="python3.8 python3-pip git supervisor"
+RUN apk add --no-cache python3 python3-dev py3-pip py3-bcrypt py3-wheel py3-pyzmq gcc g++ make libffi-dev openssl-dev
 
-RUN apt-get update && apt-get install --reinstall -yqq \
-      $BASE_APPS \
-    && apt-get -y clean \
-    && apt-get -y autoremove
-
-
-#Clean up the envars
-RUN unset BASE_APPS
-
-# Symlink for Python
-RUN ln -s /usr/bin/python3.8 /usr/bin/python
-
-# Add file system
-ADD docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-RUN ln -s /usr/local/bin/docker-entrypoint.sh /
-
-# HPFeeds
+ADD requirements.txt /opt/requirements.txt
+RUN pip install -r /opt/requirements.txt
 
 # Add Honeyswarm
 ADD honeyswarm /opt/honeyswarm
-ADD honeyswarm.py /opt/
 
-WORKDIR /opt/honeyswarm
-RUN python -m pip install -r requirements.txt
-RUN python -m pip install -r requirements-salt.txt
-
-
+WORKDIR /opt/
 # Run the container
-
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["/usr/bin/python", "/opt/honeyswarm.py"]
+CMD ["gunicorn", "--bind=0.0.0.0:8080", "honeyswarm:app"]
