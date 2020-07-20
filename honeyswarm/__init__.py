@@ -155,15 +155,25 @@ app.register_blueprint(frames, url_prefix="/frames")
 app.register_blueprint(events, url_prefix="/events")
 app.register_blueprint(dashboard, url_prefix="/dashboard")
 
+# Dynamically register all reports. 
+report_path = os.path.join(app.root_path, 'reports')
+REPORTS = []
 
-#REPORTS = [
-#    {'path': '.plugin.views', 'blueprint': 'plugin'}, 
-#    {'path': '.plugin2.views', 'blueprint': 'plugin2'}
-#]
+for report_blueprint in os.listdir(report_path):
+    if os.path.isdir(os.path.join(report_path, report_blueprint)) and not report_blueprint.startswith('__'):
+        REPORTS.append({
+            'path': '.reports.{0}.{0}'.format(report_blueprint),
+            'blueprint': report_blueprint
+        })
 
-#for report in REPORTS:
-#    module = importlib.import_module(report['path'], package='app')
-#    app.register_blueprint(getattr(module, report['blueprint']))
+for report in REPORTS:
+    try:
+        module = importlib.import_module(report['path'], package="honeyswarm")
+        app.register_blueprint(getattr(module, report['blueprint']), url_prefix="/report/{0}".format(report['blueprint']))
+    except Exception as err:
+        print(err)
+        print("Unable to load report blueprint from {0}".format(report['blueprint']))
+
 
 # Only show installer pages if we have no users
 try:

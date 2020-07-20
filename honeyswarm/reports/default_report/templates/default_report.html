@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% set active_page = "report" %}
+{% set page_title = " - Reports" %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row mt-5">
+        <div class="col">
+            <h4 class="text-success">Reports for {{honeypot}} Honeypot</h4>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="card-columns">
+
+                {% for table in tables %}
+
+                <div class="card">
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                            <th scope="col">Item</th>
+                            <th scope="col">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for path in counters[table] %}
+                            <tr>
+                            <td>{{path['_id']['fieldname']}}</td>
+                            <td>{{path['count']}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        </table>
+                    <div class="card-footer">
+                      <small class="text-muted">Top 10 for {{table}}</small>
+                    </div>
+                  </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+{% endblock %}
