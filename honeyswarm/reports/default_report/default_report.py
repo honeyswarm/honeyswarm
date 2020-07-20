@@ -21,9 +21,6 @@ def report_main():
 
     tables = table_list.split(',')
 
-
-    events = HoneypotEvents.objects(honeypot_type=honeypot)
-
     base_pipeline = {"$facet": {}
         }
 
@@ -41,7 +38,7 @@ def report_main():
                 {"$limit": limit}
             ]
 
-    counters = [x for x in HoneypotEvents.objects(honeypot_type="Wordpress").aggregate(base_pipeline)][0]
+    counters = [x for x in HoneypotEvents.objects(honeypot_type=honeypot).aggregate(base_pipeline)][0]
 
     return render_template(
         "default_report.html",
