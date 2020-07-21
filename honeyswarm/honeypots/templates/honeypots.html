@@ -35,10 +35,11 @@
               <td class={% if instance[1].status == "Online"%}text-success{% else %}text-danger{% endif %}>{{instance[1].status}}</td>
               <td class=text-right>
                 <span>
-                    <button class="btn btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}" disabled>Poll</button> 
-                    <button class="btn btn-success ml-2 instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
-                    <button class="btn btn-warning ml-2 instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
-                    <button class="btn btn-danger ml-2 instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
+                    <button class="btn btn-sm btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}" disabled>Poll</button>
+                    <a class="btn btn-sm btn-primary" href="/report/default_report/?honeypot={{instance[1].honeypot.name}}&tables={{ instance[1].honeypot.report_fields|join(',') }}&limit10" target="_blank" role="button">Report</a>
+                    <button class="btn btn-sm btn-success ml-2 instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
+                    <button class="btn btn-sm btn-warning ml-2 instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
+                    <button class="btn btn-sm btn-danger ml-2 instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
                 </span>
 
               </td>
@@ -133,6 +134,11 @@
                           <textarea class="form-control" id="honeypot_channels" name="honeypot_channels"
                               rows="3" placeholder="enter each hpfeeds channels on a new line"></textarea>
                       </div>
+                      <div class="form-group">
+                        <label for="honeypot_channels">Report Fields</label>
+                        <textarea class="form-control" id="honeypot_report_fields" name="honeypot_report_fields"
+                            rows="3" placeholder="enter each hpfeeds channels on a new line"></textarea>
+                    </div>
                   </div>
                   <div class="modal-footer p-0">
 

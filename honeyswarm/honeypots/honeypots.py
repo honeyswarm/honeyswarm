@@ -55,7 +55,8 @@ def create_honeypot():
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
         new_honeypot.container_name = request.form.get('honeypot_container_name')
-        new_honeypot.channels = request.form.get('honeypot_channels').split('/r/n')
+        new_honeypot.channels = request.form.get('honeypot_channels').split('\r\n')
+        new_honeypot.report_fields = request.form.get('honeypot_report_fields').split('\r\n')
         new_honeypot.honeypot_state_file = request.form.get(
             'honeypot_state_file'
             )
@@ -76,7 +77,7 @@ def create_honeypot():
             os.chmod(state_file_path, 0o777)
 
         # Add all channels to the master subscriber
-        channel_list = request.form.get('honeypot_channels').split('/r/n')
+        channel_list = request.form.get('honeypot_channels').split('\r\n')
 
         sub_key = AuthKey.objects(identifier="honeyswarm").first()
         for channel in channel_list:
@@ -148,7 +149,9 @@ def update_honeypot(honeypot_id):
     honeypot_details.honeypot_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
     honeypot_details.container_name = request.form.get('honeypot_container_name')
-    honeypot_details.channels = request.form.get('honeypot_channels').split('/r/n')
+    honeypot_details.channels = request.form.get('honeypot_channels').split('\r\n')
+    honeypot_details.report_fields = request.form.get('honeypot_report_fields').split('\r\n')
+    print(request.form.get('honeypot_report_fields').split('\r\n'))
     honeypot_details.honeypot_state_file = request.form.get(
         'honeypot_state_file'
         )

@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="row mt-5">
         <div class="col">
-            <h4 class="text-success">Reports for {{honeypot}} Honeypot</h4>
+            <h4 class="text-success">Report for {{honeypot}} Honeypot</h4>
         </div>
     </div>
 
@@ -16,8 +16,11 @@
 
                 {% for table in tables %}
 
-                <div class="card">
-                    <table class="table table-sm table-bordered">
+                <div class="card table-responsive border-dark">
+                    <div class="card-header">
+                        <strong>Top 10 results for {{table}}</strong>
+                      </div>
+                    <table class="table table-sm table-bordered table-condensed m-0">
                         <thead>
                             <tr>
                             <th scope="col">Item</th>
@@ -33,9 +36,6 @@
                             {% endfor %}
                         </tbody>
                         </table>
-                    <div class="card-footer">
-                      <small class="text-muted">Top 10 for {{table}}</small>
-                    </div>
                   </div>
 
                 {% endfor %}

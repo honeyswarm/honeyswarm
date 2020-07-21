@@ -54,6 +54,12 @@
                                 
                                     rows="3" >{{ '\r\n'.join(honeypot_details.channels) }}</textarea>
                             </div>
+                            <div class="form-group">
+                                <label for="honeypot_channels">Report Fields <span><small>(One per line)</small></span></label>
+                                <textarea class="form-control" id="honeypot_report_fields" name="honeypot_report_fields"
+                                
+                                    rows="3" >{{ '\r\n'.join(honeypot_details.report_fields) }}</textarea>
+                            </div>
 
                             <div id="pillar-states" class="form-group">
                                 <label for="pillar-states">Pillar Values</label>

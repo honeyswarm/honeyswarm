@@ -60,6 +60,7 @@ class Honeypot(Document):
     pillar = ListField()
     channels = ListField()
     container_name = StringField()
+    report_fields = ListField(default=["source_ip"])
 
 
 class HoneypotInstance(Document):
