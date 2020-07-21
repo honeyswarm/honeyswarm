@@ -60,10 +60,6 @@ def report_main():
 
     this = json.loads(single_event.to_json())
 
-    #print(list(pairs(this)))
-
-    print(getKeys(this))
-
     return render_template(
         "default_report.html",
         honeypot=honeypot,
