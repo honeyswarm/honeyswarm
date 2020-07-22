@@ -19,7 +19,7 @@
                 <th scope="col">Created</th>
                 <th scope="col">Last Seen</th>
                 <th scope="col">Frame</th>
-                <th scope="col">Honeypot / Event Count</th>
+                <th scope="col">Honeypot Count</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -33,11 +33,10 @@
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
                 <td>{{hive['frame']['name'] or '<a href="/frames">Show Frames</a>' | safe}}</td>
-                <td>{{hive['honeypots'] | length}} / {{hive.event_count}}</td>
+                <td>{{hive['honeypots'] | length}}</td>
                 <td>
                   <span>
                       <button class="btn btn-sm btn-info hive-btn" data-action="poll" data-hiveid="{{hive['id']}}">Poll</button> 
-                      <button class="btn btn-sm btn-success hive-btn" data-action="edit" data-hiveid="{{hive['id']}}">Edit</button>
                       <button class="btn btn-sm btn-warning hive-btn" data-action="restart" data-hiveid="{{hive['id']}}">Restart</button> 
                       <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
 
@@ -67,7 +66,7 @@
           <table class="table table-bordered table-sm table-hover">
             <thead class="thead-dark">
               <tr>
-                <th scope="col-6">Hive ID</th>
+                <th scope="col-6">Hive Name</th>
                 <th scope="col-6">Actions</th>
               </tr>
             </thead>
@@ -75,7 +74,7 @@
               {% for hive in hive_list %}
               {% if not hive['registered'] %}
               <tr id="row-{{hive['id']}}">
-                <th scope="row">{{hive['id']}}</th>
+                <th scope="row"><a href="{{ url_for('hives.hive_details', hive_id=hive['id']) }}">{{hive['name']}}</a></th>
                 <td>
 
                   <span>
@@ -98,7 +97,7 @@
           <table class="table table-bordered table-sm table-hover">
             <thead class="thead-dark">
               <tr>
-                <th scope="col">Hive ID</th>
+                <th scope="col">Hive Name</th>
                 <th scope="col">OS</th>
                 <th scope="col">IP Address</th>
                 <th scope="col">Created</th>
@@ -112,7 +111,7 @@
               {% for hive in hive_list %}
               {% if not hive['salt_alive'] and hive['id'] | string not in key_list %}
               <tr id="row-{{hive['id']}}">
-                <th scope="row">{{hive['id']}}</th>
+                <th scope="row"><a href="{{ url_for('hives.hive_details', hive_id=hive['id']) }}">{{hive['name']}}</a></th>
                 <td>{{hive['grains']['osfullname']}}</td>
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>
@@ -120,13 +119,9 @@
                 <td>{{hive['frame']['name'] or 'No Frame' | safe}}</td>
                 <td>{{hive['honeypots'] | length}}</td>
                 <td>
-                  <select class="form-control hive_action" id="regActions" data-hiveId="{{hive['id']}}">
-                    <option value="select">Select</option>
-                    <option value="poll">Poll</option>
-                    <option value="edit">Edit</option>
-                    <option value="restart">Restart</option>
-                    <option value="delete">Delete</option>
-                  </select>
+                  <button class="btn btn-sm btn-info hive-btn" data-action="poll" data-hiveid="{{hive['id']}}">Poll</button> 
+                  <button class="btn btn-sm btn-warning hive-btn" data-action="restart" data-hiveid="{{hive['id']}}">Restart</button> 
+                  <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
                 </td>
               </tr>
               {% endif %}
@@ -187,14 +182,7 @@ $( ".hive-btn" ).click(function() {
   let post_params = { hive_id: hive_id };
   let post_url = "/hives/actions/"+hive_action;
 
-
-  // Ignore select
-  if (hive_action == "select"){
-    return;
-  }
-
   alert_notify('alert-success', 'Running', hive_action + " for Hive " + hive_id );
-
 
   if (hive_action == "frame"){
     frame_state_path = button.data('frame_state');
@@ -202,7 +190,6 @@ $( ".hive-btn" ).click(function() {
     post_params['frame_state_file'] = frame_state_path;
     post_params['frame_id'] = frame_id;
   }
-
   
   $.post( post_url, post_params)
   .done(function( data ) {
@@ -218,22 +205,15 @@ $( ".hive-btn" ).click(function() {
         $('#row-'+hive_id).remove();
         }
 
-
-
     } else {
       alert_notify('alert-danger', 'Opps!', data['message'] )
     }
-
-
 
   })
   .fail(function() {
     alert_notify('alert-danger', 'Opps!', "Something went wrong please check the logs" )
   });
 
-
-  // reset the dropdown
-  $(this).val('select')
 
   });
 
@@ -244,7 +224,6 @@ function add_notification(textClass, text){
   $('#notification-dropdown').append(notification);
   $('#notification-count').html(notificationCount);
 }
-
 
 
 </script>
