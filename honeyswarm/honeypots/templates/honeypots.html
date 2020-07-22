@@ -35,11 +35,11 @@
               <td class={% if instance[1].status == "Online"%}text-success{% else %}text-danger{% endif %}>{{instance[1].status}}</td>
               <td class=text-right>
                 <span>
-                    <button class="btn btn-sm btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}" disabled>Poll</button>
-                    <a class="btn btn-sm btn-primary" href="/report/default_report/?honeypot={{instance[1].honeypot.name}}&tables={{ instance[1].honeypot.report_fields|join(',') }}&limit10" target="_blank" role="button">Report</a>
-                    <button class="btn btn-sm btn-success ml-2 instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
-                    <button class="btn btn-sm btn-warning ml-2 instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
-                    <button class="btn btn-sm btn-danger ml-2 instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
+                  <a class="btn btn-sm btn-primary" href="/report/default_report/?honeypot={{instance[1].honeypot.name}}&tables={{ instance[1].honeypot.report_fields|join(',') }}&limit=10" target="_blank" role="button">Report</a>
+                  <button class="btn btn-sm btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Poll</button>
+                  <button class="btn btn-sm btn-success instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
+                  <button class="btn btn-sm btn-warning instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
+                  <button class="btn btn-sm btn-danger instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
                 </span>
 
               </td>
@@ -73,7 +73,7 @@
                                   </button>
                                 <!-- <a href="{{ url_for('honeypots.honeypot_deployments', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a> -->
                                 <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
-                                <a href="#" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
+                                <a href="{{ url_for('honeypots.delete_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
                             </div>
                         </div>
     
@@ -219,7 +219,8 @@ $( ".instance-btn" ).click(function() {
             .done(function( data ) {
             console.log(data);
             if(data['success']){
-                alert_notify('alert-success', 'Job Running', 'Job ID: '+data['message'] )
+                alert_notify('alert-success','', data['message'] )
+                // API call to update table in here. 
             } else {
                 alert_notify('alert-danger', 'Opps!', data['message'] )
             }
@@ -232,10 +233,6 @@ $( ".instance-btn" ).click(function() {
 
 
 function update_object(action, object_id, post_url) {
-
-
-
-
 
       $.post(post_url, post_data)
         .done(function (data) {

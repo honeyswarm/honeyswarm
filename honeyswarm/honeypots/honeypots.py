@@ -1,15 +1,18 @@
 import os
-
 import mimetypes
+import logging
+
 from flask import Blueprint, redirect, url_for, request, abort
 from flask import render_template, jsonify, send_file
 from flask_login import login_required
-from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config, HoneypotInstance
+from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config
+from honeyswarm.models import HoneypotInstance
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 from honeyswarm.saltapi import pepper_api
 from honeyswarm import SALT_STATE_BASE
 
 honeypots = Blueprint('honeypots', __name__, template_folder="templates")
+logger = logging.getLogger(__name__)
 
 
 @honeypots.route('/')
@@ -24,17 +27,14 @@ def honeypot_list():
 
     for hive in hives:
         for instance in hive.honeypots:
-            # Sometimes we can end up with a dead instance. 
+            # Sometimes we can end up with a dead instance.
             # Clean them here
             try:
-                honeypot = instance.honeypot.name
                 instances.append([hive.id, instance, hive.name])
-            except:
+            except Exception as err:
+                logger.info("clearing dead instance: {0}".format(err))
                 hive.update(pull__honeypots=instance)
                 hive.save()
-            
-            
-    # Installed Honeypots
 
     return render_template(
         "honeypots.html",
@@ -54,9 +54,15 @@ def create_honeypot():
         new_honeypot.name = request.form.get('honeypot_name')
         new_honeypot.honey_type = request.form.get('honeypot_type')
         new_honeypot.description = request.form.get('honeypot_description')
-        new_honeypot.container_name = request.form.get('honeypot_container_name')
-        new_honeypot.channels = request.form.get('honeypot_channels').split('\r\n')
-        new_honeypot.report_fields = request.form.get('honeypot_report_fields').split('\r\n')
+        new_honeypot.container_name = request.form.get(
+            'honeypot_container_name'
+            )
+        new_honeypot.channels = request.form.get(
+            'honeypot_channels'
+            ).split('\r\n')
+        new_honeypot.report_fields = request.form.get(
+            'honeypot_report_fields'
+            ).split('\r\n')
         new_honeypot.honeypot_state_file = request.form.get(
             'honeypot_state_file'
             )
@@ -90,21 +96,51 @@ def create_honeypot():
 
     except Exception as err:
         json_response['message'] = err
-        print(err)
+        logger.error("Error creating honeypot ", err)
 
     return redirect(url_for('honeypots.honeypot_list'))
 
+
+@honeypots.route('/<honeypot_id>/delete/', methods=['GET'])
+@login_required
+def delete_honeypot(honeypot_id):
+    # This one is harder.
+    json_response = {"success": False}
+
+    honeypot = Honeypot.objects(id=honeypot_id).first()
+
+    if not honeypot:
+        return abort(404)
+
+    # Remove all the instances from hives
+    hives = Hive.objects()
+    for hive in hives:
+        for instance in hive.honeypots:
+            if instance.honeypot == honeypot:
+                container_name = honeypot.container_name
+                pepper_api.docker_remove(
+                    hive.id, container_name
+                    )
+                # remove the instance from the hive honeypot list
+                hive.update(pull__honeypots=instance)
+                # Delete the instance
+                instance.delete()
+                hive.save()
+
+    # Remove the Honeypot
+    honeypot.delete()
+    json_response['success'] = True
+    return redirect(url_for(honeypots.honeypot_list))
 
 
 @honeypots.route('/<honeypot_id>/edit/')
 @login_required
 def show_honeypot(honeypot_id):
-    print(honeypot_id)
     honeypot_details = Honeypot.objects(id=honeypot_id).first()
 
     if not honeypot_details:
         abort(404)
-    honeypotname = honeypot_details.name
+
     # Lets hack in flask code.
     honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
 
@@ -146,12 +182,17 @@ def update_honeypot(honeypot_id):
     json_response = {"success": False}
 
     honeypot_details.name = request.form.get('honeypot_name')
-    honeypot_details.honeypot_type = request.form.get('honeypot_type')
+    honeypot_details.honey_type = request.form.get('honeypot_type')
     honeypot_details.description = request.form.get('honeypot_description')
-    honeypot_details.container_name = request.form.get('honeypot_container_name')
-    honeypot_details.channels = request.form.get('honeypot_channels').split('\r\n')
-    honeypot_details.report_fields = request.form.get('honeypot_report_fields').split('\r\n')
-    print(request.form.get('honeypot_report_fields').split('\r\n'))
+    honeypot_details.container_name = request.form.get(
+        'honeypot_container_name'
+        )
+    honeypot_details.channels = request.form.get(
+        'honeypot_channels'
+        ).split('\r\n')
+    honeypot_details.report_fields = request.form.get(
+        'honeypot_report_fields'
+        ).split('\r\n')
     honeypot_details.honeypot_state_file = request.form.get(
         'honeypot_state_file'
         )
@@ -193,7 +234,6 @@ def update_honeypot(honeypot_id):
     )
 @login_required
 def resource_data(object_id, file_path):
-    print("Read Resource", file_path)
 
     honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
 
@@ -264,7 +304,6 @@ def honeypot_deployments(honeypot_id):
     return jsonify(json_response)
 
 
-
 @honeypots.route('/<honeypot_id>/deploy/', methods=['POST'])
 @login_required
 def honeypot_deploy(honeypot_id):
@@ -295,7 +334,9 @@ def honeypot_deploy(honeypot_id):
     for instance in hive.honeypots:
         if instance.honeypot.id == honeypot_details.id:
             honeypot_instance = instance
-            auth_key = AuthKey.objects(identifier=str(honeypot_instance.id)).first()
+            auth_key = AuthKey.objects(
+                identifier=str(honeypot_instance.id)
+                ).first()
 
     # Else we create an instance and a new auth_key
     if not honeypot_instance:
@@ -390,7 +431,6 @@ def honeypot_deploy(honeypot_id):
     return jsonify(json_response)
 
 
-
 @honeypots.route('/instance/control/', methods=['POST'])
 @login_required
 def instance_control():
@@ -415,32 +455,61 @@ def instance_control():
             # remove the instance from the hive honeypot list
             hive.update(pull__honeypots=instance)
             json_response["success"] = True
-            json_response['message'] = "Removed instance of {0}".format(container_name)
+            json_response['message'] = "Removed instance of {0}".format(
+                container_name
+                )
             # Delete the instance
             instance.delete()
             hive.save()
-    
+
     elif instance_action == "stop":
         container_name = instance.honeypot.container_name
-        container_stop = pepper_api.docker_control(
+        pepper_api.docker_control(
             hive_id,
             container_name,
             "stop"
         )
+        container_state = "Pending"
         json_response['success'] = True
-        json_response['message'] = "Honeypot {0} on hive {1} is stopped".format(container_name, hive_id)
-        instance.status = "stopped"
+        json_response['message'] = "\
+            Honeypot <strong>{0}</strong> on hive \
+                <strong>{1}</strong> is \
+                <strong>{2}</strong>".format(
+            container_name, hive.name, container_state
+            )
+        instance.status = container_state
 
     elif instance_action == "start":
         container_name = instance.honeypot.container_name
-        container_start = pepper_api.docker_control(
+        pepper_api.docker_control(
             hive_id,
             container_name,
             "start"
         )
+        container_state = "Pending"
         json_response['success'] = True
-        json_response['message'] = "Honeypot {0} on hive {1} is running".format(container_name, hive_id)
-        instance.status = "running"
+        json_response['message'] = "\
+            Honeypot <strong>{0}</strong> on hive \
+                <strong>{1}</strong> is \
+                <strong>{2}</strong>".format(
+            container_name, hive.name, container_state
+            )
+        instance.status = container_state
+
+    elif instance_action == "poll":
+        container_name = instance.honeypot.container_name
+        container_state = pepper_api.docker_state(
+            hive_id,
+            container_name
+        )
+        json_response['success'] = True
+        json_response['message'] = "\
+            Honeypot <strong>{0}</strong> on hive \
+                <strong>{1}</strong> is \
+                <strong>{2}</strong>".format(
+            container_name, hive.name, container_state
+            )
+        instance.status = container_state
 
     instance.save()
     hive.save()

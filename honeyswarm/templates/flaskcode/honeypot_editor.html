@@ -88,7 +88,7 @@
                         </form>
                         <hr>
                         <button id="update-btn" class="btn btn-success btn-block">Update</button>
-                        <button class="btn btn-danger btn-block">Delete</button>
+                        <a href="{{ url_for('honeypots.delete_honeypot', honeypot_id=honeypot_details.id) }}" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
 
                     </div>
 
