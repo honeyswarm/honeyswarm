@@ -1,8 +1,9 @@
 version: '3.7'
 services:
   honeyswarm:
-    image: honeyswarm/honeyswarm
-    container_name: honeyswarm
+    build:
+      context: .
+      dockerfile: Dockerfile
     env_file:
       - honeyswarm.env
     ports:
@@ -17,7 +18,6 @@ services:
       - saltmaster
   mongoserver:
     image: mongo:latest
-    container_name: honeyswarm_db
     env_file:
       - honeyswarm.env
     ports:
@@ -29,7 +29,6 @@ services:
       - "honeyswarmDB:/data/db"
   saltmaster:
     image: "saltstack/salt:latest"
-    container_name: honeyswarm_saltstack
     env_file:
       - honeyswarm.env
     ports:
@@ -44,7 +43,7 @@ services:
       - "honeyswarmStates:/srv/salt:rw"
   hpfeeds-broker:
     image: honeyswarm/honeyswarm_broker
-    container_name: honeyswarm_broker
+    container_name: hpfeeds
     ports:
      - "0.0.0.0:10000:10000"
     networks:
