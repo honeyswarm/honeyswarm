@@ -32,24 +32,29 @@
                 <td>{{hive['grains']['ipv4'][-1]}}</td>
                 <td>{{hive['created_at'] | dateformat}}</td>
                 <td>{{hive['last_seen'] | dateformat}}</td>
-                <td>{{hive['frame']['name'] or '<a href="/frames">Show Frames</a>' | safe}}</td>
+                <td>
+                  
+                  {% if not hive['frame'] %}
+
+                    {% for frame in frame_list %}
+                      {% if hive['grains']['osfullname'] in frame['supported_os'] %}
+                        <button class="btn btn-sm btn-success ml-2 hive-btn" data-frame_id="{{frame.id}}" data-frame_state="frames/{{frame.id}}/{{frame.frame_state_path}}" data-action="frame" data-hiveid="{{hive['id']}}">Install {{frame.name}} Frame</button>
+                      {% endif %}
+                    {% endfor %}
+
+                  {% else %}
+
+                    {{hive['frame']['name']}}
+
+                  {% endif %}
+
+                </td>
                 <td>{{hive['honeypots'] | length}}</td>
                 <td>
                   <span>
                       <button class="btn btn-sm btn-info hive-btn" data-action="poll" data-hiveid="{{hive['id']}}">Poll</button> 
                       <button class="btn btn-sm btn-warning hive-btn" data-action="restart" data-hiveid="{{hive['id']}}">Restart</button> 
                       <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
-
-                      {% if not hive['frame'] %}
-
-                        {% for frame in frame_list %}
-                          {% if hive['grains']['osfullname'] in frame['supported_os'] %}
-                          <button class="btn btn-sm btn-danger ml-2 hive-btn" data-frame_id="{{frame.id}}" data-frame_state="frames/{{frame.id}}/{{frame.frame_state_path}}" data-action="frame" data-hiveid="{{hive['id']}}">Install {{frame.name}} Frame</button>
-                          {% endif %}
-                        {% endfor %}
-
-                      {% endif %}
-
                     </span>
                 </td>
               </tr>
@@ -79,7 +84,7 @@
 
                   <span>
                     {% if hive['id'] | string in key_list %}
-                    <button class="btn btn-sm btn-sucess hive-btn" data-action="swarm" data-hiveid="{{hive['id']}}">Add to Swarm</button>
+                    <button class="btn btn-sm btn-success hive-btn" data-action="swarm" data-hiveid="{{hive['id']}}">Add to Swarm</button>
                     {% endif %} 
                     <button class="btn btn-sm btn-danger hive-btn" data-action="delete" data-hiveid="{{hive['id']}}">Delete</button>
                 </td>
