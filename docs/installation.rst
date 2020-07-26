@@ -13,7 +13,77 @@ Install Docker and docker-compose
 HoneySwarm
 ----------
 
-If you want to run the latest stable release go to https://github.com/honeyswarm/honeyswarm/releases and get the latest release
+If you want to run the latest stable release use the following docker-compose file and pin a release tag
+
+.. code-block:: yaml
+
+   version: '3.7'
+   services:
+   honeyswarm:
+      image: honeyswarm/honeyswarm
+      env_file:
+         - honeyswarm.env
+      ports:
+         - "8080:8080"
+      networks:
+         honeynet:
+         ipv4_address: 10.1.0.101
+      volumes:
+         - "honeyswarmStates:/opt/honeystates/salt:rw"
+      depends_on: 
+         - mongoserver
+         - saltmaster
+   mongoserver:
+      image: mongo:latest
+      env_file:
+         - honeyswarm.env
+      ports:
+         - '27017:27017'
+      networks:
+         honeynet:
+         ipv4_address: 10.1.0.102
+      volumes:
+         - "honeyswarmDB:/data/db"
+   saltmaster:
+      image: "saltstack/salt:latest"
+      env_file:
+         - honeyswarm.env
+      ports:
+         - "8000:8000"
+         - "4505:4505"
+         - "4506:4506"
+      networks:
+         honeynet:
+         ipv4_address: 10.1.0.103
+      volumes:
+         - "honeyswarmPKI:/etc/salt/pki:rw"
+         - "honeyswarmStates:/srv/salt:rw"
+   hpfeeds-broker:
+      image: honeyswarm/honeyswarm_broker
+      container_name: hpfeeds
+      ports:
+      - "0.0.0.0:10000:10000"
+      networks:
+         honeynet:
+         ipv4_address: 10.1.0.104
+      env_file:
+         - honeyswarm.env
+      depends_on: 
+         - mongoserver
+
+   networks:
+   honeynet:
+      driver: bridge
+      ipam:
+         driver: default
+         config:
+         - subnet: 10.1.0.0/24
+
+   volumes:
+   honeyswarmDB:
+   honeyswarmPKI:
+   honeyswarmStates:
+
 
 If you prefer a development version then ``git clone git@github.com:honeyswarm/honeyswarm.git``
 
