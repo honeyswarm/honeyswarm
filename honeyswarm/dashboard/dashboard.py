@@ -1,8 +1,7 @@
-import json
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template
 from flask_security import login_required
-from honeyswarm.models import HoneypotEvents, Honeypot, HoneypotInstance, Hive
+from honeyswarm.models import HoneypotEvents, HoneypotInstance, Hive
 
 dashboard = Blueprint('dashboard', __name__, template_folder="templates")
 
@@ -11,8 +10,8 @@ def get_dashboard_data(days):
     today = datetime.utcnow()
     start_date = today - timedelta(days)
     service_pipeline = [
-        { "$match": {
-            "date": { "$gte": start_date, "$lte": today }
+        {"$match": {
+            "date": {"$gte": start_date, "$lte": today}
         }},
         {"$group": {
             "_id": "$service",
@@ -46,13 +45,14 @@ def get_dashboard_data(days):
 def main_dashboard():
 
     hive_count = Hive.objects.count()
+    alive_hives = Hive.objects(salt_alive=True).count()
     event_count = HoneypotEvents.objects.count()
     instance_count = HoneypotInstance.objects.count()
+    alive_instances = HoneypotInstance.objects(status="Online").count()
 
     service_graph_day = get_dashboard_data(1)
     service_graph_week = get_dashboard_data(7)
     service_graph_month = get_dashboard_data(30)
-
 
     service_graphs = {
         "serviceDay": [
@@ -72,7 +72,9 @@ def main_dashboard():
     return render_template(
         'dashboard.html',
         hive_count=hive_count,
+        alive_hives=alive_hives,
         event_count=event_count,
         instance_count=instance_count,
+        alive_instances=alive_instances,
         service_graphs=service_graphs
         )
