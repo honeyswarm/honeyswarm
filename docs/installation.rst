@@ -8,7 +8,7 @@ should give you a headstart.
 Docker and Compose
 ------------------
 
-Install Docker and docker-compose
+Install Docker and docker-compose using the offical guides at https://docs.docker.com/get-docker/
 
 HoneySwarm
 ----------
@@ -21,6 +21,7 @@ If you want to run the latest stable release use the following docker-compose fi
    services:
    honeyswarm:
       image: honeyswarm/honeyswarm
+      container_name: honeyswarm
       env_file:
          - honeyswarm.env
       ports:
@@ -35,6 +36,7 @@ If you want to run the latest stable release use the following docker-compose fi
          - saltmaster
    mongoserver:
       image: mongo:latest
+      container_name: honeyswarm_db
       env_file:
          - honeyswarm.env
       ports:
@@ -46,6 +48,7 @@ If you want to run the latest stable release use the following docker-compose fi
          - "honeyswarmDB:/data/db"
    saltmaster:
       image: "saltstack/salt:latest"
+      container_name: honeyswarm_saltstack
       env_file:
          - honeyswarm.env
       ports:
@@ -60,7 +63,7 @@ If you want to run the latest stable release use the following docker-compose fi
          - "honeyswarmStates:/srv/salt:rw"
    hpfeeds-broker:
       image: honeyswarm/honeyswarm_broker
-      container_name: hpfeeds
+      container_name: honeyswarm_broker
       ports:
       - "0.0.0.0:10000:10000"
       networks:
@@ -85,7 +88,39 @@ If you want to run the latest stable release use the following docker-compose fi
    honeyswarmStates:
 
 
+
 If you prefer a development version then ``git clone git@github.com:honeyswarm/honeyswarm.git``
+
+Create a docker-compose.yml file on the host you want to operate as the HoneySwarm Controller. 
+Add the contents of the compose file from above. 
+
+Create a honeyswarm.env file in the same directory as the docker-compose and add the following content. The latest version can be found in the git repo. 
+
+.. code-block:: sh
+
+   # Salt Master details
+   SALT_USERNAME=salt
+   SALT_SHARED_SECRET=supersecretsaltstackmasterstring
+   SALT_HOST=https://127.0.0.1:8000
+
+   # Flask Shell
+   FLASK_APP=honeyswarm.py
+   PYTHONPATH=/opt/
+   SESSION_SECRET=MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK
+
+   # Mongo Details
+   MONGODB_HOST=127.0.0.1
+   MONGODB_PORT=27017
+   MONGODB_USERNAME=admin
+   MONGODB_PASSWORD=admin
+   MONGODB_AUTH_SOURCE=admin
+   MONGODB_DATABASE=honeyswarm
+   MONGO_INITDB_ROOT_USERNAME=admin
+   MONGO_INITDB_ROOT_PASSWORD=admin
+
+   # HPFeeds
+   WAIT_HOSTS=127.0.0.1:27017
+
 
 Configuration
 -------------
@@ -105,6 +140,10 @@ Once you have made your changes you will need to start the application and compl
 
 First Time Setup
 ----------------
+
+Start Honeyswarm using the command ``docker-compose up``. Refer to the Starting section for more details. 
+
+The first start will download all the required docker images and configure them as per the .env file. 
 
 Once you start your HoneySwarm instance for the first time you will need to run the initial installation. 
 To start the install visit http://HONEYSWARMIP:8080/install
