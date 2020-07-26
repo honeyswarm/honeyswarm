@@ -31,11 +31,14 @@ def event_stream():
     start_offset = start_offset + per_page
     start_page = int(start_offset / per_page)
 
-    # print(start_offset, start_page, per_page)
-
     # Check for a column sort
     order_by = request.form.get("order[0][column]")
     order_direction = request.form.get("order[0][dir]")
+
+    # On first load dont let 0 be the default
+    if order_by == "0":
+        order_direction = "desc"
+        order_by = "1"
 
     if order_direction == "asc":
         direction = "+"
