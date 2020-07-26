@@ -56,6 +56,22 @@ def install_states(state_base):
 def base_install():
 
     if request.method == "GET":
+
+        # Do we already have an active installation and need a reboot?
+        try:
+            user_count = User.objects.count()
+            if user_count > 0:
+                reboot = True
+            else:
+                reboot = False
+        except Exception as err:
+            print(err)
+            reboot = False
+
+        if reboot:
+            flash('Honeyswarm has been installed. You need to stop / start the docker-compose to complete the installation')
+            return redirect(url_for('installer.base_install'))
+
         token1 = token_hex(16)
         token2 = token_hex(16)
         return render_template(
