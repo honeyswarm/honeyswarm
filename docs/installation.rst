@@ -162,6 +162,7 @@ Fill all the required fields.
 
 As part of the installation HoneySwarm will download and install all the available frames and honeypots.
 
+Once the installation has completed you will need to stop and restart the docker-compose to restart all the services with the new configuration. 
 
 Starting
 ========
