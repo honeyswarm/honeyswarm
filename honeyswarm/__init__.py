@@ -230,5 +230,5 @@ def format_userroles(userroles):
 @app.route('/')
 def index():
     if not app.config['installed']:
-        return redirect("/install/")
+        return redirect(url_for('installer.base_install'))
     return render_template('index.html')
