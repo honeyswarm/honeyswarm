@@ -16,6 +16,7 @@ Welcome to HoneySwarm's documentation!
    hives
    frames
    honeypots
+   elasticsearch
 
 
 Indices and tables
