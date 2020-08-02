@@ -119,7 +119,7 @@ def delete_honeypot(honeypot_id):
             if instance.honeypot == honeypot:
                 container_name = honeypot.container_name
                 pepper_api.docker_remove(
-                    hive.id, container_name
+                    str(hive.id), container_name
                     )
                 # remove the instance from the hive honeypot list
                 hive.update(pull__honeypots=instance)
