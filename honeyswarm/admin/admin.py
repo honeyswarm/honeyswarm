@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, jsonify, request
+from flask import current_app
+from flask_security import login_required, MongoEngineUserDatastore
 from flask_security.decorators import roles_required
 from honeyswarm.models import AuthKey, User, Role
 from flask_security.utils import encrypt_password
-from honeyswarm import user_datastore
 
 admin = Blueprint('admin', __name__, template_folder="templates")
 
@@ -46,7 +47,9 @@ def update_keys():
     if action == "delete":
         key.delete()
         json_response['success'] = True
-        json_response['message'] = "Deleted HPFeeds Authkey {0}".format(key.identifier)
+        json_response['message'] = "Deleted HPFeeds Authkey {0}".format(
+            key.identifier
+            )
 
     elif action == "update":
         key.identifier = request.form.get('identifier')
@@ -55,7 +58,9 @@ def update_keys():
         key.subscribe = request.form.get('subscribe').split(',')
         key.save()
         json_response['success'] = True
-        json_response['message'] = "Update HPFeeds Authkey {0}".format(key.identifier)
+        json_response['message'] = "Update HPFeeds Authkey {0}".format(
+            key.identifier
+            )
 
     return jsonify(json_response)
 
@@ -75,13 +80,12 @@ def updte_users():
     else:
         user = User.objects(id=user_id).first()
 
-
     if not user and not new_user:
         json_response['message'] = "Not a valid user"
         return jsonify(json_response)
 
     if action == "delete":
-        user_datastore.delete_user(user)
+        current_app.user_datastore.delete_user(user)
         json_response['success'] = True
         json_response['message'] = "Deleted User {0}".format(user.name)
 
@@ -97,7 +101,7 @@ def updte_users():
             active_user = False
 
         if new_user:
-            user = user_datastore.create_user(
+            user = current_app.user_datastore.create_user(
                 email=user_email,
                 password=encrypt_password(password),
                 name=user_name,
@@ -110,25 +114,24 @@ def updte_users():
                 user.password = encrypt_password(password)
 
             if active_user:
-                user_datastore.activate_user(user)
+                current_app.user_datastore.activate_user(user)
             else:
-                user_datastore.deactivate_user(user)
+                current_app.user_datastore.deactivate_user(user)
 
         # Remove all roles
         all_roles = Role.objects()
         for role in all_roles:
-            user_datastore.remove_role_from_user(user, role)
+            current_app.user_datastore.remove_role_from_user(user, role)
 
         # add new roles
         for role_id in request.form.getlist('roles[]'):
             role = Role.objects(id=role_id).first()
             if role:
-                user_datastore.add_role_to_user(user, role)
+                current_app.user_datastore.add_role_to_user(user, role)
 
         user.save()
 
         json_response['success'] = True
         json_response['message'] = "Updated details for {0}".format(user.name)
-
 
     return jsonify(json_response)

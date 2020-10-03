@@ -71,8 +71,9 @@
                                 <button type="button" class="btn btn-success btn-block" data-toggle="modal" data-target="#deploymentModal" data-honeypotid="{{honeypot.id}}" data-honeypotname="{{honeypot.name}}">
                                     Deploy
                                   </button>
+                                  <a class="btn btn-primary btn-block" href="/report/default_report/?honeypot={{honeypot.name}}&tables={{honeypot.report_fields|join(',') }}&limit=10" target="_blank" role="button">Report</a>
                                 <!-- <a href="{{ url_for('honeypots.honeypot_deployments', honeypot_id=honeypot.id) }}" class="btn btn-success btn-block" role="button" aria-pressed="true">Deploy</a> -->
-                                <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-primary btn-block" role="button" aria-pressed="true">Edit</a>
+                                <a href="{{ url_for('honeypots.show_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-warning btn-block" role="button" aria-pressed="true">Edit</a>
                                 <a href="{{ url_for('honeypots.delete_honeypot', honeypot_id=honeypot.id) }}" class="btn btn-danger btn-block" role="button" aria-pressed="true">Delete</a>
                             </div>
                         </div>

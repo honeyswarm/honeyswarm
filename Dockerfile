@@ -10,4 +10,4 @@ ADD honeyswarm /opt/honeyswarm
 
 WORKDIR /opt/
 # Run the container
-CMD ["gunicorn", "--bind=0.0.0.0:8080", "honeyswarm:app"]
+CMD ["gunicorn", "--bind=0.0.0.0:8080", "honeyswarm:app", "--reload", "-w", "4"]

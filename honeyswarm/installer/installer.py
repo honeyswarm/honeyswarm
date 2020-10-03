@@ -6,15 +6,18 @@ from secrets import token_hex
 from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
+from flask import current_app
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from honeyswarm.models import User, Frame, Honeypot, AuthKey, Config
-from flask_security.utils import encrypt_password
 
-from honeyswarm import user_datastore
-from honeyswarm import SALT_STATE_BASE
+from honeyswarm.models import db, User, Role, Frame, Honeypot, AuthKey, Config
+from flask_security.utils import encrypt_password
+from flask_security import MongoEngineUserDatastore
+
 
 logger = logging.getLogger(__name__)
 installer = Blueprint('installer', __name__, template_folder="templates")
+
+user_datastore = MongoEngineUserDatastore(db, User, Role)
 
 
 def install_states(state_base):
@@ -150,14 +153,14 @@ def base_install():
 
     # Fetch and write all the states to the correct path
     try:
-        install_states(SALT_STATE_BASE)
+        install_states(current_app.config['SALT_BASE'])
     except Exception as err:
         flash('Error installing base states: {0}'.format(err))
         return redirect(url_for('installer.base_install'))
 
     # Add Frames
     try:
-        frame_path = os.path.join(SALT_STATE_BASE, 'frames')
+        frame_path = os.path.join(current_app.config['SALT_BASE'], 'frames')
         for frame in os.listdir(frame_path):
             state_config_file = os.path.join(frame_path, frame, "state.json")
             with open(state_config_file) as json_file:
@@ -175,7 +178,7 @@ def base_install():
 
     # Add honeypots
     try:
-        honeypot_path = os.path.join(SALT_STATE_BASE, 'honeypots')
+        honeypot_path = os.path.join(current_app.config['SALT_BASE'], 'honeypots')
         for honeypot in os.listdir(honeypot_path):
             state_config_file = os.path.join(
                 honeypot_path,

@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_security import login_required
+from flask_security import login_required, MongoEngineUserDatastore
 from flask_security.utils import login_user, logout_user
 from flask_security.utils import verify_and_update_password, encrypt_password
-from honeyswarm.models import User
-from honeyswarm import user_datastore
+from honeyswarm.models import db, User, Role
 
 auth = Blueprint('auth', __name__)
+
+user_datastore = MongoEngineUserDatastore(db, User, Role)
 
 
 @auth.route('/login')

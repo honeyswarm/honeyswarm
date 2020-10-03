@@ -3,13 +3,12 @@ import mimetypes
 import logging
 
 from flask import Blueprint, redirect, url_for, request, abort
-from flask import render_template, jsonify, send_file
+from flask import render_template, jsonify, send_file, current_app
 from flask_login import login_required
 from honeyswarm.models import Hive, PepperJobs, Honeypot, AuthKey, Config
 from honeyswarm.models import HoneypotInstance
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 from honeyswarm.saltapi import pepper_api
-from honeyswarm import SALT_STATE_BASE
 
 honeypots = Blueprint('honeypots', __name__, template_folder="templates")
 logger = logging.getLogger(__name__)
@@ -73,7 +72,8 @@ def create_honeypot():
 
         # Add a default state file so that we have something to edit.
         state_path = os.path.join(
-            SALT_STATE_BASE, 'honeypots', str(honeypot_id)
+            current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+            'honeypots', str(honeypot_id)
             )
         state_name = "{0}.sls".format(new_honeypot.honeypot_state_file)
         state_file_path = os.path.join(state_path, state_name)
@@ -142,7 +142,10 @@ def show_honeypot(honeypot_id):
         abort(404)
 
     # Lets hack in flask code.
-    honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', honeypot_id)
+    honey_salt_base = os.path.join(
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'honeypots', honeypot_id
+        )
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
@@ -235,7 +238,10 @@ def update_honeypot(honeypot_id):
 @login_required
 def resource_data(object_id, file_path):
 
-    honey_salt_base = os.path.join(SALT_STATE_BASE, 'honeypots', object_id)
+    honey_salt_base = os.path.join(
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'honeypots', object_id
+        )
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -261,7 +267,8 @@ def resource_data(object_id, file_path):
 @login_required
 def update_resource_data(object_id, file_path):
     honey_salt_base = os.path.join(
-        SALT_STATE_BASE, 'honeypots', object_id
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'honeypots', object_id
         )
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))

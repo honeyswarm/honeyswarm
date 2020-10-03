@@ -8,74 +8,151 @@ from datetime import datetime
 import flaskcode
 from datetime import timedelta
 from flask import Flask, render_template, url_for, redirect
-from flask_mongoengine import MongoEngine
 from werkzeug.middleware.proxy_fix import ProxyFix
-from honeyswarm.models import User, Role, PepperJobs, Hive
+from honeyswarm.models import db, User, Role, PepperJobs, Hive
 from honeyswarm.saltapi import pepper_api
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
+import mongoengine
 from flask_security import Security, MongoEngineUserDatastore
 
-# Set the Core Application
+from honeyswarm.admin import admin
+from honeyswarm.installer import installer
+from honeyswarm.auth import auth
+from honeyswarm.hives import hives
+from honeyswarm.jobs import jobs
+from honeyswarm.honeypots import honeypots
+from honeyswarm.frames import frames
+from honeyswarm.events import events
+from honeyswarm.dashboard import dashboard
+
+
 app = Flask(__name__, static_folder='static', static_url_path='')
-app.secret_key = os.environ.get(
-    'SESSION_SECRET', 'MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK'
-    )
-app.config['SECURITY_PASSWORD_SALT'] = os.environ.get(
-    "SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634'
-    )
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1)
-TZ = pytz.timezone('Europe/London')
-SALT_STATE_BASE = os.path.join(app.root_path, '../', 'honeystates', 'salt')
 
-# Mongo next
 
-# MongoEngine doesnt support AUTH_SOURCE so we manully construct
-MONGODB_SETTINGS = [{
-    "host": "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
-        os.environ.get("MONGODB_USERNAME"),
-        os.environ.get("MONGODB_PASSWORD"),
-        os.environ.get("MONGODB_HOST"),
-        os.environ.get("MONGODB_PORT"),
-        os.environ.get("MONGODB_DATABASE"),
-        os.environ.get("MONGODB_AUTH_SOURCE")
-    )
-}, {
-    "host": "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
-        os.environ.get("MONGODB_USERNAME"),
-        os.environ.get("MONGODB_PASSWORD"),
-        os.environ.get("MONGODB_HOST"),
-        os.environ.get("MONGODB_PORT"),
-        "hpfeeds",
-        os.environ.get("MONGODB_AUTH_SOURCE")
-    ),
-    "alias": "hpfeeds_db"
-}
-]
+def setup_config():
+    app.config['installed'] = False
+    app.secret_key = os.environ.get(
+        'SESSION_SECRET', 'MuhktUNBDthagZkY477ZWcXfM41x5dRuao8eEXZK'
+        )
+    app.config['SECURITY_PASSWORD_SALT'] = os.environ.get(
+        "SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634'
+        )
+    app.config['SALT_BASE'] = os.path.join(
+        app.root_path,
+        '../',
+        'honeystates',
+        'salt'
+        )
+    app.config['SECURITY_LOGIN_URL'] = '/nowhere'
+    app.config['SECURITY_LOGIN_USER_TEMPLATE'] = "login.html"
+    app.config['SECURITY_CONFIRMABLE'] = True
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
 
-app.config['MONGODB_SETTINGS'] = MONGODB_SETTINGS
+    app.config['TIMEZONE'] = os.environ.get("TIMEZONE")
 
-# Init the DB and the login managers
-db = MongoEngine(app)
+    # Flask code
+    app.config.from_object(flaskcode.default_config)
+    app.config['FLASKCODE_RESOURCE_BASEPATH'] = app.config['SALT_BASE']
 
-# Setup Flask-Security
-user_datastore = MongoEngineUserDatastore(db, User, Role)
-app.config['SECURITY_LOGIN_URL'] = '/nowhere'
-app.config['SECURITY_LOGIN_USER_TEMPLATE'] = "login.html"
-app.config['SECURITY_CONFIRMABLE'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
-security = Security(app, user_datastore)
 
-# CSRFProtect(app)
+def setup_blueprints():
+    app.register_blueprint(admin.admin, url_prefix="/admin")
+    app.register_blueprint(auth.auth, url_prefix="/auth")
+    app.register_blueprint(hives.hives, url_prefix="/hives")
+    app.register_blueprint(jobs.jobs, url_prefix="/jobs")
+    app.register_blueprint(honeypots.honeypots, url_prefix="/honeypots")
+    app.register_blueprint(frames.frames, url_prefix="/frames")
+    app.register_blueprint(events.events, url_prefix="/events")
+    app.register_blueprint(dashboard.dashboard, url_prefix="/dashboard")
+    app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
 
-# Global App Scheduler
-executors = dict(default=ThreadPoolExecutor())
-app.scheduler = BackgroundScheduler(
-    executors=executors, timezone='Europe/London'
-    )
-app.scheduler.start()
-atexit.register(app.scheduler.shutdown)
+    # Dynamically register all reports.
+    report_path = os.path.join(app.root_path, 'reports')
+    REPORTS = []
+
+    for report_blueprint in os.listdir(report_path):
+        if os.path.isdir(
+                os.path.join(report_path, report_blueprint)
+                ) and not report_blueprint.startswith('__'):
+            REPORTS.append({
+                'path': '.reports.{0}.{0}'.format(report_blueprint),
+                'blueprint': report_blueprint
+            })
+
+    for report in REPORTS:
+        try:
+            module = importlib.import_module(
+                report['path'],
+                package="honeyswarm"
+                )
+            app.register_blueprint(
+                getattr(module, report['blueprint']),
+                url_prefix="/report/{0}".format(report['blueprint'])
+                )
+        except Exception as err:
+            error_message = "Erorr loading report blueprint{0}: {1}".format(
+                report['blueprint'], err
+                )
+            app.logger.error(error_message)
+
+
+def setup_mongo():
+    # MongoEngine doesnt support AUTH_SOURCE so we manully construct
+    MONGODB_SETTINGS = [{
+        "host": "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
+            os.environ.get("MONGODB_USERNAME"),
+            os.environ.get("MONGODB_PASSWORD"),
+            os.environ.get("MONGODB_HOST"),
+            os.environ.get("MONGODB_PORT"),
+            os.environ.get("MONGODB_DATABASE"),
+            os.environ.get("MONGODB_AUTH_SOURCE")
+        ),
+        "alias": mongoengine.DEFAULT_CONNECTION_NAME
+    }, {
+        "host": "mongodb://{0}:{1}@{2}:{3}/{4}?authSource={5}".format(
+            os.environ.get("MONGODB_USERNAME"),
+            os.environ.get("MONGODB_PASSWORD"),
+            os.environ.get("MONGODB_HOST"),
+            os.environ.get("MONGODB_PORT"),
+            "hpfeeds",
+            os.environ.get("MONGODB_AUTH_SOURCE")
+        ),
+        "alias": "hpfeeds_db"
+    }
+    ]
+
+    app.config['MONGODB_SETTINGS'] = MONGODB_SETTINGS
+    db.init_app(app)
+
+
+def setup_scheduler():
+    # Global App Scheduler
+    executors = dict(default=ThreadPoolExecutor())
+    app.scheduler = BackgroundScheduler(
+        executors=executors, timezone=app.config['TIMEZONE']
+        )
+    app.scheduler.start()
+    atexit.register(app.scheduler.shutdown)
+
+    # ToDo: Set sensible intervals
+    app.scheduler.add_job(check_jobs, 'interval', minutes=1, args=[])
+    app.scheduler.add_job(poll_instances, 'interval', minutes=30, args=[])
+    app.scheduler.add_job(poll_hives, 'interval', minutes=60, args=[])
+
+
+def setup_installation():
+    # Only show installer pages if we have no users
+    try:
+        user_count = User.objects.count()
+        if user_count > 0:
+            app.config['installed'] = True
+        else:
+            app.register_blueprint(installer.installer, url_prefix="/install")
+    except Exception as err:
+        app.logger.error(err)
 
 
 # Jobs Schedule
@@ -122,90 +199,14 @@ def poll_instances():
             instance.save()
 
 
-# ToDo: Set sensible intervals
-app.scheduler.add_job(check_jobs, 'interval', minutes=1, args=[])
-app.scheduler.add_job(poll_instances, 'interval', minutes=30, args=[])
-app.scheduler.add_job(poll_hives, 'interval', minutes=60, args=[])
-
-
-##
-# Flask Code
-##
-
-app.config.from_object(flaskcode.default_config)
-app.config['FLASKCODE_RESOURCE_BASEPATH'] = SALT_STATE_BASE
-app.register_blueprint(flaskcode.blueprint, url_prefix='/flaskcode')
-
-
-# Import the Blueprints after the app has loaded else we get import errors.
-
-from honeyswarm.admin.admin import admin
-from honeyswarm.installer.installer import installer
-from honeyswarm.auth.auth import auth
-from honeyswarm.hives.hives import hives
-from honeyswarm.jobs.jobs import jobs
-from honeyswarm.honeypots.honeypots import honeypots
-from honeyswarm.frames.frames import frames
-from honeyswarm.events.events import events
-from honeyswarm.dashboard.dashboard import dashboard
-
-# Register the Blueprints
-app.register_blueprint(admin, url_prefix="/admin")
-app.register_blueprint(auth, url_prefix="/auth")
-app.register_blueprint(hives, url_prefix="/hives")
-app.register_blueprint(jobs, url_prefix="/jobs")
-app.register_blueprint(honeypots, url_prefix="/honeypots")
-app.register_blueprint(frames, url_prefix="/frames")
-app.register_blueprint(events, url_prefix="/events")
-app.register_blueprint(dashboard, url_prefix="/dashboard")
-
-# Dynamically register all reports.
-report_path = os.path.join(app.root_path, 'reports')
-REPORTS = []
-
-for report_blueprint in os.listdir(report_path):
-    if os.path.isdir(
-        os.path.join(report_path, report_blueprint)
-          ) and not report_blueprint.startswith('__'):
-        REPORTS.append({
-            'path': '.reports.{0}.{0}'.format(report_blueprint),
-            'blueprint': report_blueprint
-        })
-
-for report in REPORTS:
-    try:
-        module = importlib.import_module(report['path'], package="honeyswarm")
-        app.register_blueprint(
-            getattr(module, report['blueprint']),
-            url_prefix="/report/{0}".format(report['blueprint'])
-            )
-    except Exception as err:
-        error_message = "Unable to load report blueprint from {0}: {1}".format(
-            report['blueprint'], err
-            )
-        app.logger.error(error_message)
-
-# Only show installer pages if we have no users
-try:
-    app.config['installed'] = False
-    user_count = User.objects.count()
-    if user_count > 0:
-        app.config['installed'] = True
-    else:
-        app.register_blueprint(installer, url_prefix="/install")
-except Exception as err:
-    app.logger.error(err)
-    app.config['installed'] = False
-
-
 # Filters
-
 @app.template_filter('dateformat')
 def format_datetime(datetime_object):
     if isinstance(datetime_object, datetime):
+        timezone = pytz.timezone(app.config['TIMEZONE'])
         return datetime_object.replace(
             tzinfo=pytz.utc
-            ).astimezone(TZ).strftime('%d %b %Y %H:%M')
+            ).astimezone(timezone).strftime('%d %b %Y %H:%M')
     else:
         return str()
 
@@ -223,8 +224,12 @@ def format_prettyjson(json_string):
 
 @app.template_filter('userroles')
 def format_userroles(userroles):
-
     return [x.name for x in userroles]
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 
 @app.route('/')
@@ -232,3 +237,13 @@ def index():
     if not app.config['installed']:
         return redirect(url_for('installer.base_install'))
     return render_template('index.html')
+
+
+setup_config()
+setup_mongo()
+setup_blueprints()
+setup_installation()
+setup_scheduler()
+
+user_datastore = MongoEngineUserDatastore(db, User, Role)
+security = Security(app, user_datastore)

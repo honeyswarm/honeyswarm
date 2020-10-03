@@ -7,7 +7,6 @@ from honeyswarm.models import Frame, Hive, PepperJobs
 
 from flaskcode.utils import write_file, dir_tree, get_file_extension
 from honeyswarm.saltapi import pepper_api
-from honeyswarm import SALT_STATE_BASE
 
 frames = Blueprint('frames', __name__, template_folder="templates")
 
@@ -33,7 +32,10 @@ def show_frame(frame_id):
         abort(404)
     framename = frame_details.name
     # Lets hack in flask code.
-    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', frame_id)
+    honey_salt_base = os.path.join(
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'frames', frame_id
+    )
 
     dirname = os.path.basename(honey_salt_base)
     dtree = dir_tree(honey_salt_base, honey_salt_base + '/')
@@ -81,7 +83,11 @@ def create_frame():
         new_frame.save()
 
         frame_id = new_frame.id
-        state_path = os.path.join(SALT_STATE_BASE, 'frames', str(frame_id))
+        state_path = os.path.join(
+            current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+            'frames',
+            str(frame_id)
+            )
         state_name = "{0}.sls".format(new_frame.frame_state_file)
         state_file_path = os.path.join(state_path, state_name)
         if not os.path.exists(state_path):
@@ -144,7 +150,11 @@ def update_frame(frame_id):
 @login_required
 def resource_data(object_id, file_path):
 
-    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', object_id)
+    honey_salt_base = os.path.join(
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'frames',
+        object_id
+        )
 
     file_path = os.path.join(honey_salt_base, file_path)
     if not (os.path.exists(file_path) and os.path.isfile(file_path)):
@@ -170,7 +180,11 @@ def resource_data(object_id, file_path):
     )
 @login_required
 def update_resource_data(object_id, file_path):
-    honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', object_id)
+    honey_salt_base = os.path.join(
+        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        'frames',
+        object_id
+        )
     file_path = os.path.join(honey_salt_base, file_path)
     is_new_resource = bool(int(request.form.get('is_new_resource', 0)))
     if not is_new_resource and not (

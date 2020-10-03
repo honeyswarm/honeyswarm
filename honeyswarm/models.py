@@ -1,5 +1,5 @@
 
-from flask_mongoengine import Document
+from flask_mongoengine import Document, MongoEngine
 from mongoengine import ReferenceField, BooleanField, StringField, IntField, \
     DictField, DateTimeField, ListField
 from datetime import datetime
@@ -17,6 +17,9 @@ class AuthKey(Document):
 
 
 class Config(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     honeyswarm_host = StringField()
     honeyswarm_api = StringField()
     broker_host = StringField()
@@ -45,6 +48,9 @@ class HoneypotEvents(Document):
 
 
 class Frame(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     name = StringField(unique=True)
     description = StringField()
     supported_os = ListField()
@@ -53,6 +59,9 @@ class Frame(Document):
 
 
 class Honeypot(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     name = StringField(unique=True)
     honeypot_state_file = StringField()
     honey_type = StringField()
@@ -64,6 +73,9 @@ class Honeypot(Document):
 
 
 class HoneypotInstance(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     honeypot = ReferenceField(Honeypot)
     hpfeeds = ReferenceField(AuthKey)
     pillar = DictField(default={})
@@ -71,6 +83,9 @@ class HoneypotInstance(Document):
 
 
 class Hive(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     name = StringField(unique=True)
     registered = BooleanField(default=False)
     salt_alive = BooleanField()
@@ -83,6 +98,9 @@ class Hive(Document):
 
 
 class PepperJobs(Document):
+    meta = {
+        'db_alias': 'default'
+    }
     job_id = StringField()
     job_short = StringField()
     job_description = StringField()
@@ -95,11 +113,17 @@ class PepperJobs(Document):
 
 
 class Role(Document, RoleMixin):
+    meta = {
+        'db_alias': 'default'
+    }
     name = StringField(max_length=80, unique=True)
     description = StringField(max_length=255)
 
 
 class User(Document, UserMixin):
+    meta = {
+        'db_alias': 'default'
+    }
     email = StringField(unique=True)
     password = StringField()
     name = StringField(unique=True)
@@ -107,3 +131,6 @@ class User(Document, UserMixin):
     fs_uniquifier = StringField(max_length=255)
     confirmed_at = DateTimeField()
     roles = ListField(ReferenceField(Role), default=[])
+
+
+db = MongoEngine()
