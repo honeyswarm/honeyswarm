@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents
 
@@ -100,7 +100,7 @@ def event_stream():
 
             data_rows.append(single_row)
         except Exception as err:
-            print(err)
+            current_app.logger.error("Error Showing Events: {0}".format(err))
             continue
 
     # Final Json to return

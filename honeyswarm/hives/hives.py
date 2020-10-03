@@ -1,7 +1,6 @@
 from honeyswarm.saltapi import pepper_api
 import os
 import time
-from uuid import uuid4
 from datetime import datetime
 
 from flask import Blueprint, render_template, request, abort, jsonify
@@ -49,14 +48,13 @@ def hives_list():
     )
 
 
-
 @hives.route('/<hive_id>')
 @login_required
 def hive_details(hive_id):
     try:
         hive_details = Hive.objects(id=hive_id).first()
-    except:
-        hive_details = None
+    except Exception as err:
+        hive_details = err
         abort(404)
 
     return render_template(
@@ -65,11 +63,6 @@ def hive_details(hive_id):
     )
 
 
-
-
-##
-# Hive Actions
-##
 @hives.route('/actions/delete', methods=["POST"])
 @login_required
 def hive_delete():
@@ -155,7 +148,6 @@ def hive_swarm():
             # Try one more time.
             if not hive_grains:
                 time.sleep(2)
-                print("Grains round 2")
                 grains_request = pepper_api.run_client_function(
                     hive_id, 'grains.items')
                 hive_grains = grains_request[hive_id]

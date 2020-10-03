@@ -1,7 +1,9 @@
 import os
+import logging
 from pepper.libpepper import Pepper
-from pepper.exceptions import PepperException
 # https://docs.saltstack.com/en/latest/ref/clients/#python-client-api
+
+logger = logging.getLogger(__name__)
 
 
 class PepperApi():
@@ -12,13 +14,13 @@ class PepperApi():
 
     def api_auth(self):
         try:
-            auth_test = self.api.login(
+            self.api.login(
                 os.environ.get("SALT_USERNAME"),
                 os.environ.get("SALT_SHARED_SECRET"),
                 'sharedsecret')
             self.authenticated = True
         except Exception as err:
-            print(err)
+            logger.error("Error authing to salt: {0}".format(err))
             self.authenticated = False
 
     def salt_keys(self):
@@ -138,31 +140,33 @@ class PepperApi():
             else:
                 return api_response['return'][0]
         except Exception as err:
-            print(err)
+            logger.error("Error authing to salt: {0}".format(err))
         return None
-
 
     def docker_state(self, target, container):
         """
-        Get the status of a docker container. 
+        Get the status of a docker container.
         """
         # check auth state
         self.api_auth()
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': 'docker.state', 'arg': container}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': 'docker.state',
+                'arg': container
+            }])
 
         container_status = "Offline"
-        try:        
+        try:
             result_object = api_reponse['return'][0]
             if result_object[target] == "running":
                 container_status = "Online"
-        
+
         except Exception as err:
             container_status = "Error Getting status: {0}".format(err)
 
         return container_status
-
 
     def docker_control(self, target, container, wanted_state):
         """
@@ -178,16 +182,19 @@ class PepperApi():
             function = "docker.stop"
 
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': function, 'arg': container}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': function,
+                'arg': container
+            }])
 
-        try:        
+        try:
             result_object = api_reponse['return'][0]
             return result_object
-
-        except:
+        except Exception as err:
+            logger.error(err)
             return "Error Get"
-
 
     def docker_remove(self, target, container):
         """
@@ -200,29 +207,42 @@ class PepperApi():
 
         # Stop the container
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': 'docker.stop', 'arg': container}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': 'docker.stop',
+                'arg': container
+            }])
         responses.append(api_reponse)
 
         # Remove the container
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': 'docker.rm', 'arg': container}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': 'docker.rm',
+                'arg': container
+            }])
         responses.append(api_reponse)
 
         # Check state to confirm
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': 'docker.state', 'arg': container}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': 'docker.state',
+                'arg': container
+                }])
 
-        try:        
+        try:
             result_object = api_reponse['return'][0]
             if 'ERROR' in result_object[target]:
                 return True
             else:
                 return False
 
-        except:
+        except Exception as err:
+            logging.error(err)
             return False
 
 

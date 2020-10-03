@@ -1,7 +1,7 @@
 import os
 import mimetypes
 from flask import Blueprint, redirect, url_for, request, abort
-from flask import jsonify, render_template, send_file
+from flask import jsonify, render_template, send_file, current_app
 from flask_login import login_required
 from honeyswarm.models import Frame, Hive, PepperJobs
 
@@ -27,7 +27,6 @@ def frames_list():
 @frames.route('/<frame_id>/edit/')
 @login_required
 def show_frame(frame_id):
-    print(frame_id)
     frame_details = Frame.objects(id=frame_id).first()
 
     if not frame_details:
@@ -95,7 +94,7 @@ def create_frame():
 
     except Exception as err:
         json_response['message'] = err
-        print(err)
+        current_app.logger.error("Error Creating Frame: {0}".format(err))
 
     return redirect(url_for('frames.frames_list'))
 
@@ -122,7 +121,6 @@ def update_frame(frame_id):
     # Now add any Pillar States
     pillar_states = []
     for field in form_vars.items():
-        print(field)
         if field[0].startswith('pillar-key'):
             key_id = field[0].split('-')[-1]
             key_name = field[1]
@@ -145,7 +143,6 @@ def update_frame(frame_id):
     )
 @login_required
 def resource_data(object_id, file_path):
-    print(file_path)
 
     honey_salt_base = os.path.join(SALT_STATE_BASE, 'frames', object_id)
 

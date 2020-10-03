@@ -130,7 +130,7 @@ def delete_honeypot(honeypot_id):
     # Remove the Honeypot
     honeypot.delete()
     json_response['success'] = True
-    return redirect(url_for(honeypots.honeypot_list))
+    return redirect(url_for('honeypots.honeypot_list'))
 
 
 @honeypots.route('/<honeypot_id>/edit/')

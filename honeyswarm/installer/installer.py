@@ -1,18 +1,19 @@
 # This should only run at first time setup
 import os
 import json
+import logging
 from secrets import token_hex
 from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 from flask import Blueprint, render_template, redirect, url_for, request, flash
-from honeyswarm.models import User, Role, Frame, Honeypot, AuthKey, Config
+from honeyswarm.models import User, Frame, Honeypot, AuthKey, Config
 from flask_security.utils import encrypt_password
 
 from honeyswarm import user_datastore
 from honeyswarm import SALT_STATE_BASE
 
-
+logger = logging.getLogger(__name__)
 installer = Blueprint('installer', __name__, template_folder="templates")
 
 
@@ -48,8 +49,8 @@ def install_states(state_base):
                     'honeyswarm_states-master/honeypots/', '')
                 zipfile.extract(zip_info, honeypot_path)
 
-        except Exception as e:
-            print(e)
+        except Exception as err:
+            logger.error("Error Installing Statest: {0}".format(err))
 
 
 @installer.route('/', methods=["GET", "POST"])
@@ -65,11 +66,13 @@ def base_install():
             else:
                 reboot = False
         except Exception as err:
-            print(err)
+            logger.error(err)
             reboot = False
 
         if reboot:
-            flash('Honeyswarm has been installed. You need to stop / start the docker-compose to complete the installation')
+            flash('Honeyswarm has been installed. \
+                   You need to stop / start the docker-compose \
+                   to complete the installation')
             return redirect(url_for('installer.base_install'))
 
         token1 = token_hex(16)

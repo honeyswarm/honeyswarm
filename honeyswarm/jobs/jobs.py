@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from flask import Blueprint, request
-from flask import jsonify, render_template
+from flask import jsonify, render_template, current_app
 
 from flask_login import login_required
 from honeyswarm.models import PepperJobs
@@ -61,9 +61,10 @@ def jobs_paginate():
 
     order_string = "{0}{1}".format(direction, column)
 
-    job_rows = PepperJobs.objects(complete=True).order_by(order_string).paginate(
-        page=start_page,
-        per_page=per_page
+    job_rows = PepperJobs.objects(complete=True).order_by(
+        order_string).paginate(
+            page=start_page,
+            per_page=per_page
         )
     job_count = job_rows.total
 
@@ -84,6 +85,7 @@ def jobs_paginate():
 
             data_rows.append(single_row)
         except Exception as err:
+            current_app.logger.error("Error getting jobs: {0}".format(err))
             print(err)
             continue
 
@@ -108,7 +110,6 @@ def jobs_payload(job_id):
         "payload": single_job.job_response
     }
     return jsonify(json_response)
-
 
 
 @jobs.route('/poll')

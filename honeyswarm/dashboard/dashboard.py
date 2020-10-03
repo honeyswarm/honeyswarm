@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app
 from flask_security import login_required
 from honeyswarm.models import HoneypotEvents, HoneypotInstance, Hive
 
@@ -35,7 +35,7 @@ def get_dashboard_data(days):
             *service_pipeline)][0]
 
     except Exception as err:
-        print(err)
+        current_app.logger.error("Error Creating Dashboard: {0}".format(err))
         graph_data = {}
     return graph_data
 
