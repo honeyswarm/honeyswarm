@@ -68,7 +68,7 @@ class PepperApi():
         if api_reponse['return'][0]['data']['success']:
             return api_reponse['return'][0]['data']['return']
 
-    def run_client_function_async(self, target, function):
+    def run_client_function_async(self, target, function, arg_list=[]):
         """
         Basic Function Runner; for things like test.ping it is up to
         the receiving function to parse the data it needs.
@@ -77,11 +77,16 @@ class PepperApi():
         # check auth state
         self.api_auth()
         api_reponse = self.api.low(
-            [{'client': 'local_async', 'tgt': target, 'fun': function}]
+            [{
+                'client': 'local_async',
+                'tgt': target,
+                'fun': function,
+                'arg': arg_list
+            }]
             )
         return api_reponse['return'][0]['jid']
 
-    def run_client_function(self, target, function):
+    def run_client_function(self, target, function, arg_list=[]):
         """
         Basic Function Runner; for things like test.ping it
         is up to the receiving function to parse the data it needs.
@@ -90,8 +95,13 @@ class PepperApi():
         # check auth state
         self.api_auth()
         api_reponse = self.api.low(
-            [{'client': 'local', 'tgt': target, 'fun': function}]
-            )
+            [{
+                'client': 'local',
+                'tgt': target,
+                'fun': function,
+                'arg': arg_list
+            }])
+
         return api_reponse['return'][0]
 
     def apply_state(self, target, args_list):
@@ -151,7 +161,7 @@ class PepperApi():
         self.api_auth()
         api_reponse = self.api.low(
             [{
-                'client': 'local',
+                'client': 'local_async',
                 'tgt': target,
                 'fun': 'docker.state',
                 'arg': container
@@ -183,7 +193,7 @@ class PepperApi():
 
         api_reponse = self.api.low(
             [{
-                'client': 'local',
+                'client': 'local_async',
                 'tgt': target,
                 'fun': function,
                 'arg': container
@@ -208,7 +218,7 @@ class PepperApi():
         # Stop the container
         api_reponse = self.api.low(
             [{
-                'client': 'local',
+                'client': 'local_async',
                 'tgt': target,
                 'fun': 'docker.stop',
                 'arg': container
@@ -218,7 +228,7 @@ class PepperApi():
         # Remove the container
         api_reponse = self.api.low(
             [{
-                'client': 'local',
+                'client': 'local_async',
                 'tgt': target,
                 'fun': 'docker.rm',
                 'arg': container
@@ -228,7 +238,7 @@ class PepperApi():
         # Check state to confirm
         api_reponse = self.api.low(
             [{
-                'client': 'local',
+                'client': 'local_async',
                 'tgt': target,
                 'fun': 'docker.state',
                 'arg': container

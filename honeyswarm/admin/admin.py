@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, jsonify, request
 from flask import current_app
 from flask_security import login_required, MongoEngineUserDatastore
 from flask_security.decorators import roles_required
-from honeyswarm.models import AuthKey, User, Role
+from honeyswarm.models import AuthKey, User, Role, Config
 from flask_security.utils import encrypt_password
 
 admin = Blueprint('admin', __name__, template_folder="templates")
@@ -14,18 +14,19 @@ def admin_page():
 
     # Users
     users = User.objects
-
     # Roles
     roles = Role.objects
-
     # AuthKeys
     auth_keys = AuthKey.objects
+    # Config
+    config = Config.objects.first()
 
     return render_template(
         "admin.html",
         users=users,
         roles=roles,
-        auth_keys=auth_keys
+        auth_keys=auth_keys,
+        config=config
         )
 
 

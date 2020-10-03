@@ -26,6 +26,7 @@ def hives_list():
     honeyswarm_api = config.honeyswarm_api
 
     key_list = pepper_api.salt_keys()
+    print(key_list)
 
     for hive in hive_list:
         if str(hive.id) in key_list['minions']:
@@ -106,7 +107,16 @@ def hive_poll():
                 hive_id, 'grains.items')
 
             hive_grains = grains_request[hive_id]
+
+            external_ip_request = pepper_api.run_client_function(
+                hive_id,
+                'cmd.run',
+                'wget -qO- http://ipecho.net/plain'
+            )
+            external_ip = external_ip_request[hive_id]
+
             if hive_grains:
+                hive_grains['external_ip'] = external_ip
                 hive.grains = hive_grains
                 hive.last_seen = datetime.utcnow
                 hive.salt_alive = True
@@ -152,7 +162,15 @@ def hive_swarm():
                     hive_id, 'grains.items')
                 hive_grains = grains_request[hive_id]
 
+            external_ip_request = pepper_api.run_client_function(
+                hive_id,
+                'cmd.run',
+                'wget -qO- http://ipecho.net/plain'
+            )
+            external_ip = external_ip_request[hive_id]
+
             if hive_grains:
+                hive_grains['external_ip'] = external_ip
                 hive.grains = hive_grains
                 hive.last_seen = datetime.utcnow
                 hive.salt_alive = True

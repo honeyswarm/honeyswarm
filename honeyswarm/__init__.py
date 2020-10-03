@@ -180,8 +180,18 @@ def poll_hives():
             hive_id,
             'grains.items'
             )
+
+        external_ip_request = pepper_api.run_client_function(
+            hive_id,
+            'cmd.run',
+            'wget -qO- http://ipecho.net/plain'
+        )
+        external_ip = external_ip_request[hive_id]
+
         hive_grains = grains_request[hive_id]
+
         if hive_grains:
+            hive_grains['external_ip'] = external_ip
             hive.grains = hive_grains
             hive.last_seen = datetime.utcnow
             hive.salt_alive = True

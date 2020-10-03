@@ -3,9 +3,52 @@
 {% set page_title = " - Admin" %}
 {% block content %}
 
-<div class="container-fluid">
-  <div class="row mt-5">
-    <div class="col">
+<div class="row mt-2">
+  <div class="col">
+    <h4 class="text-warning">HoneySwarm Config</h4>
+
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm table-hover table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">Value</th>
+            <th scope="col">Actions</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">HoneySwarm Host</th>
+            <td><input name="name" type="text" class="form-control" value="{{config.honeyswarm_host}}"></td>
+            <td class="text-right">
+              <span><button class="btn btn-info" onclick="console.log('save')">Update</button> <button
+                  class="btn btn-danger ml-2" onclick="console.log('save')">Delete</button></span>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">HoneySwarm API</th>
+            <td><input name="name" type="text" class="form-control" value="{{config.honeyswarm_api}}"></td>
+            <td class="text-right">
+              <span><button class="btn btn-info" onclick="console.log('save')">Update</button> <button
+                  class="btn btn-danger ml-2" onclick="console.log('save')">Delete</button></span>
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Broker Host</th>
+            <td><input name="name" type="text" class="form-control" value="{{config.broker_host}}"></td>
+            <td class="text-right">
+              <span><button class="btn btn-info" onclick="console.log('save')">Update</button> <button
+                  class="btn btn-danger ml-2" onclick="console.log('save')">Delete</button></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
       <div class="row">
         <div class="col">
           <h4 class="text-warning">User Accounts</h4>
@@ -117,7 +160,6 @@
         </div>
       </div>
 
-
       <div class="row">
         <div class="col">
           <h4 class="text-warning">HPFeeds Auth Keys</h4>
@@ -155,10 +197,6 @@
           </div>
         </div>
       </div>
-
-
-    </div>
-  </div>
 
   <script>
     $('select').selectpicker();
@@ -204,7 +242,6 @@
   </script>
 
 
-</div>
 
 
 
