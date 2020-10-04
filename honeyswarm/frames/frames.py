@@ -33,7 +33,7 @@ def show_frame(frame_id):
     framename = frame_details.name
     # Lets hack in flask code.
     honey_salt_base = os.path.join(
-        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        current_app.config['FLASKCODE_RESOURCE_BASEPATH'],
         'frames', frame_id
     )
 
@@ -84,7 +84,7 @@ def create_frame():
 
         frame_id = new_frame.id
         state_path = os.path.join(
-            current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+            current_app.config['FLASKCODE_RESOURCE_BASEPATH'],
             'frames',
             str(frame_id)
             )
@@ -151,7 +151,7 @@ def update_frame(frame_id):
 def resource_data(object_id, file_path):
 
     honey_salt_base = os.path.join(
-        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        current_app.config['FLASKCODE_RESOURCE_BASEPATH'],
         'frames',
         object_id
         )
@@ -181,7 +181,7 @@ def resource_data(object_id, file_path):
 @login_required
 def update_resource_data(object_id, file_path):
     honey_salt_base = os.path.join(
-        current_app.config('FLASKCODE_RESOURCE_BASEPATH'),
+        current_app.config['FLASKCODE_RESOURCE_BASEPATH'],
         'frames',
         object_id
         )
@@ -256,6 +256,7 @@ def frame_deploy(frame_id):
         job = PepperJobs(
             hive=hive,
             job_id=job_id,
+            job_type="Apply Frame",
             job_short="Apply State {0}".format(frame_details.name),
             job_description="Apply frame {0} to Hive {1}".format(
                 frame_details, hive_id)
