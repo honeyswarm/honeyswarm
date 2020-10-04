@@ -167,16 +167,8 @@ class PepperApi():
                 'arg': container
             }])
 
-        container_status = "Offline"
-        try:
-            result_object = api_reponse['return'][0]
-            if result_object[target] == "running":
-                container_status = "Online"
+        return api_reponse['return'][0]['jid']
 
-        except Exception as err:
-            container_status = "Error Getting status: {0}".format(err)
-
-        return container_status
 
     def docker_control(self, target, container, wanted_state):
         """
@@ -199,12 +191,7 @@ class PepperApi():
                 'arg': container
             }])
 
-        try:
-            result_object = api_reponse['return'][0]
-            return result_object
-        except Exception as err:
-            logger.error(err)
-            return "Error Get"
+        return api_reponse['return'][0]['jid']
 
     def docker_remove(self, target, container):
         """
@@ -218,7 +205,7 @@ class PepperApi():
         # Stop the container
         api_reponse = self.api.low(
             [{
-                'client': 'local_async',
+                'client': 'local',
                 'tgt': target,
                 'fun': 'docker.stop',
                 'arg': container
@@ -228,7 +215,7 @@ class PepperApi():
         # Remove the container
         api_reponse = self.api.low(
             [{
-                'client': 'local_async',
+                'client': 'local',
                 'tgt': target,
                 'fun': 'docker.rm',
                 'arg': container
@@ -238,7 +225,7 @@ class PepperApi():
         # Check state to confirm
         api_reponse = self.api.low(
             [{
-                'client': 'local_async',
+                'client': 'local',
                 'tgt': target,
                 'fun': 'docker.state',
                 'arg': container
