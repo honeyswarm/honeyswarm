@@ -3,46 +3,9 @@
 {% set page_title = " - Jobs" %}
 {% block content %}
 
-
       <div class="row">
         <div class="col">
-          <h4 class="text-warning">Pending Jobs</h4>
-          <table class="table table-bordered table-sm table-hover table-striped">
-            <thead class="thead-dark">
-              <tr>
-                <th scope="col">Hive Name</th>
-                <th scope="col">Job Type</th>
-                <th scope="col">Job Short</th>
-                <th scope="col">Created At</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for job in job_list %}
-              {% if not job['complete']  %}
-              <tr id="row-{{job['hive']['id']}}">
-                <th scope="row">{{job['hive']['name']}}</th>
-                <td>{{job['job_type']}}</td>
-                <td>{{job['job_short']}}</td>
-                <td>{{job['created_at'] | dateformat}}</td>
-                <td>
-                  <span>
-                    <button class="btn btn-sm btn-info job-btn" data-action="poll" data-jobid="{{job['id']}}">Poll</button> 
-                    <button class="btn btn-sm btn-danger job-btn" data-action="delete" data-jobid="{{job['id']}}">Delete</button>
-                  </span>
-                </td>
-              </tr>
-              {% endif %}
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-
-      <div class="row">
-        <div class="col">
-          <h4 class="text-success">Completed Jobs</h4>
+          <h4 class="text-success">All Jobs</h4>
           <div class="table-responsive">
             <table id="jobs_table" class="table table-bordered table-sm table-striped">
               <thead class="thead-dark">
@@ -53,6 +16,7 @@
                     <th scope="col">Job Short</th>
                     <th scope="col">Created At</th>
                     <th scope="col">Completed At</th>
+                    <th score="col">Actions</th>
                   </tr>
               </thead>
               <tbody>
@@ -65,11 +29,6 @@
       </div>
 
 <script>
-
-setTimeout(function() {
-  location.reload();
-}, 60000);
-
 
 let notificationCount = 0;
 
@@ -131,6 +90,33 @@ function add_notification(textClass, text){
 
 <script>
 
+$('#jobs_table').on('click', 'button.job-btn', function (e) {
+
+var button = $(this)
+var action = button.data('action')
+var hive_id = button.data('hiveid')
+var instance_id = button.data('jobid')
+
+post_data = {
+    "action": action,
+    "hive_id": hive_id,
+    "instance_id": instance_id
+}
+    alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
+    $.post( '/jobs/control/', post_data )
+        .done(function( data ) {
+        if(data['success']){
+            alert_notify('alert-success','', data['message'] )
+            // API call to update table in here. 
+        } else {
+            alert_notify('alert-danger', 'Opps!', data['message'] )
+        }
+    });
+
+  });
+
+
+
   $(document).ready(function () {
     var table = $('#jobs_table').DataTable({
       "processing": true,
@@ -150,7 +136,14 @@ function add_notification(textClass, text){
         { "data": "job_type"},
         { "data": "job_short" },
         { "data": "created_at" },
-        { "data": "completed_at" }
+        { "data": "completed_at" },
+        {
+            "orderable": false,
+            "data": "job_id",
+            "render": function (data) {
+              return `<button class="btn btn-sm btn-danger job-btn" data-action="delete" data-jobid="${data}">Delete</button>`
+            }
+          }
       ]
     });
 
@@ -170,6 +163,12 @@ function add_notification(textClass, text){
         tr.addClass('shown');
       }
     });
+
+
+    setInterval( function () {
+          table.ajax.reload( null, false );
+      }, 30000 );
+
 
   });
 

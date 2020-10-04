@@ -141,7 +141,7 @@ def setup_scheduler():
 
     # ToDo: Set sensible intervals
     app.scheduler.add_job(check_jobs, 'interval', minutes=1, args=[])
-    app.scheduler.add_job(poll_instances, 'interval', minutes=30, args=[])
+    app.scheduler.add_job(poll_instances, 'interval', minutes=2, args=[])
     app.scheduler.add_job(poll_hives, 'interval', minutes=60, args=[])
 
 

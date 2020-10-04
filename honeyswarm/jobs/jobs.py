@@ -13,16 +13,7 @@ jobs = Blueprint('jobs', __name__, template_folder="templates")
 @jobs.route('/')
 @login_required
 def jobs_list():
-
-    # shoudl probably add a filter in here this could get noisy
-    job_list = PepperJobs.objects
-
-    # Probably want a way to update / delete a job
-
-    return render_template(
-        "jobs.html",
-        job_list=job_list
-        )
+    return render_template("jobs.html")
 
 
 @jobs.route('/paginate', methods=["POST"])
@@ -53,6 +44,7 @@ def jobs_paginate():
         direction = "-"
 
     column = [
+        "show_more",
         "hive_id",
         "job_type",
         "job_short",
@@ -60,9 +52,13 @@ def jobs_paginate():
         "completed_at"
         ][int(order_by)]
 
-    order_string = "{0}{1}".format(direction, column)
+    # Default sort
+    if order_by == "0":
+        order_string = "-created_at"
+    else:
+        order_string = "{0}{1}".format(direction, column)
 
-    job_rows = PepperJobs.objects(complete=True).order_by(
+    job_rows = PepperJobs.objects().order_by(
         order_string).paginate(
             page=start_page,
             per_page=per_page
@@ -82,13 +78,15 @@ def jobs_paginate():
                 "job_type": row.job_type,
                 "job_short": row.job_short,
                 "created_at": row.created_at,
-                "completed_at": row.completed_at
+                "completed_at": row.completed_at,
+                "job_id": str(row.id)
             }
 
             data_rows.append(single_row)
         except Exception as err:
-            current_app.logger.error("Error getting jobs: {0}".format(err))
-            print(err)
+            error_message = "Error getting jobs: {0}".format(err)
+            current_app.logger.error(error_message)
+            print(error_message)
             continue
 
     # Final Json to return
