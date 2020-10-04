@@ -48,7 +48,7 @@ def main_dashboard():
     alive_hives = Hive.objects(salt_alive=True).count()
     event_count = HoneypotEvents.objects.count()
     instance_count = HoneypotInstance.objects.count()
-    alive_instances = HoneypotInstance.objects(status="Online").count()
+    alive_instances = HoneypotInstance.objects(status="running").count()
 
     service_graph_day = get_dashboard_data(1)
     service_graph_week = get_dashboard_data(7)
