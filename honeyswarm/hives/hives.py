@@ -26,7 +26,6 @@ def hives_list():
     honeyswarm_api = config.honeyswarm_api
 
     key_list = pepper_api.salt_keys()
-    print(key_list)
 
     for hive in hive_list:
         if str(hive.id) in key_list['minions']:

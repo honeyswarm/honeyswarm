@@ -192,14 +192,11 @@ $('#deploymentModal').on('show.bs.modal', function (event) {
 })
 
 $('#instances-table').on('click', 'button.instance-btn', function (e) {
-  console.log("here")
 
   var button = $(this)
   var action = button.data('action')
   var hive_id = button.data('hiveid')
   var instance_id = button.data('instanceid')
-
-  console.log(instance_id)
 
   post_data = {
       "action": action,
@@ -209,7 +206,6 @@ $('#instances-table').on('click', 'button.instance-btn', function (e) {
       alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
       $.post( '/honeypots/instance/control/', post_data )
           .done(function( data ) {
-          console.log(data);
           if(data['success']){
               alert_notify('alert-success','', data['message'] )
               // API call to update table in here. 

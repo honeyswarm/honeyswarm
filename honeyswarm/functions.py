@@ -15,8 +15,6 @@ def check_jobs():
         hive_id = str(job['hive']['id'])
         api_check = pepper_api.lookup_job(job.job_id)
 
-        print(api_check)
-
         if job.job_type == "Docker State":
             # We need to parse the message as details are not in the API
             instance_id = job.job_description.split("id: ")[-1]
@@ -74,9 +72,39 @@ def poll_hives():
 
 
 def poll_instances():
-    for hive in Hive.objects():
-        for instance in hive.honeypots:
-            container_name = instance.honeypot.container_name
-            status = pepper_api.docker_state(str(hive.id), container_name)
-            instance.status = str(status)
+    """
+    This sets up an async salt call that is saved as a job per instance.
+    """
+    for instance in HoneypotInstance.objects():
+        try:
+            hive = instance.hive
+            if hive.salt_alive:
+                container_name = instance.honeypot.container_name
+                pepper_job_id = pepper_api.docker_state(
+                    str(hive.id),
+                    container_name
+                )
+
+                job = PepperJobs(
+                    hive=hive,
+                    job_type="Docker State",
+                    job_id=pepper_job_id,
+                    job_short="Scheduled Docker State on {0}".format(
+                        container_name
+                        ),
+                    job_description="Scheduled task to check Docker state for honeypot \
+                        {0} on hive {1} with instance id: {2}".format(
+                            container_name,
+                            hive.name,
+                            instance.id
+                            )
+                        )
+                job.save()
+            else:
+                instance.status = "Unresponsive Hive"
+                instance.save()
+        except Exception as err:
+            error_message = "Error Checking Container State: {0}".format(err)
+            logger.error(error_message)
+            instance.status = error_message
             instance.save()
