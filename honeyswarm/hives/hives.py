@@ -210,8 +210,9 @@ def hive_test():
 
                 job = PepperJobs(
                     hive=hive,
+                    job_type="Apply Frame",
                     job_id=job_id,
-                    job_short="Apply Frame state",
+                    job_short="Apply {0} state".format(frame.name),
                     job_description="Apply {0} frame state to Hive {1}".format(
                         frame.name, hive_id)
                 )

@@ -13,42 +13,32 @@
         </div>
     </div>
     
-<div class="row mt-5">
-    <div class="col">
-        <h4 class="text-warning">Existing Honeypots</h4>
-        <table class="table table-bordered table-sm table-hover">
-          <thead class="thead-dark">
-            <tr>
-              <th scope="col">Instance ID</th>
-              <th scope="col">Hive Name</th>
-              <th scope="col">Honeypot Type</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for instance in instances %}
-            <tr id="row-{{instance[1].id}}">
-              <th scope="row">{{instance[1].id}}</th>
-              <td>{{instance[2]}}</td>
-              <td>{{instance[1].honeypot.name}}</td>
-              <td class={% if instance[1].status == "Online"%}text-success{% else %}text-danger{% endif %}>{{instance[1].status}}</td>
-              <td class=text-right>
-                <span>
-                  <a class="btn btn-sm btn-primary" href="/report/default_report/?honeypot={{instance[1].honeypot.name}}&tables={{ instance[1].honeypot.report_fields|join(',') }}&limit=10" target="_blank" role="button">Report</a>
-                  <button class="btn btn-sm btn-info instance-btn" data-action="poll" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Poll</button>
-                  <button class="btn btn-sm btn-success instance-btn" data-action="start" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Start</button>
-                  <button class="btn btn-sm btn-warning instance-btn" data-action="stop" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Stop</button> 
-                  <button class="btn btn-sm btn-danger instance-btn" data-action="delete" data-instanceid="{{instance[1].id}}" data-hiveid="{{instance[0]}}">Delete</button>
-                </span>
-
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+<div class="row">
+  <div class="col">
+    <h4 class="text-warning">Existing Honeypots</h4>
+    <table id="instances-table" class="table table-bordered table-sm table-hover table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Instance ID</th>
+          <th scope="col">Hive Name</th>
+          <th scope="col">Honeypot type</th>
+          <th scope="col">Status</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
+
 
 <div class="row mt-5">
       <div class="col">
@@ -201,35 +191,34 @@ $('#deploymentModal').on('show.bs.modal', function (event) {
 
 })
 
-$( ".instance-btn" ).click(function() {
+$('#instances-table').on('click', 'button.instance-btn', function (e) {
+  console.log("here")
 
-    var button = $(this)
-    var action = button.data('action')
-    var hive_id = button.data('hiveid')
-    var instance_id = button.data('instanceid')
+  var button = $(this)
+  var action = button.data('action')
+  var hive_id = button.data('hiveid')
+  var instance_id = button.data('instanceid')
 
-    post_data = {
-        "action": action,
-        "hive_id": hive_id,
-        "instance_id": instance_id
-    }
+  console.log(instance_id)
 
-
-        alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
-        $.post( '/honeypots/instance/control/', post_data )
-            .done(function( data ) {
-            console.log(data);
-            if(data['success']){
-                alert_notify('alert-success','', data['message'] )
-                // API call to update table in here. 
-            } else {
-                alert_notify('alert-danger', 'Opps!', data['message'] )
-            }
-        });
-
+  post_data = {
+      "action": action,
+      "hive_id": hive_id,
+      "instance_id": instance_id
+  }
+      alert_notify('alert-info', 'Submitted!', 'Deployment Requested' )
+      $.post( '/honeypots/instance/control/', post_data )
+          .done(function( data ) {
+          console.log(data);
+          if(data['success']){
+              alert_notify('alert-success','', data['message'] )
+              // API call to update table in here. 
+          } else {
+              alert_notify('alert-danger', 'Opps!', data['message'] )
+          }
+      });
 
     });
-
 
 
 
@@ -261,6 +250,73 @@ function update_object(action, object_id, post_url) {
 </script>
 
 
+
+<script>
+
+function instance_actions(data) {
+
+  let html = `<a class="btn btn-sm btn-primary" href="/report/default_report/?honeypot=${data['honeypot_name']}&tables=${data['report_fields']}&limit=10" target="_blank" role="button">Report</a>
+          <button class="btn btn-sm btn-info instance-btn" data-action="poll" data-instanceid="${data['instance_id']}">Poll</button>
+          <button class="btn btn-sm btn-success instance-btn" data-action="start" data-instanceid="${data['instance_id']}">Start</button>
+          <button class="btn btn-sm btn-warning instance-btn" data-action="stop" data-instanceid="${data['instance_id']}">Stop</button> 
+          <button class="btn btn-sm btn-danger instance-btn" data-action="delete" data-instanceid="${data['instance_id']}">Delete</button>`
+  return html
+}
+
+function status_text(data) {
+  let text_value = data.charAt(0).toUpperCase() + data.slice(1)
+
+  if (text_value === "Running") {
+    text_class = "text-success"
+  } else {
+    text_class = "text-danger"
+  }
+
+  let html = `<span class="${text_class}">${text_value}</span>`
+
+  return html
+}
+
+
+$(document).ready(function () {
+  var table = $('#instances-table').DataTable({
+        "searchDelay": 1000,
+        "pageLength": 25,
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+          "url": "/honeypots/paginate",
+          "type": "POST"
+        },
+        "columns": [
+          { "data": "instance_id" },
+          { "data": "hive_name" },
+          { "data": "honeypot_type" },
+          {
+            "data": "status",
+            "render": function (data) {
+              return status_text(data)
+            }
+           },
+          {
+            "orderable": false,
+            "data": "actions",
+            "render": function (data) {
+              return instance_actions(data)
+            }
+          }
+        ]
+      });
+
+      setInterval( function () {
+          table.ajax.reload( null, false );
+      }, 30000 );
+
+});
+
+
+
+</script>
 
 
 {% endblock %}

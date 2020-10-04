@@ -54,6 +54,7 @@ def jobs_paginate():
 
     column = [
         "hive_id",
+        "job_type",
         "job_short",
         "created_at",
         "completed_at"
@@ -77,7 +78,8 @@ def jobs_paginate():
         try:
             single_row = {
                 "DT_RowId": str(row.id),
-                "hive_id": str(row.hive.id),
+                "hive_id": str(row.hive.name),
+                "job_type": row.job_type,
                 "job_short": row.job_short,
                 "created_at": row.created_at,
                 "completed_at": row.completed_at

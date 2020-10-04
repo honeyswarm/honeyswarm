@@ -3,16 +3,15 @@
 {% set page_title = " - Jobs" %}
 {% block content %}
 
-<div class="container-fluid">
-  <div class="row mt-5">
-    <div class="col-8">
+
       <div class="row">
         <div class="col">
           <h4 class="text-warning">Pending Jobs</h4>
           <table class="table table-bordered table-sm table-hover table-striped">
             <thead class="thead-dark">
               <tr>
-                <th scope="col">Hive ID</th>
+                <th scope="col">Hive Name</th>
+                <th scope="col">Job Type</th>
                 <th scope="col">Job Short</th>
                 <th scope="col">Created At</th>
                 <th scope="col">Actions</th>
@@ -22,16 +21,15 @@
               {% for job in job_list %}
               {% if not job['complete']  %}
               <tr id="row-{{job['hive']['id']}}">
-                <th scope="row">{{job['hive']['id']}}</th>
+                <th scope="row">{{job['hive']['name']}}</th>
+                <td>{{job['job_type']}}</td>
                 <td>{{job['job_short']}}</td>
                 <td>{{job['created_at'] | dateformat}}</td>
                 <td>
-                  <select class="form-control job_action" id="regActions" data-jobId="{{job['id']}}">
-                    <option value="select">Select</option>
-                    <option value="poll">Poll</option>
-                    <option value="restart">Restart</option>
-                    <option value="delete">Delete</option>
-                  </select>
+                  <span>
+                    <button class="btn btn-sm btn-info job-btn" data-action="poll" data-jobid="{{job['id']}}">Poll</button> 
+                    <button class="btn btn-sm btn-danger job-btn" data-action="delete" data-jobid="{{job['id']}}">Delete</button>
+                  </span>
                 </td>
               </tr>
               {% endif %}
@@ -41,6 +39,7 @@
         </div>
       </div>
 
+
       <div class="row">
         <div class="col">
           <h4 class="text-success">Completed Jobs</h4>
@@ -49,7 +48,8 @@
               <thead class="thead-dark">
                   <tr>
                     <th></th>
-                    <th scope="col">Hive ID</th>
+                    <th scope="col">Hive Name</th>
+                    <th scope="col">Job Type</th>
                     <th scope="col">Job Short</th>
                     <th scope="col">Created At</th>
                     <th scope="col">Completed At</th>
@@ -63,21 +63,6 @@
           </div>
         </div>
       </div>
-
-
-
-
-
-    </div>
-    <div class="col-4">
-      <div class="card p-2">
-        <h4>Jobs</h4>
-        <p>Jobs are checked every minute to see if they have completed yet.</p>
-        <p>You can manually trigger a job check using the actions menu</p>
-
-      </div>
-    </div>
-  </div>
 
 <script>
 
@@ -162,6 +147,7 @@ function add_notification(textClass, text){
           "defaultContent": ''
         },
         { "data": "hive_id"},
+        { "data": "job_type"},
         { "data": "job_short" },
         { "data": "created_at" },
         { "data": "completed_at" }
