@@ -80,6 +80,7 @@ class HoneypotInstance(Document):
     hpfeeds = ReferenceField(AuthKey)
     pillar = DictField(default={})
     status = StringField(default="Pending")
+    hive = ReferenceField('Hive')
 
 
 class Hive(Document):
@@ -102,6 +103,7 @@ class PepperJobs(Document):
         'db_alias': 'default'
     }
     job_id = StringField()
+    job_type = StringField()
     job_short = StringField()
     job_description = StringField()
     created_at = DateTimeField(default=datetime.utcnow())
