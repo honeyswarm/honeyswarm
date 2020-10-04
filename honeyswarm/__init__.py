@@ -3,18 +3,18 @@ import json
 import os
 import pytz
 import importlib
+import mongoengine
 from datetime import datetime
 
 import flaskcode
 from datetime import timedelta
 from flask import Flask, render_template, url_for, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
-from honeyswarm.models import db, User, Role, PepperJobs, Hive
-from honeyswarm.saltapi import pepper_api
+from honeyswarm.models import db, User, Role
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
-import mongoengine
+
 from flask_security import Security, MongoEngineUserDatastore
 
 from honeyswarm.admin import admin
@@ -26,6 +26,8 @@ from honeyswarm.honeypots import honeypots
 from honeyswarm.frames import frames
 from honeyswarm.events import events
 from honeyswarm.dashboard import dashboard
+
+from honeyswarm.functions import check_jobs, poll_hives, poll_instances
 
 
 app = Flask(__name__, static_folder='static', static_url_path='')
@@ -153,60 +155,6 @@ def setup_installation():
             app.register_blueprint(installer.installer, url_prefix="/install")
     except Exception as err:
         app.logger.error(err)
-
-
-# Jobs Schedule
-def check_jobs():
-    # Get all PepperJobs not marked as complete
-    open_jobs = PepperJobs.objects(complete=False)
-    for job in open_jobs:
-        api_check = pepper_api.lookup_job(job.job_id)
-        hive_id = str(job['hive']['id'])
-        if api_check:
-            job.complete = True
-            job.job_response = json.dumps(
-                api_check['data'][hive_id],
-                sort_keys=True,
-                indent=4
-                )
-            job.completed_at = datetime.utcnow
-        job.save()
-
-
-def poll_hives():
-    for hive in Hive.objects(registered=True):
-        hive_id = str(hive.id)
-        grains_request = pepper_api.run_client_function(
-            hive_id,
-            'grains.items'
-            )
-
-        external_ip_request = pepper_api.run_client_function(
-            hive_id,
-            'cmd.run',
-            'wget -qO- http://ipecho.net/plain'
-        )
-        external_ip = external_ip_request[hive_id]
-
-        hive_grains = grains_request[hive_id]
-
-        if hive_grains:
-            hive_grains['external_ip'] = external_ip
-            hive.grains = hive_grains
-            hive.last_seen = datetime.utcnow
-            hive.salt_alive = True
-        else:
-            hive.salt_alive = False
-        hive.save()
-
-
-def poll_instances():
-    for hive in Hive.objects():
-        for instance in hive.honeypots:
-            container_name = instance.honeypot.container_name
-            status = pepper_api.docker_state(str(hive.id), container_name)
-            instance.status = str(status)
-            instance.save()
 
 
 # Filters
