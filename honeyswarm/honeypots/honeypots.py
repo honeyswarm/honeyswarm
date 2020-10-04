@@ -552,8 +552,11 @@ def instance_control():
             job_id=pepper_job_id,
             job_short="Setting Docker State on {0}".format(container_name),
             job_description="Setting Docker state for honeypot \
-                {0} on hive {1}".format(container_name, hive.name)
-                )
+                {0} on hive {1} with instance id: {2}".format(
+                    container_name,
+                    hive.name,
+                    instance.id
+                ))
         job.save()
 
         json_response['success'] = True
@@ -567,7 +570,7 @@ def instance_control():
     elif instance_action == "start":
         container_name = instance.honeypot.container_name
         pepper_job_id = pepper_api.docker_control(
-            hive.id,
+            str(hive.id),
             container_name,
             "start"
         )
@@ -578,7 +581,11 @@ def instance_control():
             job_id=pepper_job_id,
             job_short="Setting Docker State on {0}".format(container_name),
             job_description="Setting Docker state for honeypot \
-                {0} on hive {1}".format(container_name, hive.name)
+                {0} on hive {1} with instance id: {2}".format(
+                    container_name,
+                    hive.name,
+                    instance.id
+                    )
                 )
         job.save()
 

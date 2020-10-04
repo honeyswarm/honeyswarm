@@ -20,7 +20,12 @@ def check_jobs():
             instance_id = job.job_description.split("id: ")[-1]
             if api_check:
                 try:
-                    container_state = api_check[hive_id]
+                    api_response = api_check[hive_id]
+                    if 'state' in api_response:
+                        container_state = api_response['state']['new']
+                    else:
+                        container_state = api_response
+
                     job.complete = True
                     job.job_response = container_state
                     job.completed_at = datetime.utcnow
@@ -29,7 +34,7 @@ def check_jobs():
                     instance.status = container_state
                     instance.save()
                 except Exception as err:
-                    logger.error("API Response: {0}".format(err))
+                    logger.error("Salt Error: {0} {1}".format(err, api_check))
 
         else:
             hive_id = str(job['hive']['id'])

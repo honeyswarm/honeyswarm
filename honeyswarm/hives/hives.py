@@ -77,6 +77,10 @@ def hive_delete():
             # Delete Jobs
             PepperJobs.objects(hive=hive_id).delete()
 
+            # Delete Instances
+            for instance in Hive.honeypots:
+                instance.delete()
+
             # Delete Hive
             Hive.objects(id=hive_id).delete()
 
