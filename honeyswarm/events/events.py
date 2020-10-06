@@ -96,9 +96,9 @@ def event_stream():
                 "service": event.service,
                 "port": event.port,
                 "honeypot_type": event.honeypot_type,
-                "honeypot_instance_id": event.honeypot_instance_id
+                "honeypot_instance_id": event.honeypot_instance_id,
+                "session_length": len(str(event.payload))
             }
-
             data_rows.append(single_row)
         except Exception as err:
             current_app.logger.error("Error Showing Events: {0}".format(err))
@@ -122,10 +122,11 @@ def event_payload(event_id):
 
     # Just need to tidy some long cols
     if "ttylog" in single_event.payload:
-        session_size = len(single_event.payload["ttylog"])
-        single_event.payload["ttylog"] = "Session Size: {0}".format(
-            session_size
-            )
+        if single_event.payload["ttylog"]:
+            session_size = len(single_event.payload["ttylog"])
+            single_event.payload["ttylog"] = "Session Size: {0}".format(
+                session_size
+                )
 
     json_response = {
         "valid": True,

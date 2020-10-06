@@ -58,18 +58,22 @@
     }
 
 
-    function cowrie_playback(data, event_id) {
+    function cowrie_playback(data, event_id, session_length) {
 
       if (data == "Cowrie") {
-        
-        let html = `<span>${data}</span><span><i class="ml-2 fa-1.5x fad fa-play" onclick="load_modal('${event_id}')"></i>
+
+        console.log(session_length)
+
+        if (session_length > 1000) {
+          let html = `<span>${data}</span><span><i class="ml-2 fa-1.5x fad fa-play" onclick="load_modal('${event_id}')"></i>
           </span>`
           return html
         } else {
           return data
         }
-      
-
+      } else {
+        return data
+      }
     }
 
 
@@ -97,7 +101,7 @@
           {
             "data": "honeypot_type",
             "render": function (data, type, row, meta) {
-              return cowrie_playback(data, row['DT_RowId'])
+              return cowrie_playback(data, row['DT_RowId'], row['session_length'])
             }
           },
           { "data": "honeypot_instance_id" },
@@ -138,7 +142,7 @@
         success: function (json) {
           console.log(json.payload);
           div
-            .html('<pre>'+JSON.stringify(json.payload, undefined, 4)+'</pre>')
+            .html('<pre>' + JSON.stringify(json.payload, undefined, 4) + '</pre>')
             .removeClass('loading');
         }
       });
@@ -153,7 +157,8 @@
 
 
 <!-- Modal -->
-<div class="modal fade" id="playbackModalCenter" tabindex="-1" role="dialog" aria-labelledby="playbackModalCenterTitle" aria-hidden="true">
+<div class="modal fade" id="playbackModalCenter" tabindex="-1" role="dialog" aria-labelledby="playbackModalCenterTitle"
+  aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header p-1">
@@ -162,8 +167,8 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-        <div id="player">
-        </div>
+      <div id="player">
+      </div>
     </div>
   </div>
 </div>
