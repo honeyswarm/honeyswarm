@@ -74,7 +74,8 @@ class Honeypot(Document):
 
 class HoneypotInstance(Document):
     meta = {
-        'db_alias': 'default'
+        'db_alias': 'default',
+        'strict': False
     }
     honeypot = ReferenceField(Honeypot)
     hpfeeds = ReferenceField(AuthKey)
@@ -85,7 +86,8 @@ class HoneypotInstance(Document):
 
 class Hive(Document):
     meta = {
-        'db_alias': 'default'
+        'db_alias': 'default',
+        'strict': False
     }
     name = StringField(unique=True)
     registered = BooleanField(default=False)

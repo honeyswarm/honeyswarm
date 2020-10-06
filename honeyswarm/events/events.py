@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_security import login_required
+from honeyswarm.functions import asciinema_converter
 from honeyswarm.models import HoneypotEvents
 
 events = Blueprint('events', __name__, template_folder="templates")
@@ -121,10 +122,36 @@ def event_payload(event_id):
 
     # Just need to tidy some long cols
     if "ttylog" in single_event.payload:
-        single_event.payload["ttylog"] = "truncated from this table"
+        session_size = len(single_event.payload["ttylog"])
+        single_event.payload["ttylog"] = "Session Size: {0}".format(
+            session_size
+            )
 
     json_response = {
         "valid": True,
         "payload": single_event.payload
     }
     return jsonify(json_response)
+
+
+@events.route('/playback/<event_id>', methods=["GET"])
+@login_required
+def event_playback(event_id):
+    single_event = HoneypotEvents.objects(id=event_id).first()
+    if "ttylog" in single_event.payload:
+        if single_event.payload['ttylog']:
+            json_playback = asciinema_converter(single_event.payload['ttylog'])
+        else:
+            json_playback = {
+                "version": 1,
+                "width": 80,
+                "height": 24,
+                "duration": 1,
+                "command": "/bin/bash",
+                "title": "Cowrie Recording",
+                "env": {"TERM": "xterm256-color", "SHELL": "/bin/bash"},
+                "stdout": [[0.0, "This is an empty capture file \
+                    no commands were sent to the server"]]
+                }
+
+    return json_playback

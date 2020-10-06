@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% set active_page = "events" %}
 {% set page_title = " - Events" %}
+
+{% block page_styles %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/asciinema-player.css') }}" />
+
+{% endblock %}
+
+
 {% block content %}
 
 <div class="container-fluid">
@@ -44,6 +51,28 @@
   <script>
     let notificationCount = 0;
 
+    function load_modal(event_id) {
+      console.log("Playback: ", event_id)
+      $('#player').html(`<asciinema-player id="player" theme="solarized-dark" src="/events/playback/${event_id}"></asciinema-player>`)
+      $('#playbackModalCenter').modal('show')
+    }
+
+
+    function cowrie_playback(data, event_id) {
+
+      if (data == "Cowrie") {
+        
+        let html = `<span>${data}</span><span><i class="ml-2 fa-1.5x fad fa-play" onclick="load_modal('${event_id}')"></i>
+          </span>`
+          return html
+        } else {
+          return data
+        }
+      
+
+    }
+
+
     $(document).ready(function () {
       var table = $('#eventstream').DataTable({
         "searchDelay": 1000,
@@ -65,7 +94,12 @@
           { "data": "source_ip" },
           { "data": "service" },
           { "data": "port" },
-          { "data": "honeypot_type" },
+          {
+            "data": "honeypot_type",
+            "render": function (data, type, row, meta) {
+              return cowrie_playback(data, row['DT_RowId'])
+            }
+          },
           { "data": "honeypot_instance_id" },
         ]
       });
@@ -117,4 +151,27 @@
 
 </div>
 
+
+<!-- Modal -->
+<div class="modal fade" id="playbackModalCenter" tabindex="-1" role="dialog" aria-labelledby="playbackModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header p-1">
+        <h5 class="modal-title text-center" id="playbackModalLongTitle">SSH Playback</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+        <div id="player">
+        </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/asciinema-player.js') }}"></script>
 {% endblock %}
