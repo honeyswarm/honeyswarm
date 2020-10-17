@@ -40,7 +40,7 @@ All availaible frames will be displayed for Hives. To install a Frame click the 
 
 Frame installation can take several minutes depending on OS and internet speeds. You can track the installation under the /jobs page
 
-.. image:: images/HoneySwarm_jobs.png
+.. image:: images/HoneySwarm_Jobs.png
    :alt: Jobs
 
 With a frame installed we can now deploy some honeypots. 
