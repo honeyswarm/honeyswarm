@@ -9,7 +9,7 @@ HoneyPot Orchestration
 
 Docs available - https://honeyswarm.readthedocs.io/en/latest/
 
-![Image description](HoneySwarm.png)
+![Image description](docs/HoneySwarm.png)
 
 # Install
 
