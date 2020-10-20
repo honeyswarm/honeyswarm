@@ -86,6 +86,7 @@ services:
       - ELASTICSEARCH_HOSTS=http://honeyswarm_es01:9200
       - ELASTICSEARCH_USERNAME=elastic
       - ELASTICSEARCH_PASSWORD=HoneySwarm
+      - SERVER_BASEPATH=/kibana
     networks:
       honeynet:
         ipv4_address: 10.1.0.106
