@@ -1,8 +1,9 @@
-flask
+flask==2.2.5  
 flask-login
 mongoengine
 flask-mongoengine
 flask-security-too
+flask_security==3.0.0
 distro
 flask
 pytz
