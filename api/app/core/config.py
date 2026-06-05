@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     manifests_dir: str = Field(default="/opt/honeyswarm/manifests", alias="MANIFESTS_DIR")
     public_url: str = Field(default="http://localhost:8080", alias="PUBLIC_URL")
     mqtt_public_host: str = Field(default="localhost", alias="MQTT_PUBLIC_HOST")
+    # Published hive agent image referenced in the enrollment install command.
+    agent_image: str = Field(default="ghcr.io/honeyswarm/honeyswarm-agent:latest", alias="AGENT_IMAGE")
 
     # Auth / JWT
     jwt_secret: str = Field(default="CHANGE_ME_I_AM_NOT_SECURE", alias="JWT_SECRET")

@@ -49,11 +49,12 @@ async def create_hive(body: HiveCreate) -> dict[str, Any]:
     hive = Hive(name=body.name, agent_token_hash=hash_token(token))
     await hive.insert()
     install_command = (
-        f"docker run -d --restart unless-stopped "
+        f"docker run -d --name honeyswarm-agent --restart unless-stopped "
         f"-v /var/run/docker.sock:/var/run/docker.sock "
+        f"-v honeyswarm_agent_state:/var/lib/honeyswarm "
         f"-e HONEYSWARM_URL={settings.public_url} "
         f"-e ENROLL_TOKEN={token} "
-        f"honeyswarm/honeyswarm_agent"
+        f"{settings.agent_image}"
     )
     result = _serialize(hive)
     result["enroll_token"] = token  # shown once at creation time
