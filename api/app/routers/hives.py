@@ -5,7 +5,7 @@ salt key accept). Creating a hive issues a one-time enrollment token and an
 install one-liner; the agent later calls /agent/register with that token.
 """
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel

@@ -5,7 +5,7 @@ creates a Job and publishes a command to the hive over MQTT; the agent reports
 results back on hive/{id}/jobs/{command_id}, handled by the control plane.
 """
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
