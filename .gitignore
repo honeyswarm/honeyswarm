@@ -11,10 +11,7 @@ dist/
 *.local
 
 # Secrets & runtime (never commit)
-deploy/.env
 .env
-mqtt/passwd
-mqtt/certs/
 *.pem
 *.key
 *.crt

@@ -37,19 +37,25 @@ Browser ── React SPA ──┐
 | `agent/` | Hive agent — enroll, run honeypots via Docker, tail logs, heartbeat |
 | `web/` | React + TypeScript + Vite dashboard (served by Caddy, proxies the API) |
 | `manifests/` | Honeypot definitions (replaces the old Salt states) |
-| `mqtt/` | Mosquitto broker config + ACLs |
-| `deploy/` | docker-compose stack, Caddyfile, `.env.template` |
+| `mqtt/` | Mosquitto broker config, ACLs, and the `init.sh` cert/passwd bootstrap |
+| `compose.yaml` | the full docker-compose stack (at the repo root) |
 
 ## Quick start
 
 ```bash
-cd deploy
-cp .env.template .env        # then edit secrets (JWT_SECRET, ADMIN_PASSWORD, …)
+cp .env.example .env         # then edit secrets (JWT_SECRET, ADMIN_PASSWORD, *_PASSWORD)
 docker compose up -d --build
 ```
 
+That's it — the `mqtt-init` service generates the broker's TLS certs + password
+file on first boot (into a Docker volume), so there are no pre-run scripts.
+
 Open <http://localhost> and log in with the bootstrap admin
 (`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`).
+
+For a **remote** deployment, set `MQTT_PUBLIC_HOST` in `.env` to the controller's
+public hostname/IP before first boot — it's baked into the broker certificate's
+SAN so agents on remote hives can verify it.
 
 ### Enroll a hive
 

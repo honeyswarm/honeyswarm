@@ -1,0 +1,146 @@
+# Honeyswarm v2 — one-command stack.
+#   cp .env.example .env   (edit secrets)
+#   docker compose up -d
+# The mqtt-init service self-generates TLS certs + the password file on boot,
+# so there are no pre-run scripts.
+name: honeyswarm
+
+services:
+  # One-shot: generate MQTT TLS certs + passwd into the mqtt_secrets volume.
+  mqtt-init:
+    image: eclipse-mosquitto:2
+    container_name: honeyswarm_mqtt_init
+    entrypoint: ["/bin/sh", "/init/init.sh"]
+    restart: "no"
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+      MQTT_PUBLIC_HOST: ${MQTT_PUBLIC_HOST:-localhost}
+      MQTT_EXTRA_SANS: ${MQTT_EXTRA_SANS:-}
+    volumes:
+      # Mount the dir (not a single file) — single-file binds are flaky on Docker Desktop/WSL.
+      - ./mqtt:/init:ro
+      - mqtt_secrets:/secrets
+    networks:
+      - honeynet
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: honeyswarm_mqtt
+    restart: unless-stopped
+    depends_on:
+      mqtt-init:
+        condition: service_completed_successfully
+    command: ["/usr/sbin/mosquitto", "-c", "/honeyswarm/mosquitto.conf"]
+    volumes:
+      # Dir mount (robust on Docker Desktop/WSL); config references /mosquitto/config/secrets/*
+      - ./mqtt:/honeyswarm:ro
+      - mqtt_secrets:/mosquitto/config/secrets:ro
+      - mqttData:/mosquitto/data
+    ports:
+      - "8883:8883"
+    networks:
+      - honeynet
+
+  api:
+    build:
+      context: ./api
+    container_name: honeyswarm_api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MANIFESTS_DIR=/opt/honeyswarm/manifests
+    volumes:
+      - ./manifests:/opt/honeyswarm/manifests:ro
+      - mqtt_secrets:/secrets:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      mongo:
+        condition: service_started
+      opensearch:
+        condition: service_healthy
+      mqtt:
+        condition: service_started
+      mqtt-init:
+        condition: service_completed_successfully
+    networks:
+      - honeynet
+
+  mongo:
+    image: mongo:7
+    container_name: honeyswarm_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    volumes:
+      - honeyswarmDB:/data/db
+    networks:
+      - honeynet
+
+  opensearch:
+    image: opensearchproject/opensearch:2
+    container_name: honeyswarm_opensearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_PASSWORD}"
+      - "DISABLE_SECURITY_PLUGIN=${OPENSEARCH_DISABLE_SECURITY:-true}"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - openSearch:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks:
+      - honeynet
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2
+    container_name: honeyswarm_opensearch_dashboards
+    restart: unless-stopped
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=${OPENSEARCH_DISABLE_SECURITY:-true}"
+    ports:
+      - "5601:5601"
+    depends_on:
+      - opensearch
+    networks:
+      - honeynet
+
+  web:
+    build:
+      context: ./web
+    container_name: honeyswarm_web
+    restart: unless-stopped
+    volumes:
+      - caddyData:/data
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+    networks:
+      - honeynet
+
+networks:
+  honeynet:
+    driver: bridge
+
+volumes:
+  honeyswarmDB:
+  openSearch:
+  mqttData:
+  mqtt_secrets:
+  caddyData:

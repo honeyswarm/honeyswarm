@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     mqtt_username: str = Field(default="honeyswarm", alias="MQTT_USERNAME")
     mqtt_password: str = Field(default="", alias="MQTT_PASSWORD")
     mqtt_use_tls: bool = Field(default=True, alias="MQTT_USE_TLS")
-    mqtt_ca_cert: str = Field(default="/certs/ca.crt", alias="MQTT_CA_CERT")
+    mqtt_ca_cert: str = Field(default="/secrets/ca.crt", alias="MQTT_CA_CERT")
 
     @property
     def mongodb_uri(self) -> str:
