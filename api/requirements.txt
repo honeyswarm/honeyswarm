@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+gunicorn
+beanie
+pydantic
+pydantic-settings
+opensearch-py[async]
+aiomqtt
+python-jose[cryptography]
+bcrypt
+python-multipart
+pyyaml

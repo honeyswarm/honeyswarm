@@ -1,0 +1,19 @@
+# Serves the built SPA and proxies the API + WebSocket to the FastAPI service.
+# For production with a domain, replace :80 with your hostname so Caddy
+# auto-provisions TLS.
+:80 {
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:8080
+	}
+	handle /ws {
+		reverse_proxy api:8080
+	}
+
+	# SPA: serve static assets, fall back to index.html for client routing.
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,152 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a2129;
+  --panel-2: #222c37;
+  --border: #2d3a47;
+  --text: #e6edf3;
+  --muted: #8b9aa7;
+  --accent: #f5c542;
+  --accent-2: #4aa8ff;
+  --danger: #e5534b;
+  --ok: #3fb950;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Original Honeyswarm honeycomb backdrop: dark charcoal with gold hex outlines.
+   Painted on a fixed pseudo-element (instead of background-attachment: fixed,
+   which flickers) with a light overlay so the gold hexes stay visible. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(15, 20, 25, 0.45), rgba(15, 20, 25, 0.7)),
+    url("/honeycomb-bg.png") center / cover no-repeat;
+  background-color: var(--bg);
+}
+
+.centered { display: grid; place-items: center; height: 100vh; color: var(--muted); }
+
+/* layout */
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 24px; }
+.brand img { width: 32px; height: 32px; }
+.sidebar { background: rgba(26, 33, 41, 0.92); }
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.sidebar nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.sidebar nav a:hover { background: var(--panel-2); color: var(--text); }
+.sidebar nav a.active { background: var(--panel-2); color: var(--accent); }
+.sidebar-footer { border-top: 1px solid var(--border); padding-top: 12px; font-size: 13px; }
+.sidebar-footer .user { color: var(--muted); margin-bottom: 6px; word-break: break-all; }
+.content { padding: 28px 32px; overflow: auto; }
+
+/* typography */
+h1 { font-size: 22px; margin: 0 0 20px; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+
+/* cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.card .value { font-size: 28px; font-weight: 700; color: var(--accent); }
+.card .label { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+.panel { background: rgba(26, 33, 41, 0.9); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+
+/* honeycomb stat tiles */
+.honeycomb { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 30px; }
+.hex { position: relative; width: 150px; height: 168px; }
+.hex:nth-child(even) { margin-top: 26px; }
+.hex .outer,
+.hex .inner {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.hex .outer { background: linear-gradient(135deg, var(--accent), #f59e0b); }
+.hex .inner {
+  inset: 3px;
+  background: #1a2129;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 16px;
+}
+.hex .value { font-size: 30px; font-weight: 800; color: var(--accent); line-height: 1; }
+.hex .label { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* table */
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th, .table td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+.table th { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+.table tr:hover td { background: var(--panel-2); }
+.empty { color: var(--muted); padding: 24px; text-align: center; }
+
+/* forms + buttons */
+input, select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent-2); }
+button {
+  background: var(--accent-2);
+  color: #06121f;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+button.danger { background: var(--danger); color: #fff; }
+button.link { background: none; color: var(--accent-2); padding: 0; font-weight: 500; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.spacer { flex: 1; }
+
+/* badges */
+.badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badge.ok { background: rgba(63,185,80,0.15); color: var(--ok); }
+.badge.off { background: rgba(229,83,75,0.15); color: var(--danger); }
+.badge.neutral { background: var(--panel-2); color: var(--muted); }
+
+/* login */
+.login-wrap { display: grid; place-items: center; height: 100vh; }
+.login-card { background: rgba(26, 33, 41, 0.92); border: 1px solid var(--border); border-radius: 12px; padding: 32px; width: 320px; backdrop-filter: blur(2px); }
+.login-card h1 { text-align: center; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.login-card .logo { display: block; width: 72px; height: 72px; margin: 0 auto 12px; }
+.login-card input { width: 100%; margin-bottom: 12px; }
+.login-card button { width: 100%; }
+.error { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
+
+.code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: ui-monospace, monospace; font-size: 12px; word-break: break-all; white-space: pre-wrap; }
+.live { font-size: 12px; color: var(--ok); }

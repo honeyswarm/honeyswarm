@@ -1,0 +1,41 @@
+# Cowrie honeypot manifest. Ported from
+# honeyswarm_states/honeypots/cowrie/{cowrie.sls,cowrie.cfg,state.json}.
+#
+# Replaces the Salt state: instead of HPFeeds output the config enables Cowrie's
+# native JSON log, which the hive agent tails and ships over MQTT.
+name: Cowrie
+type: SSH
+description: >-
+  Cowrie is a medium to high interaction SSH and Telnet honeypot designed to log
+  brute force attacks and the shell interaction performed by the attacker.
+
+image: honeyswarm/honeyswarm_cowrie_honeypot
+container_name: honeyswarm_cowrie_honeypot
+
+# host_port:container_port (Cowrie listens on 2222/2223 inside the container)
+ports:
+  - "22:2222"
+  - "23:2223"
+
+# Config file rendered from template (UPPERCASE placeholders substituted from
+# vars/pillar) and bind-mounted into the container.
+config:
+  template: cowrie.cfg
+  mount: /cowrie/cowrie-git/etc/cowrie.cfg
+
+# How the agent collects events. 'file' => the agent bind-mounts a host dir over
+# the log directory and tails the JSON file; 'stdout' => agent reads docker logs.
+log:
+  source: file
+  path: /cowrie/cowrie-git/var/log/cowrie/cowrie.json
+  normalizer: cowrie
+
+# Named, vetted host actions (no arbitrary shell, unlike the old cmd.run sed).
+host_setup:
+  - move-sshd-off-22
+
+report_fields: ["credentials", "urls", "loggedin", "protocol"]
+
+# Default instance variables (operator-overridable at deploy time).
+vars:
+  COWRIEHOSTNAME: Srv04

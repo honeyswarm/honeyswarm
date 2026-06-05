@@ -1,0 +1,20 @@
+# Mosquitto ACL. Topic scheme:
+#   hive/{hive_id}/commands   controller -> agent   (deploy/start/stop/remove)
+#   hive/{hive_id}/status     agent -> controller   (heartbeat, container state)
+#   hive/{hive_id}/events     agent -> controller   (normalized honeypot events)
+#   hive/{hive_id}/jobs/#     agent -> controller   (command results)
+#
+# The controller account has full access; each hive is locked to its own
+# subtree via a per-hive ACL written at enrollment time (pattern below uses the
+# MQTT username == hive id).
+
+# Controller (the API ingest + command publisher)
+user honeyswarm
+topic readwrite hive/#
+
+# Per-hive: a hive may only publish telemetry on its own subtree and subscribe
+# to its own commands. %u expands to the connecting client's username (hive id).
+pattern write hive/%u/status
+pattern write hive/%u/events
+pattern write hive/%u/jobs/#
+pattern read hive/%u/commands

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+*.local
+
+# Secrets & runtime (never commit)
+deploy/.env
+.env
+mqtt/passwd
+*.pem
+*.key
+
+# OS / editor
+.DS_Store
+*.swp

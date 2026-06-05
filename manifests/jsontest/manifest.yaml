@@ -1,0 +1,20 @@
+# Lightweight test honeypot: emits a JSON event to stdout every few seconds.
+# Used to verify the deploy -> run -> tail -> MQTT -> ingest loop without
+# needing a real honeypot image.
+name: JSONTest
+type: Test
+description: Emits synthetic JSON events to stdout for pipeline testing.
+
+image: alpine:latest
+container_name: honeyswarm_jsontest
+
+command:
+  - sh
+  - -c
+  - "while true; do echo '{\"service\":\"Test\",\"port\":1234,\"source_ip\":\"203.0.113.99\"}'; sleep 5; done"
+
+log:
+  source: stdout
+  normalizer: generic
+
+report_fields: ["source_ip"]

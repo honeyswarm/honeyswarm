@@ -1,0 +1,32 @@
+# Reverse proxy: serves the SPA and proxies /api + /ws to the FastAPI app.
+# Replaces the old nginx.conf. For production, replace :80 with your domain
+# so Caddy provisions TLS automatically.
+
+:80 {
+	# API + docs
+	handle /api/* {
+		uri strip_prefix /api
+		reverse_proxy api:8080
+	}
+	handle /docs* {
+		reverse_proxy api:8080
+	}
+	handle /openapi.json {
+		reverse_proxy api:8080
+	}
+	handle /health {
+		reverse_proxy api:8080
+	}
+
+	# Live updates WebSocket
+	handle /ws {
+		reverse_proxy api:8080
+	}
+
+	# SPA static assets (built into the web image / mounted volume).
+	handle {
+		root * /srv/web
+		try_files {path} /index.html
+		file_server
+	}
+}
