@@ -4,9 +4,6 @@ Honeypot orchestration and monitoring platform. Deploy Dockerized honeypots
 across a fleet of remote hosts ("Hives"), collect their events centrally, and
 manage everything from a web dashboard.
 
-> **v2 rewrite.** This is the API-first rewrite of Honeyswarm. The original
-> Flask/Salt/HPFeeds version is preserved under the **`v1-legacy`** git tag.
-
 ## Architecture
 
 ```
@@ -14,7 +11,7 @@ Browser ── React SPA ──┐
                        │ HTTPS/JSON + WSS
                   Caddy (web/)  ──► FastAPI (api/) ──► MongoDB    (config, entities, jobs)
                                           │        └─► OpenSearch (event search + analytics)
-                                          │ MQTT (commands ↓ / status + events ↑)
+                                          │ MQTT/TLS (commands ↓ / status + events ↑)
                                           ▼
                                    MQTT broker (mqtt/, Mosquitto)
                                           ▲
@@ -23,22 +20,22 @@ Browser ── React SPA ──┐
                                      └─ tails honeypot JSON logs → publishes to MQTT
 ```
 
-- **No SaltStack** — a lightweight per-hive **agent** runs containers via the
-  Docker SDK and talks to the controller over MQTT (outbound only, NAT-friendly).
-- **No HPFeeds** — honeypots emit native **JSON logs**; the agent tails and ships
-  them. MQTT is the single control + telemetry backbone.
-- **MongoDB** for config/entities, **OpenSearch** for event search/dashboards.
+- A lightweight per-hive **agent** runs honeypot containers via the Docker SDK and
+  talks to the controller over MQTT — outbound only, so hives stay NAT/firewall friendly.
+- Honeypots emit native **JSON logs**; the agent tails and ships them. MQTT is the
+  single control + telemetry backbone, secured with TLS and authentication.
+- **MongoDB** stores config and entities; **OpenSearch** powers event search and dashboards.
 
 ## Layout
 
 | Path | What |
 |------|------|
-| `api/` | FastAPI control plane (auth, hives, honeypots, instances, events, jobs, admin; MQTT ingest + control plane) |
+| `api/` | FastAPI control plane: auth, hives, honeypots, instances, events, jobs, admin, plus the MQTT ingest + control plane |
 | `agent/` | Hive agent — enroll, run honeypots via Docker, tail logs, heartbeat |
-| `web/` | React + TypeScript + Vite dashboard (served by Caddy, proxies the API) |
-| `manifests/` | Honeypot definitions (replaces the old Salt states) |
+| `web/` | React + TypeScript + Vite dashboard (served by Caddy, which proxies the API) |
+| `manifests/` | Honeypot definitions (image, ports, config template, log normalizer) |
 | `mqtt/` | Mosquitto broker config, ACLs, and the `init.sh` cert/passwd bootstrap |
-| `compose.yaml` | the full docker-compose stack (at the repo root) |
+| `compose.yaml` | the full Docker Compose stack |
 
 ## Quick start
 
@@ -47,8 +44,8 @@ cp .env.example .env         # then edit secrets (JWT_SECRET, ADMIN_PASSWORD, *_
 docker compose up -d --build
 ```
 
-That's it — the `mqtt-init` service generates the broker's TLS certs + password
-file on first boot (into a Docker volume), so there are no pre-run scripts.
+That's it — the `mqtt-init` service generates the broker's TLS certificate and
+password file on first boot (into a Docker volume), so there are no pre-run scripts.
 
 Open <http://localhost> and log in with the bootstrap admin
 (`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`).
@@ -60,13 +57,19 @@ SAN so agents on remote hives can verify it.
 ### Enroll a hive
 
 In the UI: **Hives → create** to get a one-line install command, then run it on
-the hive host (needs Docker + the Docker socket). The agent enrolls over the API
-and connects to MQTT.
+the hive host (needs Docker + access to the Docker socket). The agent enrolls over
+the API, receives the broker CA, and connects to MQTT over TLS.
 
 ### Add a honeypot
 
 **Honeypots → import** a manifest (e.g. `cowrie`), then **Instances → deploy** it
 to a hive. Attack events stream into the dashboard live.
+
+## Configuration
+
+All configuration is environment variables — see [`.env.example`](.env.example)
+for the full list (MongoDB/OpenSearch/MQTT connections, JWT, the bootstrap admin,
+the published agent image, and the public host/SANs for remote deployments).
 
 ## Development
 
