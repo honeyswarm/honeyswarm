@@ -4,6 +4,7 @@ Replaces the Salt minion key-accept handshake. The agent presents its one-time
 enrollment token and receives its hive id + MQTT connection details.
 """
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -35,6 +36,15 @@ async def register(body: RegisterRequest) -> dict:
         hive.agent_version = body.agent_version
     await hive.save()
 
+    # Ship the self-signed CA so the agent can verify the broker over TLS.
+    ca_cert = ""
+    if settings.mqtt_use_tls:
+        ca_path = Path(settings.mqtt_ca_cert)
+        if ca_path.exists():
+            ca_cert = ca_path.read_text()
+        else:
+            logger.warning("MQTT CA cert not found at %s", ca_path)
+
     logger.info("Hive %s (%s) registered", hive.name, hive.id)
     return {
         "hive_id": str(hive.id),
@@ -42,4 +52,6 @@ async def register(body: RegisterRequest) -> dict:
         "mqtt_port": settings.mqtt_port,
         "mqtt_username": settings.mqtt_username,  # dev: shared; prod: per-hive creds
         "mqtt_password": settings.mqtt_password,
+        "mqtt_use_tls": settings.mqtt_use_tls,
+        "mqtt_ca_cert": ca_cert,
     }

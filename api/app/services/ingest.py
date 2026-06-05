@@ -25,6 +25,7 @@ from datetime import datetime
 import aiomqtt
 
 from app.core.config import settings
+from app.core.mqtt import tls_params
 from app.db.opensearch import get_opensearch
 from app.models import HoneypotEvent
 from app.services.normalizers import normalize
@@ -81,6 +82,7 @@ async def _run() -> None:
                 port=settings.mqtt_port,
                 username=settings.mqtt_username or None,
                 password=settings.mqtt_password or None,
+                tls_params=tls_params(),
             ) as client:
                 logger.info("Ingest connected to MQTT, subscribing to %s", EVENTS_TOPIC)
                 await client.subscribe(EVENTS_TOPIC)

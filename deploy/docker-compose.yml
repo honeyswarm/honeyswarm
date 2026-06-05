@@ -12,6 +12,7 @@ services:
       - MANIFESTS_DIR=/opt/honeyswarm/manifests
     volumes:
       - ../manifests:/opt/honeyswarm/manifests:ro
+      - ../mqtt/certs/ca.crt:/certs/ca.crt:ro
     ports:
       - "8080:8080"
     depends_on:
@@ -68,12 +69,11 @@ services:
     container_name: honeyswarm_mqtt
     volumes:
       - ../mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ../mqtt/certs:/mosquitto/config/certs:ro
+      - ../mqtt/passwd:/mosquitto/config/passwd:ro
       - mqttData:/mosquitto/data
-      # Production: also mount passwd + acl and enable auth in mosquitto.conf
-      # - ../mqtt/passwd:/mosquitto/config/passwd:ro
-      # - ../mqtt/acl:/mosquitto/config/acl:ro
+      # Enable per-hive ACLs by also mounting ../mqtt/acl and uncommenting in mosquitto.conf
     ports:
-      - "1883:1883"
       - "8883:8883"
     networks:
       - honeynet

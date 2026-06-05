@@ -11,6 +11,7 @@ import json
 import logging
 import platform
 import socket
+import ssl
 
 import aiomqtt
 import httpx
@@ -18,6 +19,7 @@ import httpx
 from . import __version__, runner
 from .settings import (
     HEARTBEAT_INTERVAL,
+    STATE_DIR,
     AgentConfig,
     load_config,
     load_state,
@@ -58,6 +60,14 @@ async def enroll(config: AgentConfig) -> dict:
         resp = await http.post(url, json={"token": config.enroll_token, "agent_version": __version__})
         resp.raise_for_status()
         state = resp.json()
+
+    # Persist the broker CA so we can verify it over TLS (now and after restart).
+    if state.get("mqtt_use_tls") and state.get("mqtt_ca_cert"):
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        ca_path = STATE_DIR / "ca.crt"
+        ca_path.write_text(state.pop("mqtt_ca_cert"))
+        state["mqtt_ca_path"] = str(ca_path)
+
     save_state(state)
     logger.info("Enrolled as hive %s", state["hive_id"])
     return state
@@ -151,6 +161,14 @@ class Agent:
         for info in self.instances.values():
             self.tailers.start(info)
 
+    def _tls_params(self) -> aiomqtt.TLSParameters | None:
+        if not self.state.get("mqtt_use_tls"):
+            return None
+        return aiomqtt.TLSParameters(
+            ca_certs=self.state["mqtt_ca_path"],
+            cert_reqs=ssl.CERT_REQUIRED,
+        )
+
     async def run(self) -> None:
         while True:
             try:
@@ -160,6 +178,7 @@ class Agent:
                     username=self.state.get("mqtt_username") or None,
                     password=self.state.get("mqtt_password") or None,
                     identifier=f"hive-{self.hive_id}",
+                    tls_params=self._tls_params(),
                 ) as client:
                     self.client = client
                     logger.info("Connected to MQTT at %s:%s", self.state["mqtt_host"], self.state["mqtt_port"])

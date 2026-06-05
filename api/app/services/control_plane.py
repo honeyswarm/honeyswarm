@@ -18,6 +18,7 @@ import aiomqtt
 from beanie import PydanticObjectId
 
 from app.core.config import settings
+from app.core.mqtt import tls_params
 from app.models import Hive, HoneypotInstance, Job
 from app.models.documents import ConnectionState
 from app.ws.hub import hub
@@ -130,6 +131,7 @@ class ControlPlane:
                     port=settings.mqtt_port,
                     username=settings.mqtt_username or None,
                     password=settings.mqtt_password or None,
+                    tls_params=tls_params(),
                 ) as client:
                     self._client = client
                     logger.info("Control plane connected to MQTT")

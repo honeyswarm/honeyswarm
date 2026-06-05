@@ -14,8 +14,10 @@ dist/
 deploy/.env
 .env
 mqtt/passwd
+mqtt/certs/
 *.pem
 *.key
+*.crt
 
 # OS / editor
 .DS_Store

@@ -48,12 +48,13 @@ class Settings(BaseSettings):
     opensearch_verify_certs: bool = Field(default=False, alias="OPENSEARCH_VERIFY_CERTS")
     opensearch_event_index: str = Field(default="honeyswarm-events", alias="OPENSEARCH_EVENT_INDEX")
 
-    # MQTT
+    # MQTT (TLS by default)
     mqtt_host: str = Field(default="mqtt", alias="MQTT_HOST")
-    mqtt_port: int = Field(default=1883, alias="MQTT_PORT")
+    mqtt_port: int = Field(default=8883, alias="MQTT_PORT")
     mqtt_username: str = Field(default="honeyswarm", alias="MQTT_USERNAME")
     mqtt_password: str = Field(default="", alias="MQTT_PASSWORD")
-    mqtt_use_tls: bool = Field(default=False, alias="MQTT_USE_TLS")
+    mqtt_use_tls: bool = Field(default=True, alias="MQTT_USE_TLS")
+    mqtt_ca_cert: str = Field(default="/certs/ca.crt", alias="MQTT_CA_CERT")
 
     @property
     def mongodb_uri(self) -> str:
