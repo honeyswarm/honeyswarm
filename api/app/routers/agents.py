@@ -6,7 +6,8 @@ enrollment token and receives its hive id + MQTT connection details.
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -17,10 +18,33 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
+INSTALL_DIR = Path(__file__).resolve().parent.parent / "agent_install"
+
+
+def _render_installer(filename: str, token: str) -> str:
+    template = (INSTALL_DIR / filename).read_text()
+    return (
+        template.replace("__HONEYSWARM_URL__", settings.public_url)
+        .replace("__ENROLL_TOKEN__", token)
+        .replace("__AGENT_IMAGE__", settings.agent_image)
+    )
+
 
 class RegisterRequest(BaseModel):
     token: str
     agent_version: str | None = None
+
+
+@router.get("/install.sh", response_class=PlainTextResponse)
+async def install_sh(token: str = Query(...)) -> str:
+    """Linux installer: `curl -fsSL <url>/agent/install.sh?token=… | sudo bash`."""
+    return _render_installer("install.sh", token)
+
+
+@router.get("/install.ps1", response_class=PlainTextResponse)
+async def install_ps1(token: str = Query(...)) -> str:
+    """Windows installer: `irm <url>/agent/install.ps1?token=… | iex`."""
+    return _render_installer("install.ps1", token)
 
 
 @router.post("/register")

@@ -56,9 +56,22 @@ SAN so agents on remote hives can verify it.
 
 ### Enroll a hive
 
-In the UI: **Hives → create** to get a one-line install command, then run it on
-the hive host (needs Docker + access to the Docker socket). The agent enrolls over
-the API, receives the broker CA, and connects to MQTT over TLS.
+In the UI: **Hives → create** to get a per-hive install one-liner. Run it on the
+hive host — it fetches an install script that installs Docker (if missing) and
+starts the agent, which enrolls over the API, receives the broker CA, and
+connects to MQTT over TLS.
+
+```bash
+# Linux (run as root)
+curl -fsSL "https://<controller>/agent/install.sh?token=<token>" | sudo bash
+```
+```powershell
+# Windows — Docker Desktop with Linux containers
+irm "https://<controller>/agent/install.ps1?token=<token>" | iex
+```
+
+A hive only needs outbound network access to the controller (API + MQTT); the
+agent never accepts inbound connections.
 
 ### Add a honeypot
 

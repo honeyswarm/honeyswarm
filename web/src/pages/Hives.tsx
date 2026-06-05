@@ -16,6 +16,7 @@ interface Hive {
 interface CreatedHive extends Hive {
   enroll_token: string;
   install_command: string;
+  install_command_windows: string;
 }
 
 export function Hives() {
@@ -64,9 +65,14 @@ export function Hives() {
         {created && (
           <div style={{ marginTop: 14 }}>
             <div className="label" style={{ marginBottom: 6 }}>
-              Run this on the hive host (shown once):
+              Run on the hive host (installs Docker + the agent; token shown once):
             </div>
+            <div className="label" style={{ marginTop: 8, marginBottom: 4 }}>Linux</div>
             <div className="code">{created.install_command}</div>
+            <div className="label" style={{ marginTop: 10, marginBottom: 4 }}>
+              Windows (PowerShell, Docker Desktop required)
+            </div>
+            <div className="code">{created.install_command_windows}</div>
           </div>
         )}
       </div>
