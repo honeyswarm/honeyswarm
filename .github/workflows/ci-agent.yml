@@ -1,0 +1,46 @@
+name: CI / Agent
+
+# Runs only when the agent (or this workflow) changes.
+# Lint + import on every agent change; Dockerfile build is validated on PRs only
+# (publish-agent.yml builds + pushes the real image on merge to main).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agent/**"
+      - ".github/workflows/ci-agent.yml"
+  pull_request:
+    paths:
+      - "agent/**"
+      - ".github/workflows/ci-agent.yml"
+
+concurrency:
+  group: ci-agent-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  agent:
+    name: Lint + import (+ PR build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: agent/requirements.txt
+      - name: Install deps
+        working-directory: agent
+        run: pip install -r requirements.txt ruff
+      - name: Lint (real errors)
+        working-directory: agent
+        run: ruff check honeyswarm_agent --select F,E9
+      - name: Import smoke
+        working-directory: agent
+        run: python -c "import honeyswarm_agent.main"
+      - name: Docker build (PR only — main builds via publish-agent)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./agent
+          push: false
