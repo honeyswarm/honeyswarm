@@ -11,9 +11,10 @@ from copy import deepcopy
 from typing import Any
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.core.deps import require_roles
 from app.core.manifests import list_manifests, load_manifest
 from app.models import Honeypot
 from app.services.normalizers import NORMALIZERS
@@ -140,7 +141,7 @@ async def list_normalizers() -> list[str]:
     return sorted(NORMALIZERS.keys())
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, dependencies=[Depends(require_roles("editor"))])
 async def create_honeypot(body: CreateHoneypot) -> dict[str, Any]:
     """Create a custom honeypot from a starter manifest (no on-disk source).
 
@@ -158,7 +159,7 @@ async def create_honeypot(body: CreateHoneypot) -> dict[str, Any]:
     return _serialize(hp)
 
 
-@router.post("/import/{manifest_name}", status_code=201)
+@router.post("/import/{manifest_name}", status_code=201, dependencies=[Depends(require_roles("editor"))])
 async def import_manifest(manifest_name: str) -> dict[str, Any]:
     try:
         manifest = load_manifest(manifest_name)
@@ -202,7 +203,7 @@ async def get_manifest(honeypot_id: str) -> ManifestResponse:
     )
 
 
-@router.put("/{honeypot_id}/manifest")
+@router.put("/{honeypot_id}/manifest", dependencies=[Depends(require_roles("editor"))])
 async def update_manifest(honeypot_id: str, body: ManifestUpdate) -> dict[str, Any]:
     hp = await Honeypot.get(honeypot_id)
     if hp is None:
@@ -231,7 +232,7 @@ async def update_manifest(honeypot_id: str, body: ManifestUpdate) -> dict[str, A
     return _serialize(hp)
 
 
-@router.delete("/{honeypot_id}", status_code=204)
+@router.delete("/{honeypot_id}", status_code=204, dependencies=[Depends(require_roles("editor"))])
 async def delete_honeypot(honeypot_id: str) -> None:
     hp = await Honeypot.get(honeypot_id)
     if hp is None:

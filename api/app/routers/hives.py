@@ -7,10 +7,11 @@ install one-liner; the agent later calls /agent/register with that token.
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.core.deps import require_roles
 from app.core.security import generate_token, hash_token
 from app.models import Hive, Job
 from app.services.control_plane import control_plane
@@ -46,7 +47,7 @@ async def list_hives() -> list[dict[str, Any]]:
     return [_serialize(h) async for h in Hive.find_all()]
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=201, dependencies=[Depends(require_roles("admin"))])
 async def create_hive(body: HiveCreate) -> dict[str, Any]:
     if await Hive.find_one(Hive.name == body.name):
         raise HTTPException(409, "A hive with that name already exists")
@@ -82,7 +83,7 @@ async def get_hive(hive_id: str) -> dict[str, Any]:
     return _serialize(hive)
 
 
-@router.post("/{hive_id}/update-agent")
+@router.post("/{hive_id}/update-agent", dependencies=[Depends(require_roles("admin"))])
 async def update_agent(hive_id: str, body: AgentUpdateRequest | None = None) -> dict[str, Any]:
     """Tell a hive's agent to update itself to the latest (or a given) image.
 
@@ -115,7 +116,7 @@ async def update_agent(hive_id: str, body: AgentUpdateRequest | None = None) -> 
     return {"command_id": job.command_id, "image": image}
 
 
-@router.delete("/{hive_id}", status_code=204)
+@router.delete("/{hive_id}", status_code=204, dependencies=[Depends(require_roles("admin"))])
 async def delete_hive(hive_id: str) -> None:
     hive = await Hive.get(hive_id)
     if hive is None:

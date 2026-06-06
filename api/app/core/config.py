@@ -8,6 +8,11 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# The secret shipped in .env.example. The app refuses to start with this value
+# (or anything too short) so a forgotten override can't leave JWTs forgeable.
+DEFAULT_JWT_SECRET = "CHANGE_ME_I_AM_NOT_SECURE"
+MIN_JWT_SECRET_LEN = 32
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -28,8 +33,11 @@ class Settings(BaseSettings):
     agent_image: str = Field(default="ghcr.io/honeyswarm/honeyswarm-agent:latest", alias="AGENT_IMAGE")
 
     # Auth / JWT
-    jwt_secret: str = Field(default="CHANGE_ME_I_AM_NOT_SECURE", alias="JWT_SECRET")
+    jwt_secret: str = Field(default=DEFAULT_JWT_SECRET, alias="JWT_SECRET")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
+    # Escape hatch for throwaway local dev ONLY: lets the app boot with the
+    # default/short secret. Never set this in any shared or internet-facing deploy.
+    allow_insecure_jwt_secret: bool = Field(default=False, alias="ALLOW_INSECURE_JWT_SECRET")
     access_token_ttl_minutes: int = Field(default=30, alias="ACCESS_TOKEN_TTL_MINUTES")
     refresh_token_ttl_days: int = Field(default=14, alias="REFRESH_TOKEN_TTL_DAYS")
     # SSO cookie for the Dashboards reverse proxy (forward_auth). Longer-lived
@@ -97,6 +105,24 @@ class Settings(BaseSettings):
             auth = ""
             suffix = ""
         return f"mongodb://{auth}{self.mongodb_host}:{self.mongodb_port}/{suffix}"
+
+    def assert_secure(self) -> None:
+        """Fail fast on an insecure JWT secret.
+
+        Called at application startup (not import time, so unit tests are
+        unaffected). With the shipped default or a too-short secret, anyone can
+        forge an admin token — so refuse to boot unless explicitly overridden for
+        local dev via ALLOW_INSECURE_JWT_SECRET.
+        """
+        if self.allow_insecure_jwt_secret:
+            return
+        if self.jwt_secret == DEFAULT_JWT_SECRET or len(self.jwt_secret) < MIN_JWT_SECRET_LEN:
+            raise RuntimeError(
+                "Refusing to start: JWT_SECRET is unset, the shipped default, or "
+                f"shorter than {MIN_JWT_SECRET_LEN} chars. Set a strong random "
+                "JWT_SECRET in .env (e.g. `openssl rand -hex 32`). For throwaway "
+                "local dev only, set ALLOW_INSECURE_JWT_SECRET=true."
+            )
 
 
 @lru_cache

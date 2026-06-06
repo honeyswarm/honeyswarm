@@ -7,9 +7,10 @@ results back on hive/{id}/jobs/{command_id}, handled by the control plane.
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.core.deps import require_roles
 from app.core.manifests import load_manifest
 from app.core.refs import link_id
 from app.models import Hive, Honeypot, HoneypotInstance, Job
@@ -55,7 +56,7 @@ async def list_instances() -> list[dict[str, Any]]:
     return [_serialize(i) async for i in HoneypotInstance.find_all()]
 
 
-@router.post("/deploy", status_code=201)
+@router.post("/deploy", status_code=201, dependencies=[Depends(require_roles("deploy"))])
 async def deploy(body: DeployRequest) -> dict[str, Any]:
     honeypot = await Honeypot.get(body.honeypot_id)
     if honeypot is None:
@@ -110,17 +111,17 @@ async def _lifecycle(instance_id: str, action: str) -> dict[str, Any]:
     return {"command_id": job.command_id}
 
 
-@router.post("/{instance_id}/start")
+@router.post("/{instance_id}/start", dependencies=[Depends(require_roles("deploy"))])
 async def start(instance_id: str) -> dict[str, Any]:
     return await _lifecycle(instance_id, "start")
 
 
-@router.post("/{instance_id}/stop")
+@router.post("/{instance_id}/stop", dependencies=[Depends(require_roles("deploy"))])
 async def stop(instance_id: str) -> dict[str, Any]:
     return await _lifecycle(instance_id, "stop")
 
 
-@router.delete("/{instance_id}")
+@router.delete("/{instance_id}", dependencies=[Depends(require_roles("deploy"))])
 async def remove(instance_id: str) -> dict[str, Any]:
     result = await _lifecycle(instance_id, "remove")
     instance = await HoneypotInstance.get(instance_id)

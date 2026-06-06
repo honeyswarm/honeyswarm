@@ -23,8 +23,15 @@ async def get_current_user(
 
 
 def require_roles(*roles: str) -> Callable:
+    """Dependency that requires the user to hold at least one of ``roles``.
+
+    ``admin`` is always allowed (superuser), so routes only name the specific
+    role they need (e.g. ``deploy``/``editor``) without also listing ``admin``.
+    """
+    allowed = set(roles) | {"admin"}
+
     async def checker(user: User = Depends(get_current_user)) -> User:
-        if not set(roles).intersection(user.roles):
+        if not allowed.intersection(user.roles):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Insufficient role")
         return user
 

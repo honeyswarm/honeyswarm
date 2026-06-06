@@ -32,6 +32,7 @@ logger = logging.getLogger("honeyswarm")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Honeyswarm API starting up")
+    settings.assert_secure()  # refuse to boot with a forgeable JWT secret
     await init_mongo()
     await seed()
     await init_opensearch()
