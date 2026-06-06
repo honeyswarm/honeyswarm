@@ -154,6 +154,15 @@ def deploy(command: dict) -> dict:
         else:
             command = render_template(str(command), variables)
 
+    # Pull the image first so honeypots on a moving tag (e.g. :latest) pick up
+    # republished updates instead of reusing a stale locally-cached image. Best
+    # effort: if the registry is unreachable, fall back to the local image.
+    try:
+        cli.images.pull(manifest["image"])
+        logger.info("Pulled image %s", manifest["image"])
+    except Exception as err:  # noqa: BLE001 - offline / private registry / rate limit
+        logger.warning("Could not pull %s (%s); using local image if present", manifest["image"], err)
+
     # Replace any existing container with this name.
     try:
         cli.containers.get(container_name).remove(force=True)
