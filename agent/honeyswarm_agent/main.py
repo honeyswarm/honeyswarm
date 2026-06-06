@@ -151,6 +151,12 @@ class Agent:
                     self.instances.pop(instance_id, None)
                     self._persist()
                 await self._publish_job(command_id, True, status, instance_id, status)
+            elif action == "update_agent":
+                # Pull the new image + launch the updater (raises on pull failure,
+                # leaving us running). Report success first; the updater then
+                # recreates this agent after a short settle delay.
+                result = await asyncio.to_thread(runner.self_update, command.get("image"))
+                await self._publish_job(command_id, True, f"updating to {result['image']}")
             else:
                 await self._publish_job(command_id, False, f"unknown action {action}")
         except Exception as err:  # noqa: BLE001 - report failure back to controller

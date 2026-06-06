@@ -12,7 +12,8 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.core.security import generate_token, hash_token
-from app.models import Hive
+from app.models import Hive, Job
+from app.services.control_plane import control_plane
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,10 @@ router = APIRouter(prefix="/hives", tags=["hives"])
 
 class HiveCreate(BaseModel):
     name: str
+
+
+class AgentUpdateRequest(BaseModel):
+    image: str | None = None
 
 
 def _serialize(hive: Hive) -> dict[str, Any]:
@@ -70,6 +75,39 @@ async def get_hive(hive_id: str) -> dict[str, Any]:
     if hive is None:
         raise HTTPException(404, "Hive not found")
     return _serialize(hive)
+
+
+@router.post("/{hive_id}/update-agent")
+async def update_agent(hive_id: str, body: AgentUpdateRequest | None = None) -> dict[str, Any]:
+    """Tell a hive's agent to update itself to the latest (or a given) image.
+
+    Publishes an ``update_agent`` command; the agent pulls the image and a
+    short-lived updater container recreates the agent in place (state + running
+    honeypots are preserved).
+    """
+    hive = await Hive.get(hive_id)
+    if hive is None:
+        raise HTTPException(404, "Hive not found")
+    if not hive.registered:
+        raise HTTPException(409, "Hive is not registered")
+
+    image = (body.image if body else None) or settings.agent_image
+    job = Job(
+        job_type="update_agent",
+        job_short="update_agent",
+        job_description=f"Update agent on {hive.name} to {image}",
+        hive=hive,
+    )
+    await job.insert()
+    job.command_id = str(job.id)
+    await job.save()
+
+    command = {"action": "update_agent", "image": image, "command_id": job.command_id}
+    try:
+        await control_plane.publish_command(str(hive.id), command)
+    except RuntimeError as err:
+        raise HTTPException(503, f"Control plane unavailable: {err}")
+    return {"command_id": job.command_id, "image": image}
 
 
 @router.delete("/{hive_id}", status_code=204)

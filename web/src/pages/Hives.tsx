@@ -45,6 +45,11 @@ export function Hives() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["hives"] }),
   });
 
+  const updateAgent = useMutation({
+    mutationFn: (id: string) => api(`/hives/${id}/update-agent`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["hives"] }),
+  });
+
   function onCreate(e: FormEvent) {
     e.preventDefault();
     if (name.trim()) create.mutate(name.trim());
@@ -101,9 +106,18 @@ export function Hives() {
             {
               header: "",
               cell: (h) => (
-                <button className="danger" onClick={() => remove.mutate(h.id)}>
-                  Delete
-                </button>
+                <div className="row">
+                  <button
+                    onClick={() => updateAgent.mutate(h.id)}
+                    disabled={!h.registered || updateAgent.isPending}
+                    title="Pull the latest agent image and recreate the agent in place"
+                  >
+                    Update agent
+                  </button>
+                  <button className="danger" onClick={() => remove.mutate(h.id)}>
+                    Delete
+                  </button>
+                </div>
               ),
             },
           ]}

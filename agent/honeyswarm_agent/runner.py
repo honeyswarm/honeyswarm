@@ -4,8 +4,10 @@ Replaces the docker_container.running / docker.start / docker.stop / docker.rm
 Salt operations. docker-py is synchronous, so callers wrap these in
 asyncio.to_thread.
 """
+import json
 import logging
 import os
+import socket
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +22,12 @@ _client = None
 
 # Named, vetted host-setup actions (replaces the old arbitrary cmd.run sed).
 KNOWN_HOST_SETUP = {"move-sshd-off-22"}
+
+# Self-update: only these env vars are carried onto the recreated agent, so the
+# new image's own baked defaults (PATH, LANG, ...) are not shadowed by old ones.
+_AGENT_ENV_PREFIXES = ("HONEYSWARM", "ENROLL", "HEARTBEAT", "TAIL_POLL", "AGENT_IMAGE")
+UPDATER_CONTAINER_NAME = "honeyswarm-agent-updater"
+DOCKER_SOCK = "/var/run/docker.sock"
 
 
 def client() -> "docker.DockerClient":
@@ -211,3 +219,97 @@ def container_status(container_name: str) -> str:
         return cli.containers.get(container_name).status.capitalize()
     except NotFound:
         return "Missing"
+
+
+# --- self-update -----------------------------------------------------------
+#
+# The agent runs as a container and has the host Docker socket, but it can't
+# replace its own container directly (removing itself would kill the process
+# mid-operation). So it pulls the new image, then launches a short-lived
+# *updater* container (from that new image) which outlives the agent, removes
+# it, and recreates it from the captured run spec. See honeyswarm_agent.updater.
+
+
+def _self_container(cli: "docker.DockerClient"):
+    """Locate the agent's own container.
+
+    Docker sets a container's hostname to its (short) id by default, so
+    ``socket.gethostname()`` resolves back to us; fall back to an explicit env
+    override or the conventional install name.
+    """
+    for ident in (
+        os.environ.get("HONEYSWARM_AGENT_CONTAINER"),
+        socket.gethostname(),
+        "honeyswarm-agent",
+    ):
+        if not ident:
+            continue
+        try:
+            return cli.containers.get(ident)
+        except NotFound:
+            continue
+    raise RuntimeError("Could not locate the agent's own container for self-update")
+
+
+def _agent_env(env_list: list[str]) -> list[str]:
+    """Keep only honeyswarm-relevant env vars (don't shadow the new image's)."""
+    return [
+        kv for kv in (env_list or [])
+        if any(kv.split("=", 1)[0].startswith(p) for p in _AGENT_ENV_PREFIXES)
+    ]
+
+
+def _recreate_spec(attrs: dict, image: str) -> dict:
+    """Build a docker-run spec from the agent's own container config."""
+    host = attrs.get("HostConfig", {}) or {}
+    cfg = attrs.get("Config", {}) or {}
+    rp = host.get("RestartPolicy") or {}
+    return {
+        "name": (attrs.get("Name") or "").lstrip("/") or "honeyswarm-agent",
+        "image": image,
+        "environment": _agent_env(cfg.get("Env")),
+        "binds": list(host.get("Binds") or []),
+        "network_mode": host.get("NetworkMode") or "default",
+        "restart_policy": {
+            "Name": rp.get("Name") or "unless-stopped",
+            "MaximumRetryCount": rp.get("MaximumRetryCount", 0),
+        },
+    }
+
+
+def self_update(image: str | None = None) -> dict:
+    """Pull a new agent image and launch the updater that recreates us.
+
+    Returns once the updater is launched; the updater then replaces this agent.
+    Raising here (e.g. pull failure) leaves the running agent untouched.
+    """
+    cli = client()
+    me = _self_container(cli)
+    current_image = (me.attrs.get("Config", {}) or {}).get("Image")
+    target = image or current_image
+    if not target:
+        raise RuntimeError("No target image for self-update")
+
+    logger.info("Self-update: pulling %s", target)
+    cli.images.pull(target)
+
+    spec = _recreate_spec(me.attrs, target)
+    spec["fallback_image"] = current_image  # roll back if the new image won't run
+
+    # Clear any leftover updater from a previous attempt, then launch a fresh one
+    # from the new image. It mounts the Docker socket and runs the updater module.
+    try:
+        cli.containers.get(UPDATER_CONTAINER_NAME).remove(force=True)
+    except NotFound:
+        pass
+    cli.containers.run(
+        target,
+        command=["python", "-m", "honeyswarm_agent.updater"],
+        name=UPDATER_CONTAINER_NAME,
+        detach=True,
+        remove=True,
+        volumes={DOCKER_SOCK: {"bind": DOCKER_SOCK, "mode": "rw"}},
+        environment={"HONEYSWARM_UPDATE_SPEC": json.dumps(spec)},
+    )
+    logger.info("Updater launched; agent %s will be recreated from %s", spec["name"], target)
+    return {"image": target, "container": spec["name"]}
