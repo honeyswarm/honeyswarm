@@ -48,30 +48,29 @@ def test_http_beelzebub_nested_event():
     assert event["service"] == "HTTP"
 
 
-def test_wordpress_beelzebub_nested_event():
-    event = normalize("wordpress", {
-        "event": {"SourceIp": "198.51.100.5", "HTTPMethod": "POST",
-                  "RequestURI": "/wp-login.php", "Body": "log=admin&pwd=secret"},
-        "msg": "New Event",
-    })
-    assert event["honeypot_type"] == "Wordpress"
-    assert event["source_ip"] == "198.51.100.5"
-
-
 def test_http_skips_framework_noise():
     # Beelzebub's own startup/info lines have no "event" -> not stored.
     assert normalize("http", {"commands": 0, "level": "info", "msg": "Init service: "}) is None
 
 
-def test_wordpress_skips_framework_noise():
-    assert normalize("wordpress", {"level": "info", "msg": "GetAllServices"}) is None
-
-
-def test_wordpress_uses_http_fields():
-    event = normalize("wordpress", {"src_ip": "192.0.2.44"})
-    assert event["port"] == 80
+def test_wordpress_flat_request():
+    # The high-interaction WordPress proxy emits flat events with source_ip.
+    event = normalize("wordpress", {
+        "source_ip": "198.51.100.5",
+        "http_method": "POST",
+        "http_path": "/wp-login.php",
+        "http_post": {"log": "admin", "pwd": "secret"},
+    })
     assert event["honeypot_type"] == "Wordpress"
+    assert event["service"] == "HTTP"
+    assert event["port"] == 80
+    assert event["source_ip"] == "198.51.100.5"
+
+
+def test_wordpress_source_ip_fallback():
+    event = normalize("wordpress", {"http_remote": "192.0.2.44"})
     assert event["source_ip"] == "192.0.2.44"
+    assert event["honeypot_type"] == "Wordpress"
 
 
 def test_unknown_falls_back_to_generic():

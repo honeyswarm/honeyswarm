@@ -159,11 +159,20 @@ def http(payload: dict[str, Any]) -> Optional[CanonicalEvent]:
     return event
 
 
-def wordpress(payload: dict[str, Any]) -> Optional[CanonicalEvent]:
-    event = http(payload)
-    if event is None:
-        return None
+def wordpress(payload: dict[str, Any]) -> CanonicalEvent:
+    # The high-interaction WordPress honeypot's proxy logs one flat JSON object
+    # per request, always carrying ``source_ip`` (plus http_method/http_path/
+    # http_post). Every line is a real request, so there is no framework noise
+    # to filter.
+    event = _base()
     event["honeypot_type"] = "Wordpress"
+    event["service"] = "HTTP"
+    event["port"] = 80
+    event["source_ip"] = (
+        payload.get("source_ip")
+        or payload.get("http_remote")
+        or payload.get("src_ip", "")
+    )
     return event
 
 

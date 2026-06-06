@@ -1,0 +1,39 @@
+# WordPress honeypot manifest.
+#
+# High-interaction: a real WordPress (latest core on SQLite) served by Apache,
+# fronted by a reverse proxy that logs every request — method, path, and POST
+# body (credentials) — as JSON lines the hive agent tails. Vulnerable plugins
+# are configurable via the WP_PLUGINS env below, so you can stand up specific
+# honeypots (clone this definition in the UI and change WP_PLUGINS).
+#
+# Image: github.com/honeyswarm/honeyswarm_wordpress_honeypot
+name: Wordpress
+type: HTTP
+description: >-
+  High-interaction WordPress honeypot (real WordPress on SQLite) with
+  configurable vulnerable plugins. Logs all requests and captured login
+  credentials.
+
+image: ghcr.io/honeyswarm/honeyswarm_wordpress_honeypot:latest
+container_name: honeyswarm_wordpress_honeypot
+
+ports:
+  - "80:80"
+
+log:
+  source: file
+  path: /var/log/honeyswarm/wordpress.json
+  normalizer: wordpress
+
+# Honeypot configuration. WP_PLUGINS is a comma-separated list, fetched at
+# startup (nothing is baked into the image). Each entry is one of:
+#   slug            -> latest from wordpress.org           e.g. wordfence
+#   slug@version    -> a specific (vulnerable) version      e.g. duplicator@1.3.26
+#   https://…/x.zip -> any plugin zip by URL
+env:
+  WP_PLUGINS: "duplicator@1.3.26,wp-graphql@1.14.0"
+  BLOGNAME: "Company Intranet"
+  BLOGDESCRIPTION: "Internal Corporate Intranet"
+  ADMINEMAIL: "info@example.com"
+
+report_fields: ["source_ip", "http_method", "http_path"]
