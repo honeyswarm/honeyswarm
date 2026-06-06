@@ -72,11 +72,15 @@ def _free_honeyswarm_ports(cli, host_ports: set[int], keep: str) -> None:
 
 
 def _parse_ports(ports: list[str]) -> dict[str, int]:
-    # "22:2222" => host 22 -> container 2222 ; docker-py wants {"2222/tcp": 22}
+    # "22:2222"      => host 22 -> container 2222/tcp ; docker-py wants {"2222/tcp": 22}
+    # "161:16100/udp" => host 161 -> container 16100/udp (proto defaults to tcp)
     mapping: dict[str, int] = {}
     for entry in ports or []:
         host, _, container = entry.partition(":")
-        mapping[f"{container}/tcp"] = int(host)
+        proto = "tcp"
+        if "/" in container:
+            container, _, proto = container.partition("/")
+        mapping[f"{container}/{proto}"] = int(host)
     return mapping
 
 
@@ -133,6 +137,15 @@ def deploy(command: dict) -> dict:
     cli = client()
     ports = _parse_ports(manifest.get("ports"))
 
+    # Substitute instance vars (UPPERCASE placeholders) into command args too,
+    # so a manifest can parameterise its command (e.g. PyRDP's relay target).
+    command = manifest.get("command")
+    if command is not None:
+        if isinstance(command, list):
+            command = [render_template(str(arg), variables) for arg in command]
+        else:
+            command = render_template(str(command), variables)
+
     # Replace any existing container with this name.
     try:
         cli.containers.get(container_name).remove(force=True)
@@ -151,7 +164,7 @@ def deploy(command: dict) -> dict:
             detach=True,
             ports=ports,
             volumes=volumes or None,
-            command=manifest.get("command"),
+            command=command,
             environment=manifest.get("env"),
             restart_policy={"Name": "unless-stopped"},
         )
