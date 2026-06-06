@@ -47,12 +47,35 @@ docker compose up -d --build
 That's it — the `mqtt-init` service generates the broker's TLS certificate and
 password file on first boot (into a Docker volume), so there are no pre-run scripts.
 
-Open <http://localhost> and log in with the bootstrap admin
+Open <https://localhost> and log in with the bootstrap admin
 (`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`).
 
-For a **remote** deployment, set `MQTT_PUBLIC_HOST` in `.env` to the controller's
-public hostname/IP before first boot — it's baked into the broker certificate's
-SAN so agents on remote hives can verify it.
+> **TLS / certificates.** The UI is served over **HTTPS** (Caddy terminates TLS at
+> the edge; everything behind it runs on the private Docker network). By default
+> Caddy issues a **self-signed** certificate on demand for whatever hostname or IP
+> you browse to — zero config, but your browser shows a one-time trust warning
+> (accept it, or import Caddy's local root CA). For a public domain with trusted
+> Let's Encrypt certs, set `SITE_ADDRESS=<your-domain>` in `.env` and change the
+> `tls internal { on_demand }` line in [`web/Caddyfile`](web/Caddyfile) to your
+> email — Caddy then provisions and renews real certs automatically.
+
+**OpenSearch Dashboards** (event search, charts, ad-hoc queries) is available at
+**`/dashboards`**, via the **Dashboards ↗** link in the sidebar. It is *not*
+published on its own port — it's proxied behind your existing Honeyswarm login
+(**single sign-on**), so there is no separate Dashboards credential to manage.
+
+For a **remote** deployment, set these in `.env` before first boot so hives can
+reach and verify the controller:
+
+- `MQTT_PUBLIC_HOST` — the controller's public hostname/IP; baked into the broker
+  certificate's SAN so agents can verify the MQTT TLS connection.
+- `PUBLIC_URL` — the base URL agents use to enroll, through the HTTPS edge
+  (e.g. `https://honeyswarm.example.com`). Enrollment is proxied by Caddy; the
+  API's `:8080` is **not** published to the host. It's what the generated install
+  one-liner points at, so it must be reachable from the hives.
+- `AGENT_TLS_VERIFY` — leave `false` for the default self-signed edge cert (the
+  install one-liner is emitted with `curl -k`); set `true` once `PUBLIC_URL` uses
+  a trusted (Let's Encrypt) cert so agents verify it.
 
 > If you change `MQTT_PUBLIC_HOST` (or `MQTT_EXTRA_SANS`) after the first boot,
 > the cert is regenerated but the running broker keeps serving the old one until
@@ -60,29 +83,31 @@ SAN so agents on remote hives can verify it.
 
 ### Enroll a hive
 
-In the UI: **Hives → create** to get a per-hive install one-liner. Run it on the
-hive host — it fetches an install script that installs Docker (if missing) and
-starts the agent, which enrolls over the API, receives the broker CA, and
-connects to MQTT over TLS.
+In the UI: **Hives → create** to get a per-hive install one-liner (copy it from
+there — it has the right URL, token, and TLS flags filled in). Run it on the hive
+host — it fetches an install script that installs Docker (if missing) and starts
+the agent, which enrolls through the controller's HTTPS edge, receives the broker
+CA, and connects to MQTT over TLS.
 
 ```bash
-# Linux (run as root)
-curl -fsSL "https://<controller>/agent/install.sh?token=<token>" | sudo bash
+# Linux (run as root). -k skips cert verification for the default self-signed
+# edge cert; drop it once the controller uses a trusted cert.
+curl -fsSLk "https://<controller>/agent/install.sh?token=<token>" | sudo bash
 ```
 ```powershell
-# Windows — Docker Desktop with Linux containers
-irm "https://<controller>/agent/install.ps1?token=<token>" | iex
+# Windows — Docker Desktop with Linux containers (PowerShell 7+).
+irm -SkipCertificateCheck "https://<controller>/agent/install.ps1?token=<token>" | iex
 ```
 
-A hive only needs outbound network access to the controller (API + MQTT); the
-agent never accepts inbound connections.
+A hive only needs outbound network access to the controller (HTTPS edge + MQTT);
+the agent never accepts inbound connections.
 
 **SSH honeypots** (e.g. Cowrie) bind host port 22, which the host's real `sshd`
 already uses. Use the SSH-honeypot install one-liner (also shown in the UI) to
 relocate the host SSH daemon first:
 
 ```bash
-curl -fsSL "https://<controller>/agent/install.sh?token=<token>" | sudo bash -s -- --move-ssh 2222
+curl -fsSLk "https://<controller>/agent/install.sh?token=<token>" | sudo bash -s -- --move-ssh 2222
 ```
 
 This moves host SSH to port 2222 (reconnect with `ssh -p 2222`; a backup of
@@ -98,6 +123,20 @@ to a hive. Attack events stream into the dashboard live.
 All configuration is environment variables — see [`.env.example`](.env.example)
 for the full list (MongoDB/OpenSearch/MQTT connections, JWT, the bootstrap admin,
 the published agent image, and the public host/SANs for remote deployments).
+
+Edge/TLS knobs worth calling out:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SITE_ADDRESS` | `:443` | Caddy's bind address. Leave as-is for zero-config self-signed HTTPS on any host/IP; set to `<your-domain>` for a named site (pair with a real-cert `tls` line in `web/Caddyfile`). |
+| `COOKIE_SECURE` | `true` | `Secure` flag on the Dashboards SSO cookie. Keep `true` (HTTPS); only set `false` if you deliberately run the edge on plain HTTP. |
+
+**Security model.** The reverse proxy (Caddy) is the trust boundary: it terminates
+TLS and authenticates browsers, then talks to the API, OpenSearch, and Dashboards
+over plain HTTP on the private `honeynet` Docker network. MongoDB and OpenSearch are
+**not** published to the host; Dashboards is reachable only through the
+SSO-gated `/dashboards` proxy. MQTT (for hives) is the one data-plane port exposed,
+secured with TLS + authentication.
 
 ## Development
 

@@ -21,16 +21,19 @@ from .documents import (
     User,
 )
 
+# HoneypotEvent is intentionally NOT a Beanie document: honeypot events live
+# solely in OpenSearch, not Mongo, so it must not be registered here (that would
+# recreate the ``honeypot_events`` collection). It is still imported/exported as
+# a plain pydantic model for ingest to shape OpenSearch documents.
 DOCUMENT_MODELS = [
     Config,
     Frame,
     Hive,
     Honeypot,
-    HoneypotEvent,
     HoneypotInstance,
     Job,
     Role,
     User,
 ]
 
-__all__ = ["DOCUMENT_MODELS", *[m.__name__ for m in DOCUMENT_MODELS]]
+__all__ = ["DOCUMENT_MODELS", "HoneypotEvent", *[m.__name__ for m in DOCUMENT_MODELS]]

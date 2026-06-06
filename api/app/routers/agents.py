@@ -27,6 +27,7 @@ def _render_installer(filename: str, token: str) -> str:
         template.replace("__HONEYSWARM_URL__", settings.public_url)
         .replace("__ENROLL_TOKEN__", token)
         .replace("__AGENT_IMAGE__", settings.agent_image)
+        .replace("__AGENT_TLS_VERIFY__", "true" if settings.agent_tls_verify else "false")
     )
 
 

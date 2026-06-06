@@ -16,8 +16,14 @@ class Settings(BaseSettings):
     timezone: str = Field(default="Europe/London", alias="TIMEZONE")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     manifests_dir: str = Field(default="/opt/honeyswarm/manifests", alias="MANIFESTS_DIR")
-    public_url: str = Field(default="http://localhost:8080", alias="PUBLIC_URL")
+    # Public base URL agents use to enroll. Goes through the Caddy edge (HTTPS),
+    # NOT the API's internal :8080 — that port is no longer published to the host.
+    public_url: str = Field(default="https://localhost", alias="PUBLIC_URL")
     mqtt_public_host: str = Field(default="localhost", alias="MQTT_PUBLIC_HOST")
+    # Whether agents verify the controller's TLS cert during enrollment. Default
+    # off because the edge ships a self-signed cert out of the box; set true once
+    # PUBLIC_URL points at a domain with a trusted (Let's Encrypt) cert.
+    agent_tls_verify: bool = Field(default=False, alias="AGENT_TLS_VERIFY")
     # Published hive agent image referenced in the enrollment install command.
     agent_image: str = Field(default="ghcr.io/honeyswarm/honeyswarm-agent:latest", alias="AGENT_IMAGE")
 
@@ -26,6 +32,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     access_token_ttl_minutes: int = Field(default=30, alias="ACCESS_TOKEN_TTL_MINUTES")
     refresh_token_ttl_days: int = Field(default=14, alias="REFRESH_TOKEN_TTL_DAYS")
+    # SSO cookie for the Dashboards reverse proxy (forward_auth). Longer-lived
+    # than the access token so opening Dashboards mid-session just works.
+    dashboards_token_ttl_minutes: int = Field(default=480, alias="DASHBOARDS_TOKEN_TTL_MINUTES")
+    dashboards_cookie_name: str = Field(default="hs_dash", alias="DASHBOARDS_COOKIE_NAME")
+    # Set the Secure flag on the cookie (requires HTTPS at the edge; default on).
+    cookie_secure: bool = Field(default=True, alias="COOKIE_SECURE")
 
     # Bootstrap admin (created on first startup if no users exist)
     admin_email: str = Field(default="admin@honeyswarm.local", alias="ADMIN_EMAIL")
@@ -47,6 +59,14 @@ class Settings(BaseSettings):
     opensearch_use_ssl: bool = Field(default=False, alias="OPENSEARCH_USE_SSL")
     opensearch_verify_certs: bool = Field(default=False, alias="OPENSEARCH_VERIFY_CERTS")
     opensearch_event_index: str = Field(default="honeyswarm-events", alias="OPENSEARCH_EVENT_INDEX")
+    # OpenSearch Dashboards (saved-objects API) for auto-provisioning the events
+    # index pattern so Discover works out of the box on a fresh install. The
+    # ``/dashboards`` suffix matches Dashboards' SERVER_BASEPATH (it is served
+    # under that prefix behind the Caddy basic-auth proxy). This is an internal
+    # container-to-container call, so it bypasses the proxy's basic auth.
+    opensearch_dashboards_url: str = Field(
+        default="http://opensearch-dashboards:5601/dashboards", alias="OPENSEARCH_DASHBOARDS_URL"
+    )
 
     # MQTT (TLS by default)
     mqtt_host: str = Field(default="mqtt", alias="MQTT_HOST")

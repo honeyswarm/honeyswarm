@@ -65,8 +65,8 @@ async def enroll(config: AgentConfig) -> dict:
         raise SystemExit("No saved state and ENROLL_TOKEN not set; cannot enroll.")
 
     url = f"{config.controller_url}/agent/register"
-    logger.info("Enrolling with controller at %s", url)
-    async with httpx.AsyncClient(timeout=15) as http:
+    logger.info("Enrolling with controller at %s (tls_verify=%s)", url, config.tls_verify)
+    async with httpx.AsyncClient(timeout=15, verify=config.tls_verify) as http:
         resp = await http.post(url, json={"token": config.enroll_token, "agent_version": __version__})
         resp.raise_for_status()
         state = resp.json()

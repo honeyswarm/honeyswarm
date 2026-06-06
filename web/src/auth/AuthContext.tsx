@@ -42,6 +42,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Keep a Dashboards SSO cookie fresh whenever we hold an active session, so
+  // Caddy's /dashboards forward_auth gate passes without a second login (e.g. a
+  // bookmarked /dashboards URL). Best-effort.
+  useEffect(() => {
+    if (!user) return;
+    api("/auth/dashboards-session", { method: "POST" }).catch(() => {});
+  }, [user]);
+
   async function login(email: string, password: string) {
     const data = await api<{ access_token: string; refresh_token: string; user: User }>(
       "/auth/login",

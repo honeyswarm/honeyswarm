@@ -20,6 +20,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import uuid
 from datetime import datetime
 
 import aiomqtt
@@ -69,13 +70,15 @@ async def handle_message(topic: str, raw: bytes) -> None:
         payload=payload,
         **canonical,
     )
-    await event.insert()
 
-    doc = event.model_dump(mode="json", exclude={"id"})
-    doc["event_id"] = str(event.id)
+    # Events live solely in OpenSearch now (no Mongo persistence), so mint our
+    # own document id rather than relying on a Mongo-assigned ObjectId.
+    event_id = uuid.uuid4().hex
+    doc = event.model_dump(mode="json")
+    doc["event_id"] = event_id
     try:
         os_client = get_opensearch()
-        await os_client.index(index=settings.opensearch_event_index, body=doc, id=str(event.id))
+        await os_client.index(index=settings.opensearch_event_index, body=doc, id=event_id)
     except Exception as err:  # noqa: BLE001 - OpenSearch must not block ingest
         logger.error("OpenSearch index failed: %s", err)
 

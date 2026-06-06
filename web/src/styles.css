@@ -66,6 +66,11 @@ body::before {
 h1 { font-size: 22px; margin: 0 0 20px; }
 h2 { font-size: 16px; margin: 0 0 12px; }
 
+/* content links (override the browser's unreadable blue/purple defaults) */
+a { color: var(--accent-2); text-decoration: none; }
+a:visited { color: var(--accent-2); }
+a:hover { text-decoration: underline; }
+
 /* cards */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
@@ -105,6 +110,41 @@ h2 { font-size: 16px; margin: 0 0 12px; }
 .table tr:hover td { background: var(--panel-2); }
 .empty { color: var(--muted); padding: 24px; text-align: center; }
 
+/* expandable rows */
+.table tr.clickable { cursor: pointer; }
+.table .caret-col { width: 28px; text-align: center; }
+.caret { display: inline-block; color: var(--muted); transition: transform 0.15s ease; }
+.caret.open { transform: rotate(90deg); color: var(--accent); }
+.table tr.expanded-row:hover td { background: var(--panel-2); }
+.table tr.expanded-row > td { padding: 0; background: var(--panel-2); }
+.event-detail { padding: 14px 18px; }
+.event-detail .kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 24px;
+  margin-bottom: 12px;
+}
+.event-detail .k {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.event-detail .v { font-size: 13px; word-break: break-all; }
+.event-detail .v.mono, .event-detail pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.event-detail pre {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  overflow: auto;
+  max-height: 320px;
+  font-size: 12px;
+  margin: 6px 0 0;
+}
+
 /* forms + buttons */
 input, select {
   background: var(--bg);
@@ -132,6 +172,7 @@ button.danger { background: var(--danger); color: #fff; }
 button.link { background: none; color: var(--accent-2); padding: 0; font-weight: 500; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
+.pager { margin-top: 14px; }
 
 /* badges */
 .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }

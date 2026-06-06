@@ -54,13 +54,18 @@ async def create_hive(body: HiveCreate) -> dict[str, Any]:
     hive = Hive(name=body.name, agent_token_hash=hash_token(token))
     await hive.insert()
     base = settings.public_url.rstrip("/")
+    # Enrollment goes through the HTTPS edge. With the default self-signed cert
+    # the clients must skip verification; a trusted cert (AGENT_TLS_VERIFY=true)
+    # drops the insecure flags.
+    curl_flags = "-fsSL" if settings.agent_tls_verify else "-fsSLk"
+    irm_insecure = "" if settings.agent_tls_verify else "-SkipCertificateCheck "
     # One-liners that fetch a per-hive install script (installs Docker + runs the agent).
-    install_command = f'curl -fsSL "{base}/agent/install.sh?token={token}" | sudo bash'
+    install_command = f'curl {curl_flags} "{base}/agent/install.sh?token={token}" | sudo bash'
     # Same, but also relocates the host SSH daemon off :22 so an SSH honeypot can bind it.
     install_command_ssh = (
-        f'curl -fsSL "{base}/agent/install.sh?token={token}" | sudo bash -s -- --move-ssh 2222'
+        f'curl {curl_flags} "{base}/agent/install.sh?token={token}" | sudo bash -s -- --move-ssh 2222'
     )
-    install_command_windows = f'irm "{base}/agent/install.ps1?token={token}" | iex'
+    install_command_windows = f'irm {irm_insecure}"{base}/agent/install.ps1?token={token}" | iex'
     result = _serialize(hive)
     result["enroll_token"] = token  # shown once at creation time
     result["install_command"] = install_command

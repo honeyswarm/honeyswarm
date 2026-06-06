@@ -1,13 +1,50 @@
-# Serves the built SPA and proxies the API + WebSocket to the FastAPI service.
-# For production with a domain, replace :80 with your hostname so Caddy
-# auto-provisions TLS.
+# Serves the built SPA and reverse-proxies the API, WebSocket, and OpenSearch
+# Dashboards. TLS terminates HERE (the edge); everything behind it speaks plain
+# HTTP on the private docker network.
+#
+# Default: self-signed HTTPS that works on ANY hostname/IP with zero config —
+# Caddy's internal CA issues a cert on demand for whatever name you browse to
+# (browsers warn until you trust Caddy's local root CA).
+#
+# For a public domain with real, trusted certs instead, set SITE_ADDRESS to your
+# domain and replace the `tls internal { on_demand }` block below with your email
+# (e.g. `tls you@example.com`) — Caddy then provisions Let's Encrypt automatically.
+
+# Redirect all plain HTTP to HTTPS. An explicit :80 site disables Caddy's own
+# automatic redirect, so this is conflict-free.
 :80 {
+	redir https://{host}{uri} permanent
+}
+
+{$SITE_ADDRESS::443} {
+	tls internal {
+		on_demand
+	}
+
 	handle /api/* {
 		uri strip_prefix /api
 		reverse_proxy api:8080
 	}
 	handle /ws {
 		reverse_proxy api:8080
+	}
+
+	# Agent enrollment (install scripts + /agent/register), called by hives. Goes
+	# through the edge so the API's :8080 isn't published to the host. No prefix
+	# strip — the API serves these at /agent/*.
+	handle /agent/* {
+		reverse_proxy api:8080
+	}
+
+	# OpenSearch Dashboards (SERVER_BASEPATH=/dashboards, so no strip_prefix).
+	# forward_auth gates every request on the Honeyswarm session: the API's
+	# /auth/dashboards-verify returns 2xx for a valid `hs_dash` cookie, else a
+	# 302 to /login. Single sign-on — no separate Dashboards credential.
+	handle /dashboards* {
+		forward_auth api:8080 {
+			uri /auth/dashboards-verify
+		}
+		reverse_proxy opensearch-dashboards:5601
 	}
 
 	# SPA: serve static assets, fall back to index.html for client routing.

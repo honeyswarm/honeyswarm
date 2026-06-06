@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { api } from "../api/client";
 
 const NAV = [
   { to: "/", label: "Dashboard", end: true },
@@ -12,11 +13,24 @@ const NAV = [
 
 export function Layout() {
   const { user, logout, hasRole } = useAuth();
+
+  // OpenSearch Dashboards lives outside the SPA at /dashboards. Mint a fresh
+  // SSO cookie, then open it (new tab). forward_auth bounces to /login if the
+  // cookie is somehow missing.
+  const openDashboards = async () => {
+    try {
+      await api("/auth/dashboards-session", { method: "POST" });
+    } catch {
+      /* best-effort */
+    }
+    window.open("/dashboards/", "_blank", "noopener");
+  };
+
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <img src="/honey.png" alt="Honeyswarm" />
+          <img src="/honeyswarm.png" alt="Honeyswarm" />
           Honeyswarm
         </div>
         <nav>
@@ -30,6 +44,15 @@ export function Layout() {
               Admin
             </NavLink>
           )}
+          <a
+            href="/dashboards/"
+            onClick={(e) => {
+              e.preventDefault();
+              openDashboards();
+            }}
+          >
+            Dashboards ↗
+          </a>
         </nav>
         <div className="sidebar-footer">
           <div className="user">{user?.email}</div>

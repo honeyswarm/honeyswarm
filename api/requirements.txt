@@ -5,6 +5,7 @@ beanie
 pydantic
 pydantic-settings
 opensearch-py[async]
+aiohttp
 aiomqtt
 python-jose[cryptography]
 bcrypt

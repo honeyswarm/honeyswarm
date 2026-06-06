@@ -29,7 +29,7 @@ export function Login() {
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={onSubmit}>
-        <img className="logo" src="/honey.png" alt="Honeyswarm" />
+        <img className="logo" src="/honeyswarm.png" alt="Honeyswarm" />
         <h1>Honeyswarm</h1>
         {error && <div className="error">{error}</div>}
         <input

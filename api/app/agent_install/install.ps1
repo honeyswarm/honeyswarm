@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 $HoneyswarmUrl = "__HONEYSWARM_URL__"
 $EnrollToken   = "__ENROLL_TOKEN__"
 $AgentImage    = "__AGENT_IMAGE__"
+$TlsVerify     = "__AGENT_TLS_VERIFY__"
 $ContainerName = "honeyswarm-agent"
 
 Write-Host "[honeyswarm] Installing hive agent..."
@@ -39,6 +40,7 @@ docker run -d --name $ContainerName --restart unless-stopped `
   -e ENROLL_TOKEN=$EnrollToken `
   -e HONEYSWARM_HOST_IP=$HostIp `
   -e HONEYSWARM_HOST_NAME=$HostName `
+  -e HONEYSWARM_TLS_VERIFY=$TlsVerify `
   $AgentImage
 
 Write-Host "[honeyswarm] Done. Follow logs with: docker logs -f $ContainerName"

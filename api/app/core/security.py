@@ -48,6 +48,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 ACCESS = "access"
 REFRESH = "refresh"
+DASHBOARDS = "dashboards"
 
 
 def _create_token(subject: str, token_type: str, expires: timedelta, extra: dict | None = None) -> str:
@@ -71,6 +72,13 @@ def create_access_token(subject: str, roles: list[str]) -> str:
 
 def create_refresh_token(subject: str) -> str:
     return _create_token(subject, REFRESH, timedelta(days=settings.refresh_token_ttl_days))
+
+
+def create_dashboards_token(subject: str) -> str:
+    """Short-lived token (cookie) authorizing access to the Dashboards proxy."""
+    return _create_token(
+        subject, DASHBOARDS, timedelta(minutes=settings.dashboards_token_ttl_minutes)
+    )
 
 
 def decode_token(token: str) -> dict | None:

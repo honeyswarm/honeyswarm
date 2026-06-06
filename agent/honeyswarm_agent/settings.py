@@ -16,12 +16,18 @@ TAIL_POLL_INTERVAL = float(os.environ.get("TAIL_POLL_INTERVAL", "1.0"))
 class AgentConfig:
     controller_url: str
     enroll_token: str | None
+    tls_verify: bool
 
 
 def load_config() -> AgentConfig:
     return AgentConfig(
         controller_url=os.environ.get("HONEYSWARM_URL", "http://localhost:8080").rstrip("/"),
         enroll_token=os.environ.get("ENROLL_TOKEN"),
+        # The controller is reached through its HTTPS edge. Off by default since
+        # the edge ships a self-signed cert; the installer sets this true when
+        # the controller uses a trusted (Let's Encrypt) cert.
+        tls_verify=os.environ.get("HONEYSWARM_TLS_VERIFY", "false").strip().lower()
+        in ("1", "true", "yes"),
     )
 
 

@@ -6,9 +6,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
-import pymongo
 from beanie import Document, Indexed, Link
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 def utcnow() -> datetime:
@@ -32,11 +31,12 @@ class Config(Document):
         name = "config"
 
 
-class HoneypotEvent(Document):
+class HoneypotEvent(BaseModel):
     """Normalized honeypot event (was ``HoneypotEvents``).
 
-    Source of truth for raw events stays in Mongo; OpenSearch holds a copy for
-    search/analytics. Collection name preserved (``honeypot_events``).
+    Honeypot events live solely in OpenSearch (the search/analytics store); they
+    are no longer persisted in Mongo. This is a plain pydantic model used to
+    validate + shape the document that ingest indexes into OpenSearch.
     """
 
     date: datetime = Field(default_factory=utcnow)
@@ -47,16 +47,6 @@ class HoneypotEvent(Document):
     hive_id: Optional[str] = None
     honeypot_instance_id: Optional[str] = None
     payload: dict[str, Any] = Field(default_factory=dict)
-
-    class Settings:
-        name = "honeypot_events"
-        indexes = [
-            [("date", pymongo.DESCENDING)],
-            [("port", pymongo.DESCENDING)],
-            [("honeypot_type", pymongo.DESCENDING)],
-            [("service", pymongo.DESCENDING)],
-            [("source_ip", pymongo.DESCENDING)],
-        ]
 
 
 class Frame(Document):

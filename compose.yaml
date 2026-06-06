@@ -54,8 +54,11 @@ services:
     volumes:
       - ./manifests:/opt/honeyswarm/manifests:ro
       - mqtt_secrets:/secrets:ro
-    ports:
-      - "8080:8080"
+    # No host `ports:` — the API is reached only through the Caddy edge (browser
+    # via /api + /ws, hives via /agent). Other containers reach it as api:8080 on
+    # the internal network.
+    expose:
+      - "8080"
     depends_on:
       mongo:
         condition: service_started
@@ -112,8 +115,15 @@ services:
     environment:
       - 'OPENSEARCH_HOSTS=["http://opensearch:9200"]'
       - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=${OPENSEARCH_DISABLE_SECURITY:-true}"
-    ports:
-      - "5601:5601"
+      # NOT published to the host (no `ports:`). Reached only via Caddy at
+      # /dashboards, gated by forward_auth against the Honeyswarm session. The
+      # security plugin stays off by design: the trust boundary is the edge
+      # proxy + the private docker network, so internal hops are plain HTTP.
+      # basePath makes Dashboards emit correct asset URLs through the proxy.
+      - "SERVER_BASEPATH=/dashboards"
+      - "SERVER_REWRITEBASEPATH=true"
+    expose:
+      - "5601"
     depends_on:
       - opensearch
     networks:
@@ -124,6 +134,12 @@ services:
       context: ./web
     container_name: honeyswarm_web
     restart: unless-stopped
+    environment:
+      # Edge TLS bind address. Default :443 = self-signed HTTPS that works on any
+      # hostname/IP (Caddy issues internal certs on demand). For a public domain
+      # with real certs, set SITE_ADDRESS=<domain> and edit web/Caddyfile's tls
+      # line to your email. Internal hops (api, dashboards) stay plain HTTP.
+      - "SITE_ADDRESS=${SITE_ADDRESS:-:443}"
     volumes:
       - caddyData:/data
     ports:
@@ -131,6 +147,7 @@ services:
       - "443:443"
     depends_on:
       - api
+      - opensearch-dashboards
     networks:
       - honeynet
 

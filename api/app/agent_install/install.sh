@@ -9,6 +9,7 @@ set -euo pipefail
 HONEYSWARM_URL="__HONEYSWARM_URL__"
 ENROLL_TOKEN="__ENROLL_TOKEN__"
 AGENT_IMAGE="__AGENT_IMAGE__"
+TLS_VERIFY="__AGENT_TLS_VERIFY__"
 CONTAINER_NAME="honeyswarm-agent"
 
 # Optional: --move-ssh [port]  relocates the host's SSH daemon off port 22 so an
@@ -95,6 +96,7 @@ docker run -d --name "${CONTAINER_NAME}" --restart unless-stopped \
   -e ENROLL_TOKEN="${ENROLL_TOKEN}" \
   -e HONEYSWARM_HOST_IP="${HOST_IP}" \
   -e HONEYSWARM_HOST_NAME="${HOST_NAME}" \
+  -e HONEYSWARM_TLS_VERIFY="${TLS_VERIFY}" \
   "${AGENT_IMAGE}"
 
 echo "[honeyswarm] Done. Follow logs with: docker logs -f ${CONTAINER_NAME}"
