@@ -21,9 +21,11 @@ docker pull $AgentImage
 docker rm -f $ContainerName 2>$null | Out-Null
 
 Write-Host "[honeyswarm] Starting agent ..."
+# Same-path bind mount so honeypot containers launched via the daemon see the
+# agent's rendered config + log dirs (resolved inside the Docker Desktop VM).
 docker run -d --name $ContainerName --restart unless-stopped `
   -v /var/run/docker.sock:/var/run/docker.sock `
-  -v honeyswarm_agent_state:/var/lib/honeyswarm `
+  -v /var/lib/honeyswarm:/var/lib/honeyswarm `
   -e HONEYSWARM_URL=$HoneyswarmUrl `
   -e ENROLL_TOKEN=$EnrollToken `
   $AgentImage

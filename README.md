@@ -54,6 +54,10 @@ For a **remote** deployment, set `MQTT_PUBLIC_HOST` in `.env` to the controller'
 public hostname/IP before first boot — it's baked into the broker certificate's
 SAN so agents on remote hives can verify it.
 
+> If you change `MQTT_PUBLIC_HOST` (or `MQTT_EXTRA_SANS`) after the first boot,
+> the cert is regenerated but the running broker keeps serving the old one until
+> restarted: `docker compose restart mqtt`.
+
 ### Enroll a hive
 
 In the UI: **Hives → create** to get a per-hive install one-liner. Run it on the
@@ -72,6 +76,17 @@ irm "https://<controller>/agent/install.ps1?token=<token>" | iex
 
 A hive only needs outbound network access to the controller (API + MQTT); the
 agent never accepts inbound connections.
+
+**SSH honeypots** (e.g. Cowrie) bind host port 22, which the host's real `sshd`
+already uses. Use the SSH-honeypot install one-liner (also shown in the UI) to
+relocate the host SSH daemon first:
+
+```bash
+curl -fsSL "https://<controller>/agent/install.sh?token=<token>" | sudo bash -s -- --move-ssh 2222
+```
+
+This moves host SSH to port 2222 (reconnect with `ssh -p 2222`; a backup of
+`sshd_config` is kept) and frees port 22 for the honeypot.
 
 ### Add a honeypot
 

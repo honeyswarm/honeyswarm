@@ -51,10 +51,15 @@ async def create_hive(body: HiveCreate) -> dict[str, Any]:
     base = settings.public_url.rstrip("/")
     # One-liners that fetch a per-hive install script (installs Docker + runs the agent).
     install_command = f'curl -fsSL "{base}/agent/install.sh?token={token}" | sudo bash'
+    # Same, but also relocates the host SSH daemon off :22 so an SSH honeypot can bind it.
+    install_command_ssh = (
+        f'curl -fsSL "{base}/agent/install.sh?token={token}" | sudo bash -s -- --move-ssh 2222'
+    )
     install_command_windows = f'irm "{base}/agent/install.ps1?token={token}" | iex'
     result = _serialize(hive)
     result["enroll_token"] = token  # shown once at creation time
     result["install_command"] = install_command
+    result["install_command_ssh"] = install_command_ssh
     result["install_command_windows"] = install_command_windows
     return result
 

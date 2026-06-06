@@ -16,6 +16,7 @@ interface Hive {
 interface CreatedHive extends Hive {
   enroll_token: string;
   install_command: string;
+  install_command_ssh: string;
   install_command_windows: string;
 }
 
@@ -69,6 +70,10 @@ export function Hives() {
             </div>
             <div className="label" style={{ marginTop: 8, marginBottom: 4 }}>Linux</div>
             <div className="code">{created.install_command}</div>
+            <div className="label" style={{ marginTop: 10, marginBottom: 4 }}>
+              Linux — SSH honeypot host (also moves host SSH to port 2222)
+            </div>
+            <div className="code">{created.install_command_ssh}</div>
             <div className="label" style={{ marginTop: 10, marginBottom: 4 }}>
               Windows (PowerShell, Docker Desktop required)
             </div>

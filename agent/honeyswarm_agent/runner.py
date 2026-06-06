@@ -40,6 +40,37 @@ def render_template(content: str, variables: dict[str, Any]) -> str:
     return rendered
 
 
+def _free_honeyswarm_ports(cli, host_ports: set[int], keep: str) -> None:
+    """Remove honeyswarm honeypot containers binding any of ``host_ports``.
+
+    Honeypots bind fixed host ports (e.g. 22), so only one can run per hive.
+    This clears orphans from prior instances / failed deploys so a redeploy
+    isn't blocked by 'port is already allocated'. Scoped to honeyswarm_*
+    containers so unrelated workloads are never touched.
+    """
+    if not host_ports:
+        return
+    for container in cli.containers.list(all=True):
+        if container.name == keep or not container.name.startswith("honeyswarm_"):
+            continue
+        bindings = (container.attrs.get("HostConfig", {}) or {}).get("PortBindings") or {}
+        used = {
+            int(b["HostPort"])
+            for binds in bindings.values()
+            for b in (binds or [])
+            if b.get("HostPort")
+        }
+        if used & host_ports:
+            logger.info(
+                "Removing orphan %s holding host port(s) %s",
+                container.name, sorted(used & host_ports),
+            )
+            try:
+                container.remove(force=True)
+            except Exception:  # noqa: BLE001
+                pass
+
+
 def _parse_ports(ports: list[str]) -> dict[str, int]:
     # "22:2222" => host 22 -> container 2222 ; docker-py wants {"2222/tcp": 22}
     mapping: dict[str, int] = {}
@@ -57,7 +88,12 @@ def apply_host_setup(actions: list[str]) -> None:
         # Host mutation only makes sense when the agent runs with host access.
         # Kept best-effort and non-fatal so it never blocks a deploy.
         if action == "move-sshd-off-22":
-            logger.info("host_setup move-sshd-off-22 (no-op unless host access configured)")
+            # The agent runs in a container and can't change host SSH config.
+            # Operators free port 22 at install time: install.sh --move-ssh <port>.
+            logger.info(
+                "host_setup move-sshd-off-22: no-op in container; re-run the hive "
+                "installer with --move-ssh <port> if port 22 is in use on the host"
+            )
 
 
 def deploy(command: dict) -> dict:
@@ -95,24 +131,37 @@ def deploy(command: dict) -> dict:
         host_log_path = str(log_dir / Path(log["path"]).name)
 
     cli = client()
+    ports = _parse_ports(manifest.get("ports"))
+
     # Replace any existing container with this name.
     try:
-        existing = cli.containers.get(container_name)
-        existing.remove(force=True)
+        cli.containers.get(container_name).remove(force=True)
         logger.info("Removed existing container %s", container_name)
     except NotFound:
         pass
 
-    cli.containers.run(
-        manifest["image"],
-        name=container_name,
-        detach=True,
-        ports=_parse_ports(manifest.get("ports")),
-        volumes=volumes or None,
-        command=manifest.get("command"),
-        environment=manifest.get("env"),
-        restart_policy={"Name": "unless-stopped"},
-    )
+    # Clear orphaned honeyswarm honeypots holding the host ports we need (e.g. a
+    # previous instance, or a half-started container from a failed deploy).
+    _free_honeyswarm_ports(cli, set(ports.values()), keep=container_name)
+
+    try:
+        cli.containers.run(
+            manifest["image"],
+            name=container_name,
+            detach=True,
+            ports=ports,
+            volumes=volumes or None,
+            command=manifest.get("command"),
+            environment=manifest.get("env"),
+            restart_policy={"Name": "unless-stopped"},
+        )
+    except Exception:
+        # Don't leave a half-created container reserving the port.
+        try:
+            cli.containers.get(container_name).remove(force=True)
+        except NotFound:
+            pass
+        raise
     logger.info("Deployed container %s from %s", container_name, manifest["image"])
 
     return {

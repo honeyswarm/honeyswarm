@@ -35,15 +35,29 @@ class RegisterRequest(BaseModel):
     agent_version: str | None = None
 
 
+# Enrollment tokens are secrets.token_urlsafe() => URL-safe base64 chars only.
+# Restricting the charset prevents reflected shell/PowerShell injection in the
+# rendered installer (which is meant to be piped to `sudo bash` / `iex`).
+TOKEN_PATTERN = r"^[A-Za-z0-9_-]{16,128}$"
+
+
+async def _require_enroll_token(token: str) -> None:
+    """Reject tokens that don't correspond to a real pending enrollment."""
+    if await Hive.find_one(Hive.agent_token_hash == hash_token(token)) is None:
+        raise HTTPException(404, "Unknown enrollment token")
+
+
 @router.get("/install.sh", response_class=PlainTextResponse)
-async def install_sh(token: str = Query(...)) -> str:
+async def install_sh(token: str = Query(..., pattern=TOKEN_PATTERN)) -> str:
     """Linux installer: `curl -fsSL <url>/agent/install.sh?token=… | sudo bash`."""
+    await _require_enroll_token(token)
     return _render_installer("install.sh", token)
 
 
 @router.get("/install.ps1", response_class=PlainTextResponse)
-async def install_ps1(token: str = Query(...)) -> str:
+async def install_ps1(token: str = Query(..., pattern=TOKEN_PATTERN)) -> str:
     """Windows installer: `irm <url>/agent/install.ps1?token=… | iex`."""
+    await _require_enroll_token(token)
     return _render_installer("install.ps1", token)
 
 
