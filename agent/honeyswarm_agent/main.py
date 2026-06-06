@@ -71,12 +71,24 @@ async def enroll(config: AgentConfig) -> dict:
         resp.raise_for_status()
         state = resp.json()
 
-    # Persist the broker CA so we can verify it over TLS (now and after restart).
-    if state.get("mqtt_use_tls") and state.get("mqtt_ca_cert"):
+    # Persist the broker CA + this hive's client cert/key so we can connect with
+    # mutual TLS (now and after restart). The client cert's CN is our hive id;
+    # the broker authenticates us as ourselves and the ACL confines us to our own
+    # hive/<id>/* subtree.
+    if state.get("mqtt_use_tls"):
         STATE_DIR.mkdir(parents=True, exist_ok=True)
-        ca_path = STATE_DIR / "ca.crt"
-        ca_path.write_text(state.pop("mqtt_ca_cert"))
-        state["mqtt_ca_path"] = str(ca_path)
+        if state.get("mqtt_ca_cert"):
+            ca_path = STATE_DIR / "ca.crt"
+            ca_path.write_text(state.pop("mqtt_ca_cert"))
+            state["mqtt_ca_path"] = str(ca_path)
+        if state.get("mqtt_client_cert") and state.get("mqtt_client_key"):
+            cert_path = STATE_DIR / "client.crt"
+            key_path = STATE_DIR / "client.key"
+            cert_path.write_text(state.pop("mqtt_client_cert"))
+            key_path.write_text(state.pop("mqtt_client_key"))
+            key_path.chmod(0o600)
+            state["mqtt_client_cert_path"] = str(cert_path)
+            state["mqtt_client_key_path"] = str(key_path)
 
     save_state(state)
     logger.info("Enrolled as hive %s", state["hive_id"])
@@ -202,8 +214,12 @@ class Agent:
     def _tls_params(self) -> aiomqtt.TLSParameters | None:
         if not self.state.get("mqtt_use_tls"):
             return None
+        # Mutual TLS: verify the broker with the CA and present our per-hive
+        # client cert (CN == hive id), which the broker maps to our MQTT username.
         return aiomqtt.TLSParameters(
             ca_certs=self.state["mqtt_ca_path"],
+            certfile=self.state.get("mqtt_client_cert_path"),
+            keyfile=self.state.get("mqtt_client_key_path"),
             cert_reqs=ssl.CERT_REQUIRED,
         )
 

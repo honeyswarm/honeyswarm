@@ -29,15 +29,13 @@ add_san() {
 add_san "${MQTT_PUBLIC_HOST:-}"
 for extra in ${MQTT_EXTRA_SANS:-}; do add_san "$extra"; done
 
+# Controller identity. The broker uses the client cert CN as the MQTT username
+# (use_identity_as_username), so this must match the controller user in the ACL.
 USER="${MQTT_USERNAME:-honeyswarm}"
-PASS="${MQTT_PASSWORD:-}"
-if [ -z "$PASS" ]; then
-  echo "ERROR: MQTT_PASSWORD is not set" >&2
-  exit 1
-fi
 
 # --- fast path: everything present and SAN unchanged ---
-if [ -f "$SECRETS/ca.crt" ] && [ -f "$SECRETS/server.crt" ] && [ -f "$SECRETS/passwd" ] \
+if [ -f "$SECRETS/ca.crt" ] && [ -f "$SECRETS/server.crt" ] \
+   && [ -f "$SECRETS/client-$USER.crt" ] && [ -f "$SECRETS/client-$USER.key" ] \
    && [ -f "$SECRETS/.san" ] && [ "$(cat "$SECRETS/.san")" = "$SAN" ]; then
   echo "mqtt-init: secrets already present (SAN unchanged); nothing to do."
   exit 0
@@ -54,28 +52,39 @@ if [ ! -f "$SECRETS/ca.crt" ]; then
     -subj "/CN=Honeyswarm CA" >/dev/null 2>&1
 fi
 
+# ext files (a temp file, not process substitution, so this stays POSIX-portable
+# across dash / busybox-ash / bash).
+EXT="$SECRETS/.ext"
+
 # --- server certificate signed by the CA (reflects current SANs) ---
 echo "mqtt-init: creating server certificate"
 openssl req -newkey rsa:4096 -nodes \
   -keyout "$SECRETS/server.key" -out "$SECRETS/server.csr" \
   -subj "/CN=honeyswarm-mqtt" >/dev/null 2>&1
+printf "subjectAltName=%s\nextendedKeyUsage=serverAuth\n" "$SAN" > "$EXT"
 openssl x509 -req -in "$SECRETS/server.csr" \
   -CA "$SECRETS/ca.crt" -CAkey "$SECRETS/ca.key" -CAcreateserial \
   -out "$SECRETS/server.crt" -days 3650 \
-  -extfile <(printf "subjectAltName=%s\nextendedKeyUsage=serverAuth\n" "$SAN") >/dev/null 2>&1
+  -extfile "$EXT" >/dev/null 2>&1
 rm -f "$SECRETS/server.csr"
 
-# --- password file (recreate; mosquitto_passwd -c refuses an existing file) ---
-echo "mqtt-init: writing password file for user '$USER'"
-rm -f "$SECRETS/passwd"
-mosquitto_passwd -c -b "$SECRETS/passwd" "$USER" "$PASS"
+# --- controller client certificate (mutual TLS; CN == ACL controller user) ---
+echo "mqtt-init: creating controller client certificate (CN=$USER)"
+openssl req -newkey rsa:4096 -nodes \
+  -keyout "$SECRETS/client-$USER.key" -out "$SECRETS/client-$USER.csr" \
+  -subj "/CN=$USER" >/dev/null 2>&1
+printf "extendedKeyUsage=clientAuth\n" > "$EXT"
+openssl x509 -req -in "$SECRETS/client-$USER.csr" \
+  -CA "$SECRETS/ca.crt" -CAkey "$SECRETS/ca.key" -CAcreateserial \
+  -out "$SECRETS/client-$USER.crt" -days 3650 \
+  -extfile "$EXT" >/dev/null 2>&1
+rm -f "$SECRETS/client-$USER.csr" "$EXT"
 
 printf '%s' "$SAN" > "$SECRETS/.san"
 
-# --- permissions: broker runs as uid 1883 ---
+# --- permissions: broker runs as uid 1883; the API (root) reads the CA key ---
 chown "$MOSQ_UID:$MOSQ_UID" "$SECRETS"/* "$SECRETS/.san" 2>/dev/null || true
-chmod 644 "$SECRETS/ca.crt" "$SECRETS/server.crt" "$SECRETS/server.key"
-chmod 600 "$SECRETS/ca.key"
-chmod 640 "$SECRETS/passwd"
+chmod 644 "$SECRETS/ca.crt" "$SECRETS/server.crt" "$SECRETS/client-$USER.crt"
+chmod 600 "$SECRETS/ca.key" "$SECRETS/server.key" "$SECRETS/client-$USER.key"
 
 echo "mqtt-init: done."

@@ -11,6 +11,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from app.core.config import settings
+from app.core.mqtt_certs import issue_client_cert
 from app.core.security import hash_token
 from app.models import Hive
 
@@ -75,22 +76,35 @@ async def register(body: RegisterRequest) -> dict:
         hive.agent_version = body.agent_version
     await hive.save()
 
-    # Ship the self-signed CA so the agent can verify the broker over TLS.
-    ca_cert = ""
-    if settings.mqtt_use_tls:
-        ca_path = Path(settings.mqtt_ca_cert)
-        if ca_path.exists():
-            ca_cert = ca_path.read_text()
-        else:
-            logger.warning("MQTT CA cert not found at %s", ca_path)
-
-    logger.info("Hive %s (%s) registered", hive.name, hive.id)
-    return {
+    response: dict = {
         "hive_id": str(hive.id),
         "mqtt_host": settings.mqtt_public_host,
         "mqtt_port": settings.mqtt_port,
-        "mqtt_username": settings.mqtt_username,  # dev: shared; prod: per-hive creds
-        "mqtt_password": settings.mqtt_password,
+        # The broker derives the username from the client cert CN; we echo it for
+        # the agent's logs/connection identifier. No shared password under mTLS.
+        "mqtt_username": str(hive.id),
         "mqtt_use_tls": settings.mqtt_use_tls,
-        "mqtt_ca_cert": ca_cert,
     }
+
+    # Mutual TLS: ship the broker CA (to verify the broker) plus a per-hive client
+    # certificate (CN == hive id) so the broker authenticates this hive as itself
+    # and the ACL confines it to its own hive/<id>/* subtree. This replaces the
+    # old single shared credential, so a compromised hive cannot impersonate or
+    # command any other hive.
+    if settings.mqtt_use_tls:
+        ca_path = Path(settings.mqtt_ca_cert)
+        if ca_path.exists():
+            response["mqtt_ca_cert"] = ca_path.read_text()
+        else:
+            logger.warning("MQTT CA cert not found at %s", ca_path)
+            response["mqtt_ca_cert"] = ""
+        try:
+            cert_pem, key_pem = issue_client_cert(str(hive.id))
+            response["mqtt_client_cert"] = cert_pem
+            response["mqtt_client_key"] = key_pem
+        except (OSError, ValueError) as err:
+            logger.error("Could not mint MQTT client cert for hive %s: %s", hive.id, err)
+            raise HTTPException(500, "Broker certificate authority unavailable")
+
+    logger.info("Hive %s (%s) registered", hive.name, hive.id)
+    return response

@@ -68,13 +68,25 @@ class Settings(BaseSettings):
         default="http://opensearch-dashboards:5601/dashboards", alias="OPENSEARCH_DASHBOARDS_URL"
     )
 
-    # MQTT (TLS by default)
+    # MQTT (mutual TLS by default)
     mqtt_host: str = Field(default="mqtt", alias="MQTT_HOST")
     mqtt_port: int = Field(default=8883, alias="MQTT_PORT")
+    # Controller identity. The broker derives the MQTT username from the client
+    # cert CN (use_identity_as_username); this must match the ACL's controller
+    # user. mqtt_password is retained for back-compat but unused under mTLS.
     mqtt_username: str = Field(default="honeyswarm", alias="MQTT_USERNAME")
     mqtt_password: str = Field(default="", alias="MQTT_PASSWORD")
     mqtt_use_tls: bool = Field(default=True, alias="MQTT_USE_TLS")
     mqtt_ca_cert: str = Field(default="/secrets/ca.crt", alias="MQTT_CA_CERT")
+    # CA private key (used to mint per-hive client certs) + the controller's own
+    # client cert/key, all generated into the mqtt_secrets volume by mqtt/init.sh.
+    mqtt_ca_key: str = Field(default="/secrets/ca.key", alias="MQTT_CA_KEY")
+    mqtt_client_cert: str = Field(
+        default="/secrets/client-honeyswarm.crt", alias="MQTT_CLIENT_CERT"
+    )
+    mqtt_client_key: str = Field(
+        default="/secrets/client-honeyswarm.key", alias="MQTT_CLIENT_KEY"
+    )
 
     @property
     def mongodb_uri(self) -> str:

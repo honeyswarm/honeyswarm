@@ -11,6 +11,7 @@ import argparse
 import asyncio
 import json
 import os
+import ssl
 
 import aiomqtt
 
@@ -30,21 +31,35 @@ SAMPLES = {
 async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default=os.environ.get("MQTT_HOST", "localhost"))
-    parser.add_argument("--port", type=int, default=int(os.environ.get("MQTT_PORT", "1883")))
-    parser.add_argument("--username", default=os.environ.get("MQTT_USERNAME", "honeyswarm"))
-    parser.add_argument("--password", default=os.environ.get("MQTT_PASSWORD", ""))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("MQTT_PORT", "8883")))
     parser.add_argument("--hive", default="test")
     parser.add_argument("--normalizer", default="cowrie", choices=list(SAMPLES))
     parser.add_argument("--instance", default="replay-instance")
     parser.add_argument("--count", type=int, default=1)
+    # Mutual TLS (the broker now requires a client cert). Default to the
+    # controller identity, which the ACL lets publish to any hive's topics.
+    parser.add_argument("--ca-cert", default=os.environ.get("MQTT_CA_CERT", "/secrets/ca.crt"))
+    parser.add_argument(
+        "--client-cert",
+        default=os.environ.get("MQTT_CLIENT_CERT", "/secrets/client-honeyswarm.crt"),
+    )
+    parser.add_argument(
+        "--client-key",
+        default=os.environ.get("MQTT_CLIENT_KEY", "/secrets/client-honeyswarm.key"),
+    )
     args = parser.parse_args()
 
+    tls_params = aiomqtt.TLSParameters(
+        ca_certs=args.ca_cert,
+        certfile=args.client_cert,
+        keyfile=args.client_key,
+        cert_reqs=ssl.CERT_REQUIRED,
+    )
     topic = f"hive/{args.hive}/events"
     async with aiomqtt.Client(
         hostname=args.host,
         port=args.port,
-        username=args.username or None,
-        password=args.password or None,
+        tls_params=tls_params,
     ) as client:
         for i in range(args.count):
             envelope = {

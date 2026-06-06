@@ -6,7 +6,8 @@
 name: honeyswarm
 
 services:
-  # One-shot: generate MQTT TLS certs + passwd into the mqtt_secrets volume.
+  # One-shot: generate the MQTT CA, server cert + controller client cert into the
+  # mqtt_secrets volume (mutual TLS). Per-hive client certs are minted by the API.
   mqtt-init:
     image: eclipse-mosquitto:2
     container_name: honeyswarm_mqtt_init
@@ -14,7 +15,6 @@ services:
     restart: "no"
     environment:
       MQTT_USERNAME: ${MQTT_USERNAME}
-      MQTT_PASSWORD: ${MQTT_PASSWORD}
       MQTT_PUBLIC_HOST: ${MQTT_PUBLIC_HOST:-localhost}
       MQTT_EXTRA_SANS: ${MQTT_EXTRA_SANS:-}
     volumes:
