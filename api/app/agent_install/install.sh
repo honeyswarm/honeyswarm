@@ -70,6 +70,14 @@ fi
 echo "[honeyswarm] Pulling agent image ${AGENT_IMAGE} ..."
 docker pull "${AGENT_IMAGE}"
 
+# Detect the host's primary reachable IP + hostname here (the agent runs in a
+# container and can't see the host's LAN IP itself). Best-effort: on a NAT'd /
+# cloud host this is the private interface IP; the public address may differ.
+HOST_IP="$(ip route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.][0-9.]*\).*/\1/p' | head -n1)"
+[ -z "$HOST_IP" ] && HOST_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+HOST_NAME="$(hostname 2>/dev/null || true)"
+echo "[honeyswarm] Reporting host IP: ${HOST_IP:-unknown} (${HOST_NAME:-unknown})"
+
 # Replace any previous agent on this host.
 docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
 
@@ -85,6 +93,8 @@ docker run -d --name "${CONTAINER_NAME}" --restart unless-stopped \
   -v /var/lib/honeyswarm:/var/lib/honeyswarm \
   -e HONEYSWARM_URL="${HONEYSWARM_URL}" \
   -e ENROLL_TOKEN="${ENROLL_TOKEN}" \
+  -e HONEYSWARM_HOST_IP="${HOST_IP}" \
+  -e HONEYSWARM_HOST_NAME="${HOST_NAME}" \
   "${AGENT_IMAGE}"
 
 echo "[honeyswarm] Done. Follow logs with: docker logs -f ${CONTAINER_NAME}"

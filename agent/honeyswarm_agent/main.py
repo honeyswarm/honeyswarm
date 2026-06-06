@@ -9,6 +9,7 @@ Enrolls with the controller, then runs an MQTT session:
 import asyncio
 import json
 import logging
+import os
 import platform
 import socket
 import ssl
@@ -34,14 +35,23 @@ RECONNECT_DELAY = 5
 
 
 def host_facts() -> dict:
-    try:
-        ips = socket.gethostbyname_ex(socket.gethostname())[2]
-    except OSError:
-        ips = []
+    # The agent runs in a container, so resolving our own hostname yields the
+    # container's bridge IP (172.17.x.x), not the host's reachable address. The
+    # installer (which runs on the host) detects the real values and passes them
+    # via HONEYSWARM_HOST_IP / HONEYSWARM_HOST_NAME; fall back to the container's
+    # own resolution only when they're absent (e.g. a manual `docker run`).
+    host_ip = os.environ.get("HONEYSWARM_HOST_IP", "").strip()
+    if host_ip:
+        ips = [ip.strip() for ip in host_ip.split(",") if ip.strip()]
+    else:
+        try:
+            ips = socket.gethostbyname_ex(socket.gethostname())[2]
+        except OSError:
+            ips = []
     return {
         "osfullname": platform.platform(),
         "os": platform.system(),
-        "hostname": socket.gethostname(),
+        "hostname": os.environ.get("HONEYSWARM_HOST_NAME", "").strip() or socket.gethostname(),
         "ipv4": ips,
     }
 

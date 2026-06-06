@@ -5,4 +5,4 @@ maintains an MQTT session for commands (deploy/start/stop/remove honeypot
 containers via the Docker SDK) and telemetry (heartbeat status + tailed honeypot
 JSON-log events).
 """
-__version__ = "2.3.0"
+__version__ = "2.4.0"

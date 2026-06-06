@@ -20,6 +20,15 @@ docker pull $AgentImage
 
 docker rm -f $ContainerName 2>$null | Out-Null
 
+# Detect the host's primary reachable IP + hostname here (the agent runs in a
+# container and can't see the host's address itself).
+$HostIp = $null
+try {
+  $HostIp = (Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway } | Select-Object -First 1).IPv4Address.IPAddress
+} catch {}
+$HostName = $env:COMPUTERNAME
+Write-Host "[honeyswarm] Reporting host IP: $HostIp ($HostName)"
+
 Write-Host "[honeyswarm] Starting agent ..."
 # Same-path bind mount so honeypot containers launched via the daemon see the
 # agent's rendered config + log dirs (resolved inside the Docker Desktop VM).
@@ -28,6 +37,8 @@ docker run -d --name $ContainerName --restart unless-stopped `
   -v /var/lib/honeyswarm:/var/lib/honeyswarm `
   -e HONEYSWARM_URL=$HoneyswarmUrl `
   -e ENROLL_TOKEN=$EnrollToken `
+  -e HONEYSWARM_HOST_IP=$HostIp `
+  -e HONEYSWARM_HOST_NAME=$HostName `
   $AgentImage
 
 Write-Host "[honeyswarm] Done. Follow logs with: docker logs -f $ContainerName"
