@@ -49,3 +49,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Disable SLSA provenance/SBOM attestations — they make buildx push a
+          # multi-manifest index that GHCR intermittently rejects ("unknown blob").
+          provenance: false
+          sbom: false
