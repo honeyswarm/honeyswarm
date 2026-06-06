@@ -1,7 +1,8 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { Table } from "../components/Table";
+import { useTrackedAction } from "../hooks/useTrackedAction";
 
 interface Hive {
   id: string;
@@ -18,6 +19,45 @@ interface CreatedHive extends Hive {
   install_command: string;
   install_command_ssh: string;
   install_command_windows: string;
+}
+
+function HiveActions({ hive }: { hive: Hive }) {
+  const qc = useQueryClient();
+  const t = useTrackedAction();
+  const update = useMutation({
+    mutationFn: () => api<{ command_id: string }>(`/hives/${hive.id}/update-agent`, { method: "POST" }),
+    onSuccess: (res) => t.track("update", res.command_id),
+  });
+  const remove = useMutation({
+    mutationFn: () => api(`/hives/${hive.id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["hives"] }),
+  });
+
+  useEffect(() => {
+    if (t.phase === "done" || t.phase === "error") qc.invalidateQueries({ queryKey: ["hives"] });
+  }, [t.phase, qc]);
+
+  return (
+    <div className="row">
+      {t.busy && <span className="spinner" />}
+      {t.phase === "done" && <span className="badge ok">agent updated ✓</span>}
+      {t.phase === "error" && (
+        <span className="badge off" title={t.response ?? ""}>
+          update failed
+        </span>
+      )}
+      <button
+        onClick={() => update.mutate()}
+        disabled={!hive.registered || t.busy || update.isPending}
+        title="Pull the latest agent image and recreate the agent in place"
+      >
+        {t.busy ? "Updating…" : "Update agent"}
+      </button>
+      <button className="danger" onClick={() => remove.mutate()}>
+        Delete
+      </button>
+    </div>
+  );
 }
 
 export function Hives() {
@@ -38,16 +78,6 @@ export function Hives() {
       setName("");
       qc.invalidateQueries({ queryKey: ["hives"] });
     },
-  });
-
-  const remove = useMutation({
-    mutationFn: (id: string) => api(`/hives/${id}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["hives"] }),
-  });
-
-  const updateAgent = useMutation({
-    mutationFn: (id: string) => api(`/hives/${id}/update-agent`, { method: "POST" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["hives"] }),
   });
 
   function onCreate(e: FormEvent) {
@@ -105,20 +135,7 @@ export function Hives() {
             { header: "Agent", cell: (h) => h.agent_version ?? "—" },
             {
               header: "",
-              cell: (h) => (
-                <div className="row">
-                  <button
-                    onClick={() => updateAgent.mutate(h.id)}
-                    disabled={!h.registered || updateAgent.isPending}
-                    title="Pull the latest agent image and recreate the agent in place"
-                  >
-                    Update agent
-                  </button>
-                  <button className="danger" onClick={() => remove.mutate(h.id)}>
-                    Delete
-                  </button>
-                </div>
-              ),
+              cell: (h) => <HiveActions hive={h} />,
             },
           ]}
           rows={hives.data ?? []}

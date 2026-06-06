@@ -15,6 +15,7 @@ def _serialize(job: Job) -> dict[str, Any]:
         "command_id": job.command_id,
         "job_type": job.job_type,
         "job_description": job.job_description,
+        "status": job.status,
         "complete": job.complete,
         "created_at": job.created_at,
         "completed_at": job.completed_at,

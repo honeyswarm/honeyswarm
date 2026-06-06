@@ -1,7 +1,8 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { Table } from "../components/Table";
+import { useTrackedAction } from "../hooks/useTrackedAction";
 
 interface Instance {
   id: string;
@@ -19,10 +20,59 @@ interface Hive {
   registered: boolean;
 }
 
+function InstanceActions({ instance }: { instance: Instance }) {
+  const qc = useQueryClient();
+  const t = useTrackedAction();
+  const action = useMutation({
+    mutationFn: ({ verb }: { verb: string }) =>
+      verb === "remove"
+        ? api<{ command_id: string }>(`/instances/${instance.id}`, { method: "DELETE" })
+        : api<{ command_id: string }>(`/instances/${instance.id}/${verb}`, { method: "POST" }),
+    onSuccess: (res, { verb }) => {
+      t.track(verb, res.command_id);
+      qc.invalidateQueries({ queryKey: ["instances"] });
+    },
+  });
+
+  // Refresh the table when the job lands so the status badge reflects reality.
+  useEffect(() => {
+    if (t.phase === "done" || t.phase === "error") qc.invalidateQueries({ queryKey: ["instances"] });
+  }, [t.phase, qc]);
+
+  if (t.busy) {
+    return (
+      <span className="row">
+        <span className="spinner" /> <span className="label">{t.verb}…</span>
+      </span>
+    );
+  }
+
+  return (
+    <div className="row">
+      {t.phase === "done" && <span className="badge ok">{t.verb} ✓</span>}
+      {t.phase === "error" && (
+        <span className="badge off" title={t.response ?? ""}>
+          {t.verb} failed
+        </span>
+      )}
+      <button className="secondary" disabled={action.isPending} onClick={() => action.mutate({ verb: "start" })}>
+        Start
+      </button>
+      <button className="secondary" disabled={action.isPending} onClick={() => action.mutate({ verb: "stop" })}>
+        Stop
+      </button>
+      <button className="danger" disabled={action.isPending} onClick={() => action.mutate({ verb: "remove" })}>
+        Remove
+      </button>
+    </div>
+  );
+}
+
 export function Instances() {
   const qc = useQueryClient();
   const [honeypotId, setHoneypotId] = useState("");
   const [hiveId, setHiveId] = useState("");
+  const deployTrack = useTrackedAction();
 
   const instances = useQuery({
     queryKey: ["instances"],
@@ -37,19 +87,21 @@ export function Instances() {
 
   const deploy = useMutation({
     mutationFn: () =>
-      api("/instances/deploy", {
+      api<{ command_id: string }>("/instances/deploy", {
         method: "POST",
         body: JSON.stringify({ honeypot_id: honeypotId, hive_id: hiveId }),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instances"] }),
+    onSuccess: (res) => {
+      deployTrack.track("deploy", res.command_id);
+      qc.invalidateQueries({ queryKey: ["instances"] });
+    },
   });
-  const action = useMutation({
-    mutationFn: ({ id, verb }: { id: string; verb: string }) =>
-      verb === "remove"
-        ? api(`/instances/${id}`, { method: "DELETE" })
-        : api(`/instances/${id}/${verb}`, { method: "POST" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["instances"] }),
-  });
+
+  useEffect(() => {
+    if (deployTrack.phase === "done" || deployTrack.phase === "error") {
+      qc.invalidateQueries({ queryKey: ["instances"] });
+    }
+  }, [deployTrack.phase, qc]);
 
   function onDeploy(e: FormEvent) {
     e.preventDefault();
@@ -82,9 +134,16 @@ export function Instances() {
                 </option>
               ))}
           </select>
-          <button type="submit" disabled={!honeypotId || !hiveId || deploy.isPending}>
-            Deploy
+          <button type="submit" disabled={!honeypotId || !hiveId || deploy.isPending || deployTrack.busy}>
+            {deployTrack.busy ? "Deploying…" : "Deploy"}
           </button>
+          {deployTrack.busy && <span className="spinner" />}
+          {deployTrack.phase === "done" && <span className="badge ok">Deployed ✓</span>}
+          {deployTrack.phase === "error" && (
+            <span className="badge off" title={deployTrack.response ?? ""}>
+              Deploy failed
+            </span>
+          )}
         </form>
       </div>
 
@@ -101,19 +160,7 @@ export function Instances() {
             },
             {
               header: "Actions",
-              cell: (i) => (
-                <div className="row">
-                  <button className="secondary" onClick={() => action.mutate({ id: i.id, verb: "start" })}>
-                    Start
-                  </button>
-                  <button className="secondary" onClick={() => action.mutate({ id: i.id, verb: "stop" })}>
-                    Stop
-                  </button>
-                  <button className="danger" onClick={() => action.mutate({ id: i.id, verb: "remove" })}>
-                    Remove
-                  </button>
-                </div>
-              ),
+              cell: (i) => <InstanceActions instance={i} />,
             },
           ]}
           rows={instances.data ?? []}

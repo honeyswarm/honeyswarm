@@ -138,6 +138,19 @@ button.link { background: none; color: var(--accent-2); padding: 0; font-weight:
 .badge.ok { background: rgba(63,185,80,0.15); color: var(--ok); }
 .badge.off { background: rgba(229,83,75,0.15); color: var(--danger); }
 .badge.neutral { background: var(--panel-2); color: var(--muted); }
+.badge.warn { background: rgba(245,197,66,0.15); color: var(--accent); }
+
+/* inline spinner for in-progress actions */
+.spinner {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent-2);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* login */
 .login-wrap { display: grid; place-items: center; height: 100vh; }

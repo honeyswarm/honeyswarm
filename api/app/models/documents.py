@@ -140,6 +140,7 @@ class Job(Document):
     job_description: Optional[str] = None
     created_at: datetime = Field(default_factory=utcnow)
     last_check: Optional[datetime] = None
+    status: str = "pending"  # pending -> running -> complete | failed
     complete: bool = False
     completed_at: Optional[datetime] = None
     job_response: Optional[str] = None

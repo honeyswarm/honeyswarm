@@ -73,10 +73,21 @@ async def _handle_job(hive_id: str, command_id: str, data: dict) -> None:
     if job is None:
         logger.warning("Result for unknown command %s", command_id)
         return
-    job.complete = bool(data.get("complete", True))
-    job.completed_at = datetime.utcnow()
-    job.last_check = job.completed_at
-    job.job_response = json.dumps(data.get("response", data))
+    now = datetime.utcnow()
+    job.last_check = now
+
+    # Agents send an intermediate {complete: false, status: "running"} when they
+    # pick up a command, then a final {complete: true, success, response}.
+    complete = bool(data.get("complete", True))
+    resp = data.get("response", data)
+    job.job_response = resp if isinstance(resp, str) else json.dumps(resp)
+    if complete:
+        success = bool(data.get("success", True))
+        job.complete = True
+        job.completed_at = now
+        job.status = "complete" if success else "failed"
+    else:
+        job.status = data.get("status", "running")
     await job.save()
 
     # Update the instance status from the command outcome if provided.
@@ -89,7 +100,13 @@ async def _handle_job(hive_id: str, command_id: str, data: dict) -> None:
         except Exception:  # noqa: BLE001
             pass
 
-    await hub.broadcast("job", {"command_id": command_id, "complete": job.complete})
+    await hub.broadcast("job", {
+        "command_id": command_id,
+        "complete": job.complete,
+        "status": job.status,
+        "response": job.job_response,
+        "instance_id": data.get("instance_id"),
+    })
 
 
 async def _handle(topic: str, raw: bytes) -> None:

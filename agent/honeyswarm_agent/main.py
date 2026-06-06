@@ -110,6 +110,19 @@ class Agent:
             },
         )
 
+    async def _publish_progress(self, command_id: str, message: str, instance_id=None) -> None:
+        """Tell the controller we've picked up a command and are working on it."""
+        await self._publish(
+            f"hive/{self.hive_id}/jobs/{command_id}",
+            {
+                "command_id": command_id,
+                "complete": False,
+                "status": "running",
+                "response": message,
+                "instance_id": instance_id,
+            },
+        )
+
     async def _publish_job(self, command_id: str, success: bool, response, instance_id=None, instance_status=None) -> None:
         await self._publish(
             f"hive/{self.hive_id}/jobs/{command_id}",
@@ -140,6 +153,8 @@ class Agent:
         action = command.get("action")
         command_id = command.get("command_id")
         instance_id = command.get("instance_id")
+        if command_id and action in ("deploy", "start", "stop", "remove", "update_agent"):
+            await self._publish_progress(command_id, f"{action} in progress", instance_id)
         try:
             if action == "deploy":
                 info = await asyncio.to_thread(runner.deploy, command)

@@ -6,6 +6,7 @@ interface Job {
   id: string;
   job_type: string;
   job_description: string;
+  status?: string;
   complete: boolean;
   created_at: string;
   completed_at: string | null;
@@ -29,11 +30,11 @@ export function Jobs() {
             { header: "Description", cell: (j) => j.job_description },
             {
               header: "Status",
-              cell: (j) => (
-                <span className={`badge ${j.complete ? "ok" : "neutral"}`}>
-                  {j.complete ? "complete" : "pending"}
-                </span>
-              ),
+              cell: (j) => {
+                const s = j.status ?? (j.complete ? "complete" : "pending");
+                const cls = s === "complete" ? "ok" : s === "failed" ? "off" : s === "running" ? "warn" : "neutral";
+                return <span className={`badge ${cls}`}>{s}</span>;
+              },
             },
             { header: "Created", cell: (j) => new Date(j.created_at).toLocaleString() },
             { header: "Response", cell: (j) => j.job_response ?? "—" },
