@@ -19,11 +19,12 @@ from .settings import TAIL_POLL_INTERVAL
 
 logger = logging.getLogger(__name__)
 
-# publisher(normalizer, instance_id, payload_dict) -> awaitable
-Publisher = Callable[[str, str, dict], Awaitable[None]]
+# publisher(tailer_info, payload_dict) -> awaitable. info carries normalizer,
+# instance_id and the optional generic field_map/static from the manifest.
+Publisher = Callable[[dict, dict], Awaitable[None]]
 
 
-async def _emit_line(line: str, normalizer: str, instance_id: str, publish: Publisher) -> None:
+async def _emit_line(line: str, info: dict, publish: Publisher) -> None:
     line = line.strip()
     if not line:
         return
@@ -31,7 +32,7 @@ async def _emit_line(line: str, normalizer: str, instance_id: str, publish: Publ
         payload = json.loads(line)
     except json.JSONDecodeError:
         return  # non-JSON log noise
-    await publish(normalizer, instance_id, payload)
+    await publish(info, payload)
 
 
 async def _tail_file(info: dict, publish: Publisher, stop: asyncio.Event) -> None:
@@ -51,7 +52,7 @@ async def _tail_file(info: dict, publish: Publisher, stop: asyncio.Event) -> Non
                     new = fh.read()
                     offset = fh.tell()
                 for line in new.splitlines():
-                    await _emit_line(line, info["normalizer"], info["instance_id"], publish)
+                    await _emit_line(line, info, publish)
         except FileNotFoundError:
             offset = 0
         await asyncio.sleep(TAIL_POLL_INTERVAL)
@@ -76,7 +77,7 @@ async def _tail_stdout(info: dict, publish: Publisher, stop: asyncio.Event) -> N
                 line = await asyncio.wait_for(queue.get(), timeout=TAIL_POLL_INTERVAL)
             except asyncio.TimeoutError:
                 continue
-            await _emit_line(line, info["normalizer"], info["instance_id"], publish)
+            await _emit_line(line, info, publish)
     finally:
         reader_task.cancel()
 

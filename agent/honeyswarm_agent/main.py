@@ -97,10 +97,17 @@ class Agent:
             return
         await self.client.publish(topic, json.dumps(payload).encode("utf-8"), qos=1)
 
-    async def _publish_event(self, normalizer: str, instance_id: str, payload: dict) -> None:
+    async def _publish_event(self, info: dict, payload: dict) -> None:
         await self._publish(
             f"hive/{self.hive_id}/events",
-            {"normalizer": normalizer, "honeypot_instance_id": instance_id, "payload": payload},
+            {
+                "normalizer": info.get("normalizer", "generic"),
+                "honeypot_instance_id": info.get("instance_id"),
+                "payload": payload,
+                # Optional generic-normalizer mapping from the manifest's log: section.
+                "field_map": info.get("field_map"),
+                "static": info.get("static"),
+            },
         )
 
     async def _publish_job(self, command_id: str, success: bool, response, instance_id=None, instance_status=None) -> None:

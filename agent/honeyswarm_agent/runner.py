@@ -188,6 +188,10 @@ def deploy(command: dict) -> dict:
     return {
         "mode": mode,
         "normalizer": log.get("normalizer", "generic"),
+        # Optional generic-normalizer mapping, shipped with each event so the
+        # controller can map a custom honeypot's JSON without code.
+        "field_map": log.get("field_map"),
+        "static": log.get("static"),
         "host_log_path": host_log_path,
         "container_name": container_name,
         "instance_id": instance_id,

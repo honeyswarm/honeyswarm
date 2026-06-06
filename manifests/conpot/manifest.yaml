@@ -1,0 +1,58 @@
+# Conpot ICS/SCADA honeypot manifest.
+#
+# Uses the Honeynet Project image and runs the bundled "default" template, which
+# emulates a number of ICS protocols. We supply our own conpot.cfg to enable the
+# native JSON logger; the hive agent tails the JSON file and ships events.
+#
+# Verified end-to-end against honeynet/conpot:latest (Conpot 0.6.0): all servers
+# start and an HTTP hit produces a JSON event {data_type, src_ip, dst_port, ...}.
+# conpot lives at /home/conpot/.local/bin/conpot (not on PATH) and the image has
+# no entrypoint, so the full path + flags are spelled out below. We deliberately
+# do NOT pass -f: it would force the bundled testing.cfg and disable JSON; instead
+# conpot.cfg sets a real fs_url (see that file). dtagdevsec/conpot (T-Pot) is
+# more current but needs T-Pot's runtime to bind its servers in a plain run.
+name: Conpot
+type: ICS
+description: >-
+  Conpot is a low/medium-interaction ICS honeypot emulating industrial control
+  system protocols (Modbus, S7comm, SNMP, BACnet, IPMI, EtherNet/IP, FTP, TFTP,
+  HTTP) to collect intelligence on adversaries targeting ICS.
+
+image: honeynet/conpot:latest
+container_name: honeyswarm_conpot_honeypot
+
+# The default template listens on non-privileged container ports; we publish the
+# conventional service ports on the host. UDP services are tagged "/udp".
+# host:container[/proto]
+ports:
+  - "80:8800"          # HTTP
+  - "502:5020"         # Modbus
+  - "102:10201"        # S7comm
+  - "44818:44818"      # EtherNet/IP
+  - "21:2121"          # FTP
+  - "161:16100/udp"    # SNMP
+  - "47808:47808/udp"  # BACnet
+  - "623:6230/udp"     # IPMI
+  - "69:6969/udp"      # TFTP
+
+command:
+  - /home/conpot/.local/bin/conpot
+  - --template
+  - default
+  - --config
+  - /etc/conpot/conpot.cfg
+  - --temp_dir
+  - /tmp
+  - --logfile
+  - /var/log/conpot/conpot.log
+
+config:
+  template: conpot.cfg
+  mount: /etc/conpot/conpot.cfg
+
+log:
+  source: file
+  path: /var/log/conpot/conpot.json
+  normalizer: conpot
+
+report_fields: ["source_ip", "service", "port"]

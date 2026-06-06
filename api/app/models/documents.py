@@ -79,7 +79,8 @@ class Honeypot(Document):
     honey_type: Optional[str] = None
     description: Optional[str] = None
     container_name: Optional[str] = None
-    manifest: Optional[str] = None  # replaces honeypot_state_file
+    manifest: Optional[str] = None  # source manifest name (provenance / disk fallback)
+    manifest_data: Optional[dict] = None  # editable snapshot (incl. config.template_content)
     normalizer: Optional[str] = None  # replaces hpfeeds channels
     pillar: list[Any] = Field(default_factory=list)
     report_fields: list[str] = Field(default_factory=lambda: ["source_ip"])

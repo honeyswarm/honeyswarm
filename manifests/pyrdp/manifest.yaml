@@ -1,0 +1,34 @@
+# PyRDP honeypot manifest.
+#
+# Uses the maintained upstream GoSecure image. PyRDP is an RDP man-in-the-middle:
+# it relays to a real downstream RDP server (RDPTARGET) and records the session.
+# It writes one JSON object per line to mitm.json, which the hive agent tails.
+name: PyRDP
+type: RDP
+description: >-
+  PyRDP is a Python Remote Desktop Protocol (RDP) man-in-the-middle and honeypot.
+  It logs connection attempts, credentials and replays the full RDP session.
+
+image: gosecure/pyrdp:latest
+container_name: honeyswarm_pyrdp_honeypot
+
+# host_port:container_port
+ports:
+  - "3389:3389"
+
+# RDPTARGET is substituted from vars (the downstream RDP server to relay to).
+command:
+  - pyrdp-mitm
+  - RDPTARGET
+
+# PyRDP writes JSONL to pyrdp_output/logs/mitm.json by default (no flag needed).
+log:
+  source: file
+  path: /home/pyrdp/pyrdp_output/logs/mitm.json
+  normalizer: pyrdp
+
+report_fields: ["source_ip", "sessionID"]
+
+# Default instance variables (operator-overridable at deploy time).
+vars:
+  RDPTARGET: "192.168.1.1"

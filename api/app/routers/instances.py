@@ -66,10 +66,14 @@ async def deploy(body: DeployRequest) -> dict[str, Any]:
     if not hive.registered:
         raise HTTPException(409, "Hive is not registered")
 
-    try:
-        manifest = load_manifest(honeypot.manifest)
-    except FileNotFoundError as err:
-        raise HTTPException(404, str(err))
+    # Prefer the editable DB snapshot; fall back to disk for legacy definitions.
+    if honeypot.manifest_data:
+        manifest = honeypot.manifest_data
+    else:
+        try:
+            manifest = load_manifest(honeypot.manifest)
+        except FileNotFoundError as err:
+            raise HTTPException(404, str(err))
 
     instance = HoneypotInstance(honeypot=honeypot, hive=hive, status="Pending")
     await instance.insert()

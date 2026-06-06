@@ -52,7 +52,15 @@ async def handle_message(topic: str, raw: bytes) -> None:
         return
 
     payload = envelope.get("payload", {})
-    canonical = normalize(envelope.get("normalizer"), payload)
+    canonical = normalize(
+        envelope.get("normalizer"),
+        payload,
+        field_map=envelope.get("field_map"),
+        static=envelope.get("static"),
+    )
+    if canonical is None:
+        # Normalizer flagged this line as framework noise, not a real event.
+        return
 
     event = HoneypotEvent(
         date=datetime.utcnow(),
