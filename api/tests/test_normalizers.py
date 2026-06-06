@@ -36,21 +36,23 @@ def test_conpot_modbus():
     assert event["honeypot_type"] == "Conpot"
 
 
-def test_http_beelzebub_nested_event():
-    # Beelzebub nests the request under "event".
+def test_http_flat_request():
+    # The HTTP honeypot logs flat events with source_ip, http_method and the port hit.
     event = normalize("http", {
-        "event": {"SourceIp": "192.0.2.7", "HTTPMethod": "GET", "RequestURI": "/"},
-        "level": "info",
-        "msg": "New Event",
+        "source_ip": "192.0.2.7",
+        "http_method": "GET",
+        "http_path": "/",
+        "port": 8080,
     })
     assert event["source_ip"] == "192.0.2.7"
-    assert event["port"] == 80
     assert event["service"] == "HTTP"
+    assert event["port"] == 8080  # taken from the payload, not hardcoded
 
 
-def test_http_skips_framework_noise():
-    # Beelzebub's own startup/info lines have no "event" -> not stored.
-    assert normalize("http", {"commands": 0, "level": "info", "msg": "Init service: "}) is None
+def test_http_defaults_port_80():
+    event = normalize("http", {"http_remote": "203.0.113.9", "http_method": "POST"})
+    assert event["source_ip"] == "203.0.113.9"
+    assert event["port"] == 80
 
 
 def test_wordpress_flat_request():

@@ -136,26 +136,22 @@ def conpot(payload: dict[str, Any]) -> CanonicalEvent:
     return event
 
 
-def http(payload: dict[str, Any]) -> Optional[CanonicalEvent]:
-    # Beelzebub logs all of its framework output as JSON and nests the request
-    # under an ``event`` object (``{"event": {...}, "msg": "New Event"}``); its
-    # framework/startup lines have no ``event``. Only treat lines that carry an
-    # actual HTTP request as events. ``SourceIp`` is Beelzebub's key;
-    # ``src_ip``/``source_ip`` keep flat/older payloads working.
-    inner = payload.get("event")
-    data = inner if isinstance(inner, dict) else payload
-    source_ip = (
-        data.get("SourceIp")
-        or data.get("src_ip")
-        or data.get("source_ip")
-    )
-    if not source_ip and "HTTPMethod" not in data:
-        return None
+def http(payload: dict[str, Any]) -> CanonicalEvent:
+    # The HTTP honeypot logs one flat JSON object per request, always carrying
+    # ``source_ip`` and the ``port`` it was reached on. Every line is a real
+    # request, so there is no framework noise to filter.
     event = _base()
     event["honeypot_type"] = "HTTP"
     event["service"] = "HTTP"
-    event["port"] = 80
-    event["source_ip"] = source_ip or ""
+    try:
+        event["port"] = int(payload.get("port") or 80)
+    except (TypeError, ValueError):
+        event["port"] = 80
+    event["source_ip"] = (
+        payload.get("source_ip")
+        or payload.get("http_remote")
+        or payload.get("src_ip", "")
+    )
     return event
 
 

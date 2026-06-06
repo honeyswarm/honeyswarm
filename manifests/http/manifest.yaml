@@ -1,0 +1,30 @@
+# Generic HTTP honeypot manifest.
+#
+# Our own aiohttp honeypot: serves a plausible page for any path and logs every
+# request — method, path, query, headers, cookies and POST body (credentials) —
+# as JSON lines the hive agent tails. The Server header is configurable.
+#
+# Image: github.com/honeyswarm/honeyswarm_http_honeypot
+name: HTTP
+type: HTTP
+description: >-
+  Generic HTTP honeypot. Logs all HTTP methods with full request path, headers
+  and body (including submitted credentials). Presents a configurable Server header.
+
+image: ghcr.io/honeyswarm/honeyswarm_http_honeypot:latest
+container_name: honeyswarm_http_honeypot
+
+ports:
+  - "80:80"
+
+log:
+  source: file
+  path: /var/log/honeyswarm/http.json
+  normalizer: http
+
+# SERVER_STRING sets the Server response header — a fixed value (e.g.
+# "nginx/1.18.0 (Ubuntu)") to pin one identity, or "random" to vary per response.
+env:
+  SERVER_STRING: "random"
+
+report_fields: ["source_ip", "http_method", "http_path"]
